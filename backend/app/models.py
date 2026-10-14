@@ -182,3 +182,16 @@ class AccesoLog(Base):
     permitido: Mapped[bool] = mapped_column(Boolean)
     motivo: Mapped[str] = mapped_column(String(120), default="")
     creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class Vehiculo(Base):
+    """Patente registrada: habilita acceso por lector de patentes (LPR) y/o sticker RFID asociado."""
+    __tablename__ = "vehiculos"
+    __table_args__ = (UniqueConstraint("edificio_id", "patente"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    unidad_id: Mapped[int] = mapped_column(ForeignKey("unidades.id"), index=True)
+    patente: Mapped[str] = mapped_column(String(10))  # normalizada: mayúsculas sin guiones/espacios
+    descripcion: Mapped[str] = mapped_column(String(80), default="")  # "Mazda 3 gris"
+    tag_id: Mapped[int | None] = mapped_column(ForeignKey("tags.id"))  # sticker opcional
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)

@@ -88,3 +88,24 @@ class LecturaIn(BaseModel):
     periodo: str
     servicio: str = "agua"
     consumo: float = Field(ge=0)
+
+
+class VehiculoIn(BaseModel):
+    unidad_id: int
+    patente: str
+    descripcion: str = ""
+    tag_id: int | None = None
+
+
+class PagoIn(BaseModel):
+    """Pago confirmado por la pasarela/banco ya resuelto: sólo se registra y se comunica."""
+    unidad_id: int
+    monto: float = Field(gt=0)
+    referencia: str = ""
+    ref_externa: str = Field(min_length=1, max_length=80)
+
+
+class RecordatorioIn(BaseModel):
+    unidad_ids: list[int] | None = None  # None = todas las unidades con deuda
+    canales: list[str] = ["whatsapp", "email"]
+    mensaje_extra: str = ""

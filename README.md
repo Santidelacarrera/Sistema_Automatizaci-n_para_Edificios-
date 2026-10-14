@@ -11,7 +11,9 @@ Backend multi-tenant (FastAPI + PostgreSQL + Celery/Redis) y firmware ESP32 (Mic
 | 1.3 Acceso vehicular/peatonal, máx. estacionamientos, visitas con QR, cupos, no-show 20 min | ✅ |
 | 1.4 Prorrata (coeficiente/consumo) y conciliación bancaria (RUT / código de cobro) | ✅ cartola CSV; sin webhook bancario real |
 | 2 Firmware ESP32 + W5500 + RC522 | ⚠️ escrito, **no probado en hardware** |
-| Panel web Next.js | ❌ no implementado |
+| Panel web Next.js (`frontend/`): fachada, portón/patentes, visitas, cobranza | ✅ probado con navegador en modo demo; contra el backend real sin probar |
+| Patentes (LPR) + sticker RFID | ✅ tabla `vehiculos`, el lector abre por patente o por tag |
+| Cobranza: recordatorios WhatsApp/correo y `POST /pagos` para su sistema de pagos | ✅ |
 
 ## Ejecutar
 ```bash
@@ -23,7 +25,13 @@ Docs interactivas: `/docs`. Lectores: `POST /api/v1/{edificio_id}/validar-acceso
 
 ## Pendientes / decisiones
 - Migraciones (Alembic), seed de los 4 edificios y alta de edificios/API keys (hoy se crean por SQL/consola).
-- Panel web, generación de imagen QR, reserva de visitas/quincho conversacional por WhatsApp (hoy responde cupos/deuda/ayuda).
+- Generación de imagen QR, reserva de visitas/quincho conversacional por WhatsApp (hoy responde cupos/deuda/ayuda).
 - Conciliación: formato CSV genérico (`fecha,descripcion,monto,id`); adaptar al formato real del banco.
 - Multas por cancelación: la regla se evalúa pero aún no hay endpoint de cancelación que la cobre.
 - Producción: HTTPS en lectores (urequests sobre TLS), rotación de claves, rate limiting, secreto JWT ≥32 bytes.
+
+## Panel web
+```bash
+cd frontend && npm install && cp .env.example .env.local && npm run dev   # http://localhost:3000
+```
+Sin `NEXT_PUBLIC_API_URL` sólo ofrece el modo demo (datos de ejemplo en el navegador).

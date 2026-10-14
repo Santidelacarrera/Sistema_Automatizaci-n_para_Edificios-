@@ -154,3 +154,32 @@ def test_whatsapp_webhook(client, seed):
     assert client.post("/webhooks/whatsapp", json=desconocido, headers={"X-Webhook-Token": "tok"}).json() == {"residente": None}
     propio = {**payload, "data": {**payload["data"], "key": {"remoteJid": "x@s.whatsapp.net", "fromMe": True}}}
     assert client.post("/webhooks/whatsapp", json=propio, headers={"X-Webhook-Token": "tok"}).json() == {"ignorado": True}
+
+
+def test_patentes_lpr_panel_y_cobranza(client, seed, db):
+    from datetime import date
+    h = login(client, "edificio_a", "ana@x.cl")
+    uid = seed["edificio_a", "101"].id
+    r = client.post("/edificios/edificio_a/vehiculos", headers=h, json={"unidad_id": uid, "patente": "bb-cd 12", "descripcion": "Mazda 3"})
+    assert r.status_code == 201 and r.json()["patente"] == "BBCD12"
+    assert client.post("/edificios/edificio_a/vehiculos", headers=h, json={"unidad_id": uid, "patente": "BBCD12"}).status_code == 409
+    assert client.post("/edificios/edificio_a/vehiculos", headers=h, json={"unidad_id": seed["edificio_a", "103"].id, "patente": "ZZZZ99"}).status_code == 409  # sin estacionamiento
+    dev = {"X-Device-Key": "keyA"}
+    url = "/api/v1/edificio_a/validar-acceso"
+    ok = client.post(url, json={"edificio_id": "edificio_a", "token_acceso": "BBCD12", "punto": "vehicular"}, headers=dev)
+    assert ok.status_code == 200
+    assert client.post(url, json={"edificio_id": "edificio_a", "token_acceso": "BBCD12", "punto": "peatonal"}, headers=dev).status_code == 403
+    p = client.get("/edificios/edificio_a/panel", headers=h).json()
+    u101 = next(u for u in p["unidades"] if u["numero"] == "101")
+    assert u101["vehiculos"][0]["patente"] == "BBCD12"
+    assert client.get("/edificios/edificio_b/panel", headers=h).status_code == 403
+    finance.generar_cargos(db, "edificio_a", "2020-01", date(2020, 2, 1), [{"concepto": "GC", "monto": 100000, "tipo": "ordinario"}])
+    db.commit()
+    c = client.get("/edificios/edificio_a/cobranza", headers=h).json()
+    assert len(c["morosos"]) == 3 and c["morosos"][0]["dias_atraso"] > 1000
+    rec = client.post("/edificios/edificio_a/cobranza/recordatorios", headers=h, json={"canales": ["whatsapp"]}).json()
+    assert rec["unidades"] == 3
+    pago = {"unidad_id": uid, "monto": 50000, "ref_externa": "X1"}
+    assert client.post("/edificios/edificio_a/pagos", headers=h, json=pago).json()["duplicado"] is False
+    assert client.post("/edificios/edificio_a/pagos", headers=h, json=pago).json()["duplicado"] is True
+    assert client.get(f"/edificios/edificio_a/unidades/{uid}/deuda", headers=h).json()["deuda"] == 0

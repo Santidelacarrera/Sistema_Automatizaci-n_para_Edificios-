@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from .. import events
 from ..config import utcnow
-from ..models import (AccesoLog, Edificio, EstadoVisita, Residente, Tag, TipoTag, Unidad, Visita)
+from ..models import (AccesoLog, Edificio, EstadoVisita, Residente, Tag, TipoTag, Unidad, Vehiculo, Visita)
 
 
 class AccesoError(Exception):
@@ -36,6 +36,35 @@ def asignar_tag(db: Session, edificio: Edificio, unidad_id: int, uid: str,
     return tag
 
 
+def normalizar_patente(p: str) -> str:
+    return "".join(c for c in p.upper() if c.isalnum())
+
+
+def registrar_vehiculo(db: Session, edificio: Edificio, unidad_id: int, patente: str,
+                       descripcion: str = "", tag_id: int | None = None) -> Vehiculo:
+    unidad = db.get(Unidad, unidad_id)
+    if not unidad or unidad.edificio_id != edificio.id:
+        raise AccesoError("Unidad no existe en este edificio")
+    pat = normalizar_patente(patente)
+    if not 5 <= len(pat) <= 7:
+        raise AccesoError("Patente inválida")
+    limite = min(unidad.estacionamientos, edificio.max_estac_por_unidad)
+    usados = db.scalar(select(func.count(Vehiculo.id)).where(
+        Vehiculo.unidad_id == unidad_id, Vehiculo.activo.is_(True)))
+    if usados >= limite:
+        raise AccesoError(f"La unidad ya tiene {usados} vehículo(s) (máx. {limite})")
+    if db.scalar(select(Vehiculo.id).where(Vehiculo.edificio_id == edificio.id, Vehiculo.patente == pat)):
+        raise AccesoError("Patente ya registrada")
+    if tag_id:
+        tag = db.get(Tag, tag_id)
+        if not tag or tag.edificio_id != edificio.id or tag.unidad_id != unidad_id:
+            raise AccesoError("Sticker no pertenece a la unidad")
+    v = Vehiculo(edificio_id=edificio.id, unidad_id=unidad_id, patente=pat, descripcion=descripcion, tag_id=tag_id)
+    db.add(v)
+    db.flush()
+    return v
+
+
 def cupos_ocupados(db: Session, edificio_id: str, desde, hasta) -> int:
     return db.scalar(select(func.count(Visita.id)).where(
         Visita.edificio_id == edificio_id, Visita.usa_estacionamiento.is_(True),
@@ -49,7 +78,7 @@ def reservar_visita(db: Session, edificio: Edificio, unidad_id: int, nombre: str
         raise AccesoError("Rango horario inválido")
     if usa_estacionamiento and cupos_ocupados(db, edificio.id, desde, hasta) >= edificio.cupos_visitas:
         raise AccesoError("Sin cupos de estacionamiento de visitas en ese horario")
-    v = Visita(edificio_id=edificio.id, unidad_id=unidad_id, nombre_visita=nombre, patente=patente.upper(),
+    v = Visita(edificio_id=edificio.id, unidad_id=unidad_id, nombre_visita=nombre, patente=normalizar_patente(patente),
                usa_estacionamiento=usa_estacionamiento, desde=desde, hasta=hasta,
                codigo_qr=secrets.token_urlsafe(24), usos_max=usos_max)
     db.add(v)
@@ -95,7 +124,21 @@ def _decidir(db: Session, edificio: Edificio, token: str, punto: str) -> tuple[b
                 return False, "Residente inactivo"
         events.publish(db, edificio.id, "acceso.residente", {"unidad_id": tag.unidad_id, "punto": punto})
         return True, "Residente"
+    if punto == "vehicular":  # lector de patentes (LPR): el token es la patente leída
+        veh = db.scalar(select(Vehiculo).where(Vehiculo.edificio_id == edificio.id,
+                                               Vehiculo.patente == normalizar_patente(token)))
+        if veh:
+            if not veh.activo:
+                return False, "Patente desactivada"
+            events.publish(db, edificio.id, "acceso.residente",
+                           {"unidad_id": veh.unidad_id, "punto": punto, "patente": veh.patente})
+            return True, "Patente de residente"
     v = db.scalar(select(Visita).where(Visita.edificio_id == edificio.id, Visita.codigo_qr == token))
+    if not v and punto == "vehicular":  # patente de visita con reserva vigente
+        v = db.scalar(select(Visita).where(Visita.edificio_id == edificio.id, Visita.patente != "",
+                                           Visita.patente == normalizar_patente(token),
+                                           Visita.estado.in_([EstadoVisita.reservada, EstadoVisita.llego]),
+                                           Visita.hasta >= utcnow()))
     if not v:
         return False, "Credencial desconocida"
     ahora = utcnow()
