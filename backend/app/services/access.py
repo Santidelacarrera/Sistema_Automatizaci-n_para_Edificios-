@@ -1,0 +1,113 @@
+"""Control de acceso: tags RFID (vehicular/peatonal) y QR de visitas."""
+import secrets
+from datetime import timedelta
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from .. import events
+from ..config import utcnow
+from ..models import (AccesoLog, Edificio, EstadoVisita, Residente, Tag, TipoTag, Unidad, Visita)
+
+
+class AccesoError(Exception):
+    pass
+
+
+def asignar_tag(db: Session, edificio: Edificio, unidad_id: int, uid: str,
+                tipo: TipoTag, residente_id: int | None = None) -> Tag:
+    unidad = db.get(Unidad, unidad_id)
+    if not unidad or unidad.edificio_id != edificio.id:
+        raise AccesoError("Unidad no existe en este edificio")
+    if tipo == TipoTag.vehicular:
+        # Límite físico: máx. estacionamientos asignados a la unidad (tope del edificio)
+        limite = min(unidad.estacionamientos, edificio.max_estac_por_unidad)
+        usados = db.scalar(select(func.count(Tag.id)).where(
+            Tag.unidad_id == unidad_id, Tag.tipo == TipoTag.vehicular, Tag.activo.is_(True)))
+        if usados >= limite:
+            raise AccesoError(f"La unidad ya tiene {usados} tag(s) vehicular(es) (máx. {limite})")
+    existente = db.scalar(select(Tag).where(Tag.edificio_id == edificio.id, Tag.uid == uid.upper()))
+    if existente:
+        raise AccesoError("UID ya registrado")
+    tag = Tag(edificio_id=edificio.id, unidad_id=unidad_id, residente_id=residente_id,
+              uid=uid.upper(), tipo=tipo)
+    db.add(tag)
+    db.flush()
+    return tag
+
+
+def cupos_ocupados(db: Session, edificio_id: str, desde, hasta) -> int:
+    return db.scalar(select(func.count(Visita.id)).where(
+        Visita.edificio_id == edificio_id, Visita.usa_estacionamiento.is_(True),
+        Visita.estado.in_([EstadoVisita.reservada, EstadoVisita.llego]),
+        Visita.desde < hasta, Visita.hasta > desde)) or 0
+
+
+def reservar_visita(db: Session, edificio: Edificio, unidad_id: int, nombre: str, desde, hasta,
+                    patente: str = "", usa_estacionamiento: bool = True, usos_max: int = 2) -> Visita:
+    if hasta <= desde:
+        raise AccesoError("Rango horario inválido")
+    if usa_estacionamiento and cupos_ocupados(db, edificio.id, desde, hasta) >= edificio.cupos_visitas:
+        raise AccesoError("Sin cupos de estacionamiento de visitas en ese horario")
+    v = Visita(edificio_id=edificio.id, unidad_id=unidad_id, nombre_visita=nombre, patente=patente.upper(),
+               usa_estacionamiento=usa_estacionamiento, desde=desde, hasta=hasta,
+               codigo_qr=secrets.token_urlsafe(24), usos_max=usos_max)
+    db.add(v)
+    db.flush()
+    events.publish(db, edificio.id, "visita.reservada",
+                   {"visita_id": v.id, "unidad_id": unidad_id, "nombre": nombre})
+    return v
+
+
+def liberar_no_show(db: Session, edificio: Edificio | None = None) -> int:
+    """Libera reservas cuya llegada excedió la tolerancia (por defecto 20 min)."""
+    ahora = utcnow()
+    q = select(Visita).where(Visita.estado == EstadoVisita.reservada, Visita.usos == 0)
+    if edificio:
+        q = q.where(Visita.edificio_id == edificio.id)
+    n = 0
+    for v in db.scalars(q):
+        ed = edificio or db.get(Edificio, v.edificio_id)
+        if ahora > v.desde + timedelta(minutes=ed.tolerancia_visita_min):
+            v.estado = EstadoVisita.no_show
+            n += 1
+            events.publish(db, v.edificio_id, "visita.no_show", {"visita_id": v.id, "unidad_id": v.unidad_id})
+    return n
+
+
+def validar_acceso(db: Session, edificio: Edificio, token: str, punto: str = "peatonal") -> tuple[bool, str]:
+    """Decide si abrir. ``punto`` = 'vehicular' | 'peatonal'. Registra bitácora."""
+    permitido, motivo = _decidir(db, edificio, token.strip(), punto)
+    db.add(AccesoLog(edificio_id=edificio.id, token=token[:80], punto=punto, permitido=permitido, motivo=motivo))
+    return permitido, motivo
+
+
+def _decidir(db: Session, edificio: Edificio, token: str, punto: str) -> tuple[bool, str]:
+    tag = db.scalar(select(Tag).where(Tag.edificio_id == edificio.id, Tag.uid == token.upper()))
+    if tag:
+        if not tag.activo:
+            return False, "Tag desactivado"
+        if tag.tipo == TipoTag.peatonal and punto == "vehicular":
+            return False, "Tag peatonal no habilita acceso vehicular"
+        if tag.residente_id:
+            r = db.get(Residente, tag.residente_id)
+            if r and not r.activo:
+                return False, "Residente inactivo"
+        events.publish(db, edificio.id, "acceso.residente", {"unidad_id": tag.unidad_id, "punto": punto})
+        return True, "Residente"
+    v = db.scalar(select(Visita).where(Visita.edificio_id == edificio.id, Visita.codigo_qr == token))
+    if not v:
+        return False, "Credencial desconocida"
+    ahora = utcnow()
+    if v.estado in (EstadoVisita.cancelada, EstadoVisita.no_show):
+        return False, f"Reserva {v.estado.value}"
+    if ahora < v.desde - timedelta(minutes=5) or ahora > v.hasta:
+        return False, "Fuera de horario de la reserva"
+    if v.usos >= v.usos_max:
+        return False, "QR sin usos disponibles"
+    v.usos += 1
+    if v.estado == EstadoVisita.reservada:
+        v.estado, v.llegada_at = EstadoVisita.llego, ahora
+        events.publish(db, edificio.id, "visita.llego",
+                       {"visita_id": v.id, "unidad_id": v.unidad_id, "nombre": v.nombre_visita})
+    return True, "Visita"
