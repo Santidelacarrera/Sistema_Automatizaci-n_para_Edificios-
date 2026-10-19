@@ -111,7 +111,7 @@ function Panel({ sess: sesionInicial, onSalir }) {
             </div>
             <Fachada data={data} filtro={filtro} seleccionada={sel} onSelect={setSel} />
           </section>
-          {u && <Drawer key={u.id} u={u} api={api} onClose={() => setSel(null)} onChange={cargar} />}
+          {u && <Drawer key={u.id} u={u} api={api} onClose={() => setSel(null)} onChange={cargar} esAdmin={PUEDE_ADMIN(sess)} unidades={data.unidades} />}
         </>)}
         {vista === "porton" && <Porton accesos={accesos} data={data} />}
         {vista === "visitas" && <Visitas visitas={visitas} data={data} />}

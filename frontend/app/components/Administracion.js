@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { erroresRegla, erroresResidente, mensajeError } from "../../lib/validar";
 
-const SECCIONES = [["residentes", "Residentes"], ["tags", "Tags RFID"], ["reglas", "Reglas"]];
+import AjustesAcceso from "./AjustesAcceso";
+import PruebaAlcance from "./PruebaAlcance";
+
+const SECCIONES = [["residentes", "Residentes"], ["tags", "Tags RFID"], ["reglas", "Reglas"], ["acceso", "Acceso"], ["alcance", "Prueba de alcance"]];
 const ROLES = { residente: "Residente", admin: "Administrador", conserje: "Conserje" };
 const TIPO_REGLA = {
   horario: "Horario permitido",
@@ -289,6 +292,8 @@ export default function Administracion({ api, data }) {
       {seccion === "residentes" && <Residentes api={api} data={data} />}
       {seccion === "tags" && <Tags api={api} data={data} />}
       {seccion === "reglas" && <Reglas api={api} />}
+      {seccion === "acceso" && <AjustesAcceso api={api} />}
+      {seccion === "alcance" && <PruebaAlcance api={api} />}
     </div>
   );
 }

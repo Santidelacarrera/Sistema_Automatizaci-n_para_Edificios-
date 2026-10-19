@@ -66,6 +66,16 @@ function adminClient(req) {
     reglas: () => req("GET", "/reglas"),
     crearRegla: (b) => req("POST", "/reglas", b),
     editarRegla: (id, b) => req("PATCH", `/reglas/${id}`, b),
+    activarTag: (id) => req("POST", `/tags/${id}/activar`),
+    perderTag: (id, motivo) => req("POST", `/tags/${id}/perder`, { motivo }),
+    bloquearTag: (id, motivo) => req("POST", `/tags/${id}/bloquear`, { motivo }),
+    reasignarTag: (id, b) => req("POST", `/tags/${id}/reasignar`, b),
+    vincularTag: (id, vehiculo_id) => req("POST", `/tags/${id}/vincular`, { vehiculo_id }),
+    desvincularTag: (id) => req("POST", `/tags/${id}/desvincular`),
+    ajustesAcceso: () => req("GET", "/ajustes-acceso"),
+    guardarAjustes: (b) => req("PATCH", "/ajustes-acceso", b),
+    pruebasAlcance: () => req("GET", "/pruebas-alcance"),
+    anotarPruebaAlcance: (b) => req("POST", "/pruebas-alcance", b),
   };
 }
 
@@ -105,9 +115,12 @@ function demoClient() {
   const accesos = Array.from({ length: 24 }, (_, i) => {
     const veh = data.unidades.flatMap((u) => u.vehiculos);
     const ok = i % 6 !== 4;
-    return { id: 100 - i, token: ok ? (i % 3 === 0 ? "04A1B2C3" : veh[i % veh.length].patente) : patente(900 + i),
-      punto: i % 4 === 3 ? "peatonal" : "vehicular", permitido: ok,
-      motivo: ok ? (i % 3 === 0 ? "Residente" : "Patente de residente") : "Credencial desconocida", creado: iso(-i * 7 - 1) };
+    const esSticker = i % 3 === 0;
+    return { id: 100 - i, token: ok ? (esSticker ? "E280117000000000000000A1" : veh[i % veh.length].patente) : patente(900 + i),
+      punto: i % 4 === 3 ? "peatonal" : "vehicular", fuente: ok ? (esSticker ? "sticker" : "patente") : (i % 2 ? "patente" : "sticker"),
+      permitido: ok,
+      motivo: ok ? (esSticker ? "Residente" : "Patente de residente") : (i % 2 ? "Patente no registrada en este edificio" : "Sticker perdido: no abre"),
+      creado: iso(-i * 7 - 1) };
   });
   const visitas = [
     { id: 1, unidad: "309", nombre: "Marcela Torres", patente: "KLPR45", desde: iso(-50), hasta: iso(70), estado: "llego", usa_estacionamiento: true },
@@ -130,11 +143,20 @@ function demoClient() {
     { id: 1, nombre: "Ana Pérez", rut: "12.345.678-5", email: "ana@x.cl", telefono: "56911112222", unidad_id: u0[0].id, rol: "admin", activo: true },
     { id: 2, nombre: "Beto Soto", rut: "11.111.111-1", email: "beto@x.cl", telefono: "56933334444", unidad_id: u0[1].id, rol: "residente", activo: true },
   ].map((r) => ({ ...r, unidad: unidadNum(r.unidad_id) }));
-  let tags = [{ id: 1, uid: "04A1B2C3", tipo: "vehicular", activo: true, unidad_id: u0[0].id, residente_id: 1 }];
+  const epcDemo = (k) => `E280117000000000${String(k).padStart(8, "0")}`;
+  let tags = [
+    { id: 1, uid: "E280117000000000000000A1", formato: "epc", tipo: "vehicular", estado: "activo", unidad_id: u0[0].id, residente_id: 1, patente: "BBCD12", fecha_alta: iso(-9000), ultima_lectura: iso(-40) },
+    { id: 2, uid: epcDemo(2), formato: "epc", tipo: "vehicular", estado: "perdido", unidad_id: u0[1].id, residente_id: 2, patente: "", fecha_alta: iso(-8000), ultima_lectura: iso(-900) },
+    { id: 3, uid: epcDemo(3), formato: "epc", tipo: "vehicular", estado: "activo", unidad_id: u0[2].id, residente_id: null, patente: "", fecha_alta: iso(-7000), ultima_lectura: null },
+    { id: 4, uid: "W26:42:12345", formato: "wiegand", tipo: "vehicular", estado: "bloqueado", unidad_id: u0[3].id, residente_id: null, patente: "CDFG34", fecha_alta: iso(-6000), ultima_lectura: null },
+  ];
+  let ajustes = { modo_acceso: "sticker_o_patente", ventana_coincidencia_s: 10, antirrebote_s: 3, anti_passback: false, umbral_confianza_patente: 0.85 };
+  let pruebas = [];
   let espacios = [{ id: 1, nombre: "Quincho", accion: "reservar_quincho", tarifa: 10000 }];
   let reglas = [{ id: 1, accion: "reservar_quincho", tipo: "horario", params: { desde: "10:00", hasta: "22:00" }, activa: true }];
   const nid = (lista) => Math.max(0, ...lista.map((x) => x.id)) + 1;
   const fallo = (msg, status = 422) => { throw new ApiError(status, msg); };
+  const tagDemo = (id) => { const t = tags.find((x) => x.id === id); if (!t) fallo("Tag no existe", 404); return t; };
   const admin = {
     residentes: async () => residentes.map((r) => ({ ...r, unidad: unidadNum(r.unidad_id) })),
     crearResidente: async (b) => {
@@ -147,7 +169,23 @@ function demoClient() {
       Object.assign(r, Object.fromEntries(Object.entries(b).filter(([, v]) => v !== null && v !== undefined)));
       return { id };
     },
-    tags: async () => tags.map((t) => ({ ...t, unidad: unidadNum(t.unidad_id), residente: residentes.find((r) => r.id === t.residente_id)?.nombre ?? null })),
+    tags: async () => tags.map((t) => ({ ...t, activo: t.estado === "activo", unidad: unidadNum(t.unidad_id), residente: residentes.find((r) => r.id === t.residente_id)?.nombre ?? null })),
+    activarTag: async (id) => { const t = tagDemo(id); t.estado = "activo"; return { id, estado: t.estado }; },
+    perderTag: async (id) => { const t = tagDemo(id); t.estado = "perdido"; return { id, estado: t.estado }; },
+    bloquearTag: async (id) => { const t = tagDemo(id); t.estado = "bloqueado"; return { id, estado: t.estado }; },
+    reasignarTag: async (id, b) => { const t = tagDemo(id); t.unidad_id = b.unidad_id; t.residente_id = b.residente_id ?? null; t.patente = ""; return { id, unidad_id: t.unidad_id }; },
+    vincularTag: async (id, vehiculo_id) => {
+      const t = tagDemo(id);
+      if (t.patente) fallo(`El sticker ya está asociado a la patente ${t.patente}: desvincúlalo primero`, 409);
+      const veh = data.unidades.flatMap((u) => u.vehiculos).find((v) => v.id === vehiculo_id);
+      if (!veh) fallo("Vehículo no existe en este edificio", 404);
+      t.patente = veh.patente; return { id };
+    },
+    desvincularTag: async (id) => { tagDemo(id).patente = ""; return { id }; },
+    ajustesAcceso: async () => ({ ...ajustes }),
+    guardarAjustes: async (b) => { ajustes = { ...ajustes, ...Object.fromEntries(Object.entries(b).filter(([, v]) => v !== null && v !== undefined)) }; return { ...ajustes }; },
+    pruebasAlcance: async () => pruebas,
+    anotarPruebaAlcance: async (b) => { pruebas = [{ id: nid(pruebas), creado: new Date().toISOString(), ...b }, ...pruebas]; return { id: pruebas[0].id }; },
     crearTag: async (b) => {
       if (!/^[0-9A-F]{8,20}$/.test(b.uid.toUpperCase())) fallo("UID inválido: entre 8 y 20 caracteres hexadecimales (0-9, A-F)");
       if (tags.some((t) => t.uid === b.uid.toUpperCase())) fallo("UID ya registrado", 409);

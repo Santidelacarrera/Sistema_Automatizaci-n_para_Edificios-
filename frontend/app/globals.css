@@ -161,8 +161,42 @@ input[type=text], input[type=email], input[type=password], input:not([type]) { b
 .acciones { display: flex; gap: .75rem; margin-top: 1.25rem; flex-wrap: wrap; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* ---------- stickers, portón y prueba de alcance ---------- */
+.acciones-fila { display: flex; gap: .5rem .9rem; flex-wrap: wrap; align-items: center; }
+.form-fila { display: flex; gap: .5rem; align-items: end; flex-wrap: wrap; margin-top: .3rem; }
+.form-fila label { display: grid; gap: .2rem; font-size: .85rem; font-weight: 600; }
+.form-fila select { font: inherit; padding: .35rem .5rem; border: 2px solid var(--tinta); background: var(--papel); min-width: 9rem; }
+.stickers-l li { gap: .35rem; }
+.sticker-cab { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.sticker-cab code { font-size: .85rem; }
+.chip-estado { font-size: .75rem; font-weight: 700; padding: .15rem .5rem; color: #fff; letter-spacing: .02em; }
+.chip-estado.activo { background: var(--verde); }
+.chip-estado.perdido { background: var(--ladrillo); }
+.chip-estado.bloqueado { background: var(--tinta); }
+.stickers-l li.sticker-perdido, .stickers-l li.sticker-bloqueado { box-shadow: inset 6px 0 0 var(--ladrillo); padding-left: .6rem; }
+.fuente { display: inline-block; font-size: .72rem; font-weight: 700; padding: .05rem .4rem; margin-right: .4rem; color: var(--tinta); background: var(--luz); }
+.fuente.patente { background: var(--vidrio-2); } .fuente.qr { background: var(--hormigon-2); } .fuente.tag { background: var(--papel); border: 1px solid var(--tinta); }
+.modos { border: 0; padding: 0; margin: 0 0 .75rem; display: grid; gap: .5rem; }
+.modos legend { font-weight: 700; margin-bottom: .5rem; }
+.modo { display: grid; grid-template-columns: auto 1fr; gap: .6rem; align-items: start; padding: .6rem .8rem; background: var(--papel); border: 2px solid transparent; cursor: pointer; }
+.modo.on { border-color: var(--tinta); }
+.modo input { margin-top: .3rem; }
+.modo b { display: block; margin-bottom: .15rem; }
+.radios-fila { display: flex; gap: 1rem; flex-wrap: wrap; }
+.alcance-vista { max-width: 58rem; }
+.alcance-vivo { background: var(--tinta); color: var(--papel); padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+.alcance-vivo h3 { font: 700 1.3rem var(--display); margin: 0 0 .4rem; letter-spacing: .02em; }
+.alcance-vivo .ultima { font: 700 clamp(1.4rem, 3.4vw, 2.2rem)/1.1 var(--display); margin: 0 0 .6rem; }
+.lecturas-vivo { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; font-size: .95rem; }
+.lecturas-vivo li { display: flex; gap: .8rem; padding: .25rem .5rem; border-left: 6px solid var(--verde); }
+.lecturas-vivo li.niega { border-left-color: var(--ladrillo); }
+.lecturas-vivo time { font-variant-numeric: tabular-nums; opacity: .85; }
+.alcance-vista .tabla { max-width: none; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
+  .cab nav[aria-label="Secciones"] { display: flex; flex-wrap: wrap; gap: .1rem .3rem; max-width: 100%; }
+  .tab { padding: .4rem .55rem; font-size: .92rem; }
   .vista.con-drawer { grid-template-columns: 1fr; }
   .drawer { position: fixed; inset: auto 0 0 0; max-height: 78vh; z-index: 5; border-top-width: 8px; box-shadow: 0 -12px 30px rgba(0,0,0,.25); }
   .entrada { grid-template-columns: 1fr; } .entrada-fachada { display: none; }

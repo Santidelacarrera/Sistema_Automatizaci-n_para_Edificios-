@@ -97,6 +97,8 @@ Los tags RFID y las patentes se registran desde el panel, en **Administración**
 va en hexadecimal (8 a 20 caracteres). Cada departamento tiene como máximo los estacionamientos
 que indique su ficha y el máximo del edificio.
 
+Para el portón (stickers UHF, lector Wiegand y patentes) ver [docs/PORTON_UHF.md](PORTON_UHF.md) y el README del firmware en `firmware/esp32/`.
+
 ## 4. Variables de entorno
 
 | Variable | Obligatoria | Para qué |
