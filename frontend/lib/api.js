@@ -29,7 +29,7 @@ export async function login(edificio_id, email, password) {
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new ApiError(r.status, data.detail ?? "No se pudo iniciar sesión");
-  return { token: data.access_token, edificio_id, demo: false };
+  return { token: data.access_token, edificio_id, demo: false, rol: data.rol, nombre: data.nombre };
 }
 
 export const apiHasBackend = () => Boolean(BASE);
@@ -46,6 +46,23 @@ export function client(sess) {
     addVehiculo: (b) => http(sess, "POST", `${e}/vehiculos`, b),
     delVehiculo: (id) => http(sess, "DELETE", `${e}/vehiculos/${id}`),
     recordatorios: (b) => http(sess, "POST", `${e}/cobranza/recordatorios`, b),
+    ...adminClient((m, p, b) => http(sess, m, `${e}${p}`, b)),
+  };
+}
+
+// Administración (sólo admin): residentes, tags RFID y reglas del motor.
+function adminClient(req) {
+  return {
+    residentes: () => req("GET", "/residentes"),
+    crearResidente: (b) => req("POST", "/residentes", b),
+    editarResidente: (id, b) => req("PATCH", `/residentes/${id}`, b),
+    tags: () => req("GET", "/tags"),
+    crearTag: (b) => req("POST", "/tags", b),
+    editarTag: (id, b) => req("PATCH", `/tags/${id}`, b),
+    espacios: () => req("GET", "/espacios"),
+    reglas: () => req("GET", "/reglas"),
+    crearRegla: (b) => req("POST", "/reglas", b),
+    editarRegla: (id, b) => req("PATCH", `/reglas/${id}`, b),
   };
 }
 
@@ -103,7 +120,60 @@ function demoClient() {
     m.sort((a, b) => b.dias_atraso - a.dias_atraso);
     return { morosos: m, total: m.reduce((s, x) => s + x.deuda, 0) };
   };
+  // Administración en memoria: mismas reglas de validación que el backend, sólo en el navegador.
+  const u0 = data.unidades;
+  const unidadNum = (id) => u0.find((x) => x.id === id)?.numero ?? "";
+  let residentes = [
+    { id: 1, nombre: "Ana Pérez", rut: "12.345.678-5", email: "ana@x.cl", telefono: "56911112222", unidad_id: u0[0].id, rol: "admin", activo: true },
+    { id: 2, nombre: "Beto Soto", rut: "11.111.111-1", email: "beto@x.cl", telefono: "56933334444", unidad_id: u0[1].id, rol: "residente", activo: true },
+  ].map((r) => ({ ...r, unidad: unidadNum(r.unidad_id) }));
+  let tags = [{ id: 1, uid: "04A1B2C3", tipo: "vehicular", activo: true, unidad_id: u0[0].id, residente_id: 1 }];
+  let espacios = [{ id: 1, nombre: "Quincho", accion: "reservar_quincho", tarifa: 10000 }];
+  let reglas = [{ id: 1, accion: "reservar_quincho", tipo: "horario", params: { desde: "10:00", hasta: "22:00" }, activa: true }];
+  const nid = (lista) => Math.max(0, ...lista.map((x) => x.id)) + 1;
+  const fallo = (msg, status = 422) => { throw new ApiError(status, msg); };
+  const admin = {
+    residentes: async () => residentes.map((r) => ({ ...r, unidad: unidadNum(r.unidad_id) })),
+    crearResidente: async (b) => {
+      if (residentes.some((r) => r.rut.replace(/\D/g, "") === b.rut.replace(/\D/g, ""))) fallo("El RUT ya está registrado en este edificio", 409);
+      const r = { id: nid(residentes), ...b, activo: true, rol: b.rol || "residente" };
+      residentes.push(r); return { id: r.id };
+    },
+    editarResidente: async (id, b) => {
+      const r = residentes.find((x) => x.id === id); if (!r) fallo("Residente no existe", 404);
+      Object.assign(r, Object.fromEntries(Object.entries(b).filter(([, v]) => v !== null && v !== undefined)));
+      return { id };
+    },
+    tags: async () => tags.map((t) => ({ ...t, unidad: unidadNum(t.unidad_id), residente: residentes.find((r) => r.id === t.residente_id)?.nombre ?? null })),
+    crearTag: async (b) => {
+      if (!/^[0-9A-F]{8,20}$/.test(b.uid.toUpperCase())) fallo("UID inválido: entre 8 y 20 caracteres hexadecimales (0-9, A-F)");
+      if (tags.some((t) => t.uid === b.uid.toUpperCase())) fallo("UID ya registrado", 409);
+      const t = { id: nid(tags), uid: b.uid.toUpperCase(), tipo: b.tipo, activo: true, unidad_id: b.unidad_id, residente_id: b.residente_id ?? null };
+      tags.push(t); return { id: t.id };
+    },
+    editarTag: async (id, b) => {
+      const t = tags.find((x) => x.id === id); if (!t) fallo("Tag no existe", 404);
+      if ("residente_id" in b) t.residente_id = b.residente_id;
+      if (b.activo !== undefined && b.activo !== null) t.activo = b.activo;
+      return { id, activo: t.activo };
+    },
+    espacios: async () => espacios,
+    reglas: async () => reglas,
+    crearRegla: async (b) => {
+      if (!espacios.some((e) => e.accion === b.accion)) fallo(`No hay un espacio común con la acción '${b.accion}'`);
+      if (reglas.some((r) => r.accion === b.accion && r.tipo === b.tipo)) fallo(`Ya existe una regla de tipo ${b.tipo} para '${b.accion}'; edítala en lugar de crear otra`);
+      const r = { id: nid(reglas), activa: true, params: {}, ...b };
+      reglas.push(r); return { id: r.id };
+    },
+    editarRegla: async (id, b) => {
+      const r = reglas.find((x) => x.id === id); if (!r) fallo("Regla no existe", 404);
+      if (b.params) r.params = b.params;
+      if (b.activa !== undefined && b.activa !== null) r.activa = b.activa;
+      return { id, activa: r.activa };
+    },
+  };
   return {
+    ...admin,
     panel: () => wait(data), accesos: () => wait(accesos), visitas: () => wait(visitas), cobranza: () => wait(cob()),
     addVehiculo: async (b) => {
       const u = data.unidades.find((x) => x.id === b.unidad_id);

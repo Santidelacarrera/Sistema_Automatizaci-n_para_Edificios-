@@ -1,13 +1,15 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { apiHasBackend, client, demoSession, login, session } from "../lib/api";
+import Administracion from "./components/Administracion";
 import Cobranza from "./components/Cobranza";
 import Drawer from "./components/Drawer";
 import Fachada from "./components/Fachada";
 import Porton from "./components/Porton";
 import Visitas from "./components/Visitas";
 
-const VISTAS = [["fachada", "Fachada"], ["porton", "Portón"], ["visitas", "Visitas"], ["cobranza", "Cobranza"]];
+const VISTAS = [["fachada", "Fachada"], ["porton", "Portón"], ["visitas", "Visitas"], ["cobranza", "Cobranza"], ["admin", "Administración"]];
+const PUEDE_ADMIN = (sess) => sess.demo || sess.rol === "admin" || sess.rol === "superadmin";
 
 function Login({ onOk }) {
   const [f, setF] = useState({ edificio_id: "", email: "", password: "" });
@@ -72,7 +74,7 @@ function Panel({ sess, onSalir }) {
       <header className="cab">
         <div className="marca"><b>Fachada</b><span>{data.edificio.nombre}{sess.demo ? " · ejemplo" : ""}</span></div>
         <nav aria-label="Secciones">
-          {VISTAS.map(([k, t]) => (
+          {VISTAS.filter(([k]) => k !== "admin" || PUEDE_ADMIN(sess)).map(([k, t]) => (
             <button key={k} className={vista === k ? "tab on" : "tab"} aria-current={vista === k ? "page" : undefined} onClick={() => setVista(k)}>
               {t}{k === "cobranza" && cob.morosos.length > 0 ? <sup>{cob.morosos.length}</sup> : null}
             </button>))}
@@ -95,6 +97,7 @@ function Panel({ sess, onSalir }) {
         {vista === "porton" && <Porton accesos={accesos} data={data} />}
         {vista === "visitas" && <Visitas visitas={visitas} data={data} />}
         {vista === "cobranza" && <Cobranza cob={cob} api={api} onChange={cargar} />}
+        {vista === "admin" && PUEDE_ADMIN(sess) && <Administracion api={api} data={data} />}
       </main>
     </div>
   );

@@ -136,6 +136,25 @@ input[type=text], input[type=email], input[type=password], input:not([type]) { b
 .envio fieldset { border: 0; padding: 0; margin: 0; display: flex; gap: 1rem; align-items: center; } .envio legend { font-weight: 600; font-size: .9rem; float: left; margin-right: 1rem; }
 .chk { display: flex; flex-direction: row; align-items: center; gap: .4rem; font-weight: 400; }
 
+/* ---------- administración ---------- */
+.admin-vista { max-width: 62rem; }
+.subtabs { display: flex; gap: .5rem; margin: 0 0 1.25rem; border-bottom: 2px solid var(--hormigon-2); }
+.subtabs .tab { color: var(--tinta); opacity: .75; } .subtabs .tab.on { opacity: 1; border-bottom-color: var(--ladrillo); }
+.admin-seccion { display: grid; gap: 1.5rem; }
+.admin-seccion .tabla { max-width: none; }
+.tabla tr.inactivo td { color: var(--tinta-2); text-decoration: line-through; text-decoration-thickness: 1px; }
+.tabla .acc { white-space: nowrap; } .tabla .acc .mini { margin-right: .75rem; }
+.form-admin { background: var(--papel); padding: 1.25rem 1.5rem; border-top: 8px solid var(--tinta); }
+.form-admin h3 { font: 700 1.5rem/1 var(--display); margin: 0 0 1rem; letter-spacing: .02em; }
+.grilla-form { display: grid; gap: 1rem 1.25rem; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); align-items: start; }
+.campo { display: grid; gap: .3rem; } .campo label { font-weight: 600; font-size: .9rem; }
+.campo select { background: var(--papel); border: 2px solid var(--tinta); padding: .55rem .6rem; width: 100%; font: inherit; }
+.campo input[aria-invalid=true], .campo select[aria-invalid=true] { border-color: var(--ladrillo); box-shadow: inset 4px 0 0 var(--ladrillo); }
+.ayuda { font-size: .8rem; color: var(--tinta-2); }
+.error-campo { font-size: .85rem; color: var(--ladrillo); font-weight: 600; }
+.acciones { display: flex; gap: .75rem; margin-top: 1.25rem; flex-wrap: wrap; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .vista.con-drawer { grid-template-columns: 1fr; }
