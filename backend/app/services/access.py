@@ -1,4 +1,5 @@
 """Control de acceso: tags RFID (vehicular/peatonal) y QR de visitas."""
+import re
 import secrets
 from datetime import timedelta
 
@@ -11,7 +12,14 @@ from ..models import (AccesoLog, Edificio, EstadoVisita, Residente, Tag, TipoTag
 
 
 class AccesoError(Exception):
-    pass
+    """Regla de negocio incumplida. ``status``: 409 conflicto, 422 dato inválido."""
+
+    def __init__(self, msg: str, status: int = 409):
+        super().__init__(msg)
+        self.status = status
+
+
+_RE_UID = re.compile(r"[0-9A-F]{8,20}")  # UID RFID en hexadecimal: 4 a 10 bytes
 
 
 def asignar_tag(db: Session, edificio: Edificio, unidad_id: int, uid: str,
@@ -19,6 +27,13 @@ def asignar_tag(db: Session, edificio: Edificio, unidad_id: int, uid: str,
     unidad = db.get(Unidad, unidad_id)
     if not unidad or unidad.edificio_id != edificio.id:
         raise AccesoError("Unidad no existe en este edificio")
+    uid = uid.strip().upper()
+    if not _RE_UID.fullmatch(uid):
+        raise AccesoError("UID inválido: entre 8 y 20 caracteres hexadecimales (0-9, A-F)", 422)
+    if residente_id is not None:
+        r = db.get(Residente, residente_id)
+        if not r or r.edificio_id != edificio.id or r.unidad_id != unidad_id:
+            raise AccesoError("El residente debe pertenecer al mismo departamento del tag", 422)
     if tipo == TipoTag.vehicular:
         # Límite físico: máx. estacionamientos asignados a la unidad (tope del edificio)
         limite = min(unidad.estacionamientos, edificio.max_estac_por_unidad)

@@ -16,4 +16,5 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
                                           Residente.email == body.email, Residente.activo.is_(True)))
     if not r or not verify_password(body.password, r.password_hash):
         raise HTTPException(401, "Credenciales inválidas")
-    return {"access_token": create_token(r.id, r.edificio_id, r.rol), "token_type": "bearer"}
+    return {"access_token": create_token(r.id, r.edificio_id, r.rol), "token_type": "bearer",
+            "rol": r.rol.value, "nombre": r.nombre}

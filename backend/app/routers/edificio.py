@@ -9,11 +9,10 @@ from sqlalchemy.orm import Session
 from .. import rules, tasks
 from ..config import utcnow
 from ..db import get_db
-from ..models import (Cargo, Edificio, EspacioComun, LecturaMedidor, Regla, Residente, ReservaEspacio,
+from ..models import (Cargo, Edificio, EspacioComun, LecturaMedidor, Residente, ReservaEspacio,
                       Rol, Unidad, Visita)
-from ..schemas import (CircularIn, GenerarGastosIn, LecturaIn, ReglaIn, ReservaEspacioIn, ResidenteIn,
-                       TagIn, UnidadIn, VisitaIn)
-from ..security import Principal, current_user, hash_password, require_roles, tenant_of
+from ..schemas import (CircularIn, GenerarGastosIn, LecturaIn, ReservaEspacioIn, UnidadIn, VisitaIn)
+from ..security import Principal, current_user, require_roles, tenant_of
 from ..services import access, email, finance, reconciliation
 from ..services.resultado import ENCOLADO, NO_CONFIGURADO
 
@@ -57,40 +56,6 @@ def crear_unidad(edificio_id: str, body: UnidadIn, user: Admin, db: Session = De
         db.rollback()
         raise HTTPException(409, "Unidad o código de cobro duplicado")
     return {"id": u.id}
-
-
-@router.post("/residentes", status_code=201)
-def crear_residente(edificio_id: str, body: ResidenteIn, user: Admin, db: Session = Depends(get_db)):
-    ed = _ed(db, user, edificio_id)
-    if not db.get(Unidad, body.unidad_id) or db.get(Unidad, body.unidad_id).edificio_id != ed.id:
-        raise HTTPException(404, "Unidad no existe en este edificio")
-    data = body.model_dump(exclude={"password"})
-    if body.rol == Rol.superadmin:
-        raise HTTPException(403, "No permitido")
-    r = Residente(edificio_id=ed.id, **data, password_hash=hash_password(body.password) if body.password else "")
-    db.add(r)
-    db.commit()
-    return {"id": r.id}
-
-
-@router.post("/tags", status_code=201)
-def asignar_tag(edificio_id: str, body: TagIn, user: Admin, db: Session = Depends(get_db)):
-    ed = _ed(db, user, edificio_id)
-    try:
-        t = access.asignar_tag(db, ed, body.unidad_id, body.uid, body.tipo, body.residente_id)
-    except access.AccesoError as e:
-        raise HTTPException(409, str(e))
-    db.commit()
-    return {"id": t.id}
-
-
-@router.post("/reglas", status_code=201)
-def crear_regla(edificio_id: str, body: ReglaIn, user: Admin, db: Session = Depends(get_db)):
-    ed = _ed(db, user, edificio_id)
-    r = Regla(edificio_id=ed.id, **body.model_dump())
-    db.add(r)
-    db.commit()
-    return {"id": r.id}
 
 
 @router.post("/lecturas", status_code=201)

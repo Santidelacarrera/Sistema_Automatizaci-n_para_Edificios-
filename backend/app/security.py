@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from .config import settings, utcnow
 from .db import get_db
-from .models import Edificio, Rol
+from .models import Edificio, Residente, Rol
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -43,14 +43,21 @@ class Principal:
         self.residente_id, self.edificio_id, self.rol = residente_id, edificio_id, rol
 
 
-def current_user(cred: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)]) -> Principal:
+def current_user(cred: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+                 db: Session = Depends(get_db)) -> Principal:
+    """Usuario de la petición. El rol y el estado vienen de la base, no del token: desactivar o
+    cambiar el rol de un residente surte efecto de inmediato, sin esperar a que expire el JWT."""
     if cred is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Falta token")
     try:
         p = jwt.decode(cred.credentials, settings.jwt_secret, algorithms=["HS256"])
-        return Principal(int(p["sub"]), p["edificio_id"], Rol(p["rol"]))
+        residente_id = int(p["sub"])
     except (jwt.PyJWTError, KeyError, ValueError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token inválido")
+    r = db.get(Residente, residente_id)
+    if not r or not r.activo:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Usuario inactivo o inexistente")
+    return Principal(r.id, r.edificio_id, r.rol)
 
 
 def require_roles(*roles: Rol):

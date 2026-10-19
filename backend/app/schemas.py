@@ -78,6 +78,29 @@ class GenerarGastosIn(BaseModel):
     gastos: list[GastoIn]
 
 
+class ResidentePatch(BaseModel):
+    """Edición parcial: sólo se aplica lo que llega con valor (null = no cambiar)."""
+    unidad_id: int | None = None
+    nombre: str | None = None
+    rut: str | None = None
+    email: str | None = None
+    telefono: str | None = None
+    rol: Rol | None = None
+    activo: bool | None = None
+    password: str | None = Field(None, min_length=8)
+
+
+class TagPatch(BaseModel):
+    residente_id: int | None = None  # null = desvincular el tag de su residente
+    activo: bool | None = None
+
+
+class ReglaPatch(BaseModel):
+    tipo: str | None = None
+    params: dict | None = None
+    activa: bool | None = None
+
+
 class CircularIn(BaseModel):
     asunto: str
     cuerpo_html: str

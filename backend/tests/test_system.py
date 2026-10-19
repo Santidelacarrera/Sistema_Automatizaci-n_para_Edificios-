@@ -30,21 +30,21 @@ def test_tags_vehiculares_maximo_por_unidad(client, seed):
     uid = seed["edificio_a", "101"].id
     for i in (1, 2):
         assert client.post("/edificios/edificio_a/tags", headers=h,
-                           json={"unidad_id": uid, "uid": f"AA{i}", "tipo": "vehicular"}).status_code == 201
+                           json={"unidad_id": uid, "uid": f"AA00000{i}", "tipo": "vehicular"}).status_code == 201
     r = client.post("/edificios/edificio_a/tags", headers=h,
-                    json={"unidad_id": uid, "uid": "AA3", "tipo": "vehicular"})
+                    json={"unidad_id": uid, "uid": "AA000003", "tipo": "vehicular"})
     assert r.status_code == 409
     # peatonales no cuentan contra el límite
     assert client.post("/edificios/edificio_a/tags", headers=h,
-                       json={"unidad_id": uid, "uid": "PP1", "tipo": "peatonal"}).status_code == 201
+                       json={"unidad_id": uid, "uid": "BB000001", "tipo": "peatonal"}).status_code == 201
 
 
 def test_dispositivo_valida_tag(client, seed):
     h = login(client, "edificio_a", "ana@x.cl")
     uid = seed["edificio_a", "101"].id
-    client.post("/edificios/edificio_a/tags", headers=h, json={"unidad_id": uid, "uid": "ab12", "tipo": "peatonal"})
+    client.post("/edificios/edificio_a/tags", headers=h, json={"unidad_id": uid, "uid": "ab12cd34", "tipo": "peatonal"})
     url = "/api/v1/edificio_a/validar-acceso"
-    body = {"edificio_id": "edificio_a", "token_acceso": "AB12"}
+    body = {"edificio_id": "edificio_a", "token_acceso": "AB12CD34"}
     assert client.post(url, json=body).status_code == 401                              # sin API key
     assert client.post(url, json=body, headers={"X-Device-Key": "keyB"}).status_code == 401  # key de otro edificio
     assert client.post(url, json=body, headers={"X-Device-Key": "keyA"}).status_code == 200
