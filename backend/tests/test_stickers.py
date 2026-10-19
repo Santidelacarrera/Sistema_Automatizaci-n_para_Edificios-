@@ -167,7 +167,7 @@ def test_y_detecta_clonacion_sticker_de_otro_vehiculo(client, seed, db):
     _vehiculo(db, seed, "102", "BBBB22", epc(31))   # el auto que intenta pasar
     assert leer(client, epc(30)).status_code == 403   # se lee el sticker clonado
     r = leer(client, "BBBB22", tipo="patente", confianza=0.95)
-    assert r.status_code == 403 and "vehículos distintos" in r.json()["detail"]
+    assert r.status_code == 403 and "pertenece a otro vehículo" in r.json()["detail"]
     assert db.query(LecturaPendiente).count() == 0    # ambas lecturas se consumen
 
 

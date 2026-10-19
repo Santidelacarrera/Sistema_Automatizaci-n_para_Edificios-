@@ -144,6 +144,34 @@ def validar_y_guardar_regla(db: Session, ed: Edificio, regla, cambios: dict):
     return regla
 
 
+def vincular_sticker(db: Session, ed: Edificio, tag: Tag, vehiculo_id: int) -> Tag:
+    """Asocia el sticker a una patente del mismo departamento. Un sticker sirve para un solo vehículo."""
+    v = db.get(Vehiculo, vehiculo_id)
+    if not v or v.edificio_id != ed.id:
+        raise AdminError("Vehículo no existe en este edificio", 404)
+    if v.unidad_id != tag.unidad_id:
+        raise AdminError("El vehículo es de otro departamento que el sticker", 422)
+    if not v.activo:
+        raise AdminError("El vehículo está dado de baja", 422)
+    if v.tag_id is not None and v.tag_id != tag.id:
+        raise AdminError("Ese vehículo ya tiene otro sticker: desvincúlalo primero", 409)
+    otro = db.scalar(select(Vehiculo).where(Vehiculo.tag_id == tag.id, Vehiculo.id != v.id))
+    if otro is not None:
+        raise AdminError(f"El sticker ya está asociado a la patente {otro.patente}: desvincúlalo primero", 409)
+    v.tag_id = tag.id
+    db.add(Evento(edificio_id=ed.id, tipo="tag.vinculado", payload={"tag_id": tag.id, "vehiculo_id": v.id}))
+    db.flush()
+    return tag
+
+
+def desvincular_sticker(db: Session, ed: Edificio, tag: Tag) -> Tag:
+    for v in db.scalars(select(Vehiculo).where(Vehiculo.tag_id == tag.id)):
+        v.tag_id = None
+    db.add(Evento(edificio_id=ed.id, tipo="tag.desvinculado", payload={"tag_id": tag.id}))
+    db.flush()
+    return tag
+
+
 def cambiar_estado_tag(db: Session, ed: Edificio, tag: Tag, estado: str, motivo: str = "") -> Tag:
     """Activa, marca perdido o bloquea un sticker. Queda en la bitácora; surte efecto en la siguiente lectura."""
     anterior = tag.estado

@@ -73,7 +73,7 @@ def accesos(edificio_id: str, user: Staff, limit: int = 50, db: Session = Depend
     ed = _ed(db, user, edificio_id)
     rows = db.scalars(select(AccesoLog).where(AccesoLog.edificio_id == ed.id)
                       .order_by(AccesoLog.id.desc()).limit(min(limit, 200))).all()
-    return [{"id": a.id, "token": a.token, "punto": a.punto, "permitido": a.permitido,
+    return [{"id": a.id, "token": a.token, "punto": a.punto, "fuente": a.fuente, "permitido": a.permitido,
              "motivo": a.motivo, "creado": a.creado.isoformat() + "Z"} for a in rows]
 
 

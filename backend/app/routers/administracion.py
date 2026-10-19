@@ -13,8 +13,8 @@ from .. import validacion
 from ..db import get_db
 from ..models import Edificio, EspacioComun, Regla, Residente, Rol, Tag, Unidad
 from ..models import EstadoTag, Evento, Vehiculo
-from ..schemas import (AjustesAccesoIn, ReglaIn, ReglaPatch, ResidenteIn, ResidentePatch, TagIn, TagMotivo,
-                       TagPatch, TagReasignar)
+from ..schemas import (AjustesAccesoIn, PruebaAlcanceIn, ReglaIn, ReglaPatch, ResidenteIn, ResidentePatch, TagIn,
+                       TagMotivo, TagPatch, TagReasignar, TagVincular)
 from ..security import Principal, require_roles, tenant_of
 from ..services import administracion
 from ..services.administracion import AdminError
@@ -162,6 +162,46 @@ def reasignar_tag(edificio_id: str, tag_id: int, body: TagReasignar, user: Admin
         _responder_error(db, e)
     db.commit()
     return {"id": t.id, "unidad_id": t.unidad_id}
+
+
+@router.post("/tags/{tag_id}/vincular")
+def vincular_tag(edificio_id: str, tag_id: int, body: TagVincular, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    t = _tag_del_edificio(db, ed, tag_id)
+    try:
+        administracion.vincular_sticker(db, ed, t, body.vehiculo_id)
+    except AdminError as e:
+        _responder_error(db, e)
+    db.commit()
+    return {"id": t.id}
+
+
+@router.post("/tags/{tag_id}/desvincular")
+def desvincular_tag(edificio_id: str, tag_id: int, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    t = administracion.desvincular_sticker(db, ed, _tag_del_edificio(db, ed, tag_id))
+    db.commit()
+    return {"id": t.id}
+
+
+@router.get("/pruebas-alcance")
+def listar_pruebas_alcance(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Bitácora de la prueba de alcance del lector: distancia y resultado anotados por el técnico."""
+    ed = _ed(db, user, edificio_id)
+    rows = db.scalars(select(Evento).where(Evento.edificio_id == ed.id, Evento.tipo == "prueba.alcance")
+                      .order_by(Evento.id.desc()).limit(100)).all()
+    return [{"id": e.id, "creado": e.creado.isoformat() + "Z", **e.payload} for e in rows]
+
+
+@router.post("/pruebas-alcance", status_code=201)
+def anotar_prueba_alcance(edificio_id: str, body: PruebaAlcanceIn, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    e = Evento(edificio_id=ed.id, tipo="prueba.alcance",
+               payload={"distancia_m": body.distancia_m, "resultado": body.resultado, "tag": body.tag_uid,
+                        "nota": body.nota, "anotado_por": user.residente_id})
+    db.add(e)
+    db.commit()
+    return {"id": e.id}
 
 
 @router.get("/ajustes-acceso")

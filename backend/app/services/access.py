@@ -302,7 +302,7 @@ def _correlacionar(db: Session, ed: Edificio, fuente: str, valor: str, veh: Vehi
     if otra.vehiculo_id is None:
         return Decision(False, "La otra lectura no corresponde a un vehículo registrado", "denegada")
     if otra.vehiculo_id != veh.id:
-        return Decision(False, "El sticker y la patente son de vehículos distintos (posible clonación)", "denegada")
+        return Decision(False, "El sticker pertenece a otro vehículo: la patente leída no coincide (posible clonación)", "denegada")
     return _finalizar_vehiculo(db, ed, veh, "Sticker y patente coinciden", direccion, tag=tag)
 
 

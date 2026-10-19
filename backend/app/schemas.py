@@ -111,6 +111,17 @@ class TagReasignar(BaseModel):
     vehiculo_id: int | None = None  # patente que queda asociada a este sticker (opcional)
 
 
+class TagVincular(BaseModel):
+    vehiculo_id: int
+
+
+class PruebaAlcanceIn(BaseModel):
+    distancia_m: float = Field(ge=0, le=50)
+    resultado: Literal["leyo", "no_leyo", "parcial"]
+    tag_uid: str = Field("", max_length=40)
+    nota: str = Field("", max_length=200)
+
+
 class TagMotivo(BaseModel):
     motivo: str = Field("", max_length=200)
 
