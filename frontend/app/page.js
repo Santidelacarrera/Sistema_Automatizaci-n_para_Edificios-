@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { apiHasBackend, client, demoSession, login, session } from "../lib/api";
+import { apiHasBackend, client, demoSession, listarEdificios, login, session } from "../lib/api";
 import Administracion from "./components/Administracion";
+import Edificios from "./components/Edificios";
 import Cobranza from "./components/Cobranza";
 import Drawer from "./components/Drawer";
 import Fachada from "./components/Fachada";
@@ -10,6 +11,7 @@ import Visitas from "./components/Visitas";
 
 const VISTAS = [["fachada", "Fachada"], ["porton", "Portón"], ["visitas", "Visitas"], ["cobranza", "Cobranza"], ["admin", "Administración"]];
 const PUEDE_ADMIN = (sess) => sess.demo || sess.rol === "admin" || sess.rol === "superadmin";
+const ES_SUPERADMIN = (sess) => !sess.demo && sess.rol === "superadmin";
 
 function Login({ onOk }) {
   const [f, setF] = useState({ edificio_id: "", email: "", password: "" });
@@ -42,7 +44,11 @@ function Login({ onOk }) {
   );
 }
 
-function Panel({ sess, onSalir }) {
+function Panel({ sess: sesionInicial, onSalir }) {
+  const [edificioId, setEdificioId] = useState(sesionInicial.edificio_id);
+  const [edificios, setEdificios] = useState([]);
+  const [errEdificios, setErrEdificios] = useState("");
+  const sess = { ...sesionInicial, edificio_id: edificioId };
   const api = client(sess);
   const [vista, setVista] = useState("fachada");
   const [data, setData] = useState(null);
@@ -60,9 +66,16 @@ function Panel({ sess, onSalir }) {
     } catch (e) {
       if (e.status === 401) onSalir(); else setErr(e.message === "Failed to fetch" ? "Sin conexión con el servidor. Reintentando…" : e.message);
     }
-  }, [sess.token]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sess.token, edificioId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { cargar(); const t = setInterval(cargar, 10000); return () => clearInterval(t); }, [cargar]);
+  useEffect(() => { setData(null); setSel(null); cargar(); const t = setInterval(cargar, 10000); return () => clearInterval(t); }, [cargar]);
+
+  useEffect(() => {
+    if (!ES_SUPERADMIN(sesionInicial)) return;
+    listarEdificios(sesionInicial).then(setEdificios).catch((e) => setErrEdificios(e.message));
+  }, [sesionInicial.token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const abrirEdificio = (id) => { setEdificioId(id); setVista("fachada"); };
 
   if (!data) return <main className="cargando">{err || "Abriendo el edificio…"}</main>;
   const u = data.unidades.find((x) => x.id === sel);
@@ -73,8 +86,14 @@ function Panel({ sess, onSalir }) {
     <div className="shell">
       <header className="cab">
         <div className="marca"><b>Fachada</b><span>{data.edificio.nombre}{sess.demo ? " · ejemplo" : ""}</span></div>
+        {ES_SUPERADMIN(sesionInicial) && (
+          <label className="selector-edificio">Edificio
+            <select value={edificioId} onChange={(e) => abrirEdificio(e.target.value)}>
+              {(edificios.length ? edificios : [{ id: edificioId, nombre: data.edificio.nombre }]).map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+            </select>
+          </label>)}
         <nav aria-label="Secciones">
-          {VISTAS.filter(([k]) => k !== "admin" || PUEDE_ADMIN(sess)).map(([k, t]) => (
+          {(ES_SUPERADMIN(sesionInicial) ? [["edificios", "Edificios"], ...VISTAS] : VISTAS).filter(([k]) => k !== "admin" || PUEDE_ADMIN(sess)).map(([k, t]) => (
             <button key={k} className={vista === k ? "tab on" : "tab"} aria-current={vista === k ? "page" : undefined} onClick={() => setVista(k)}>
               {t}{k === "cobranza" && cob.morosos.length > 0 ? <sup>{cob.morosos.length}</sup> : null}
             </button>))}
@@ -97,7 +116,8 @@ function Panel({ sess, onSalir }) {
         {vista === "porton" && <Porton accesos={accesos} data={data} />}
         {vista === "visitas" && <Visitas visitas={visitas} data={data} />}
         {vista === "cobranza" && <Cobranza cob={cob} api={api} onChange={cargar} />}
-        {vista === "admin" && PUEDE_ADMIN(sess) && <Administracion api={api} data={data} />}
+        {vista === "admin" && PUEDE_ADMIN(sess) && <Administracion key={edificioId} api={api} data={data} />}
+        {vista === "edificios" && ES_SUPERADMIN(sesionInicial) && <Edificios lista={edificios} activo={edificioId} onAbrir={abrirEdificio} error={errEdificios} />}
       </main>
     </div>
   );

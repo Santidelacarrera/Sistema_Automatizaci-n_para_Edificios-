@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { mensajeError } from "../../lib/api";
-import { erroresRegla, erroresResidente } from "../../lib/validar";
+import { erroresRegla, erroresResidente, mensajeError } from "../../lib/validar";
 
 const SECCIONES = [["residentes", "Residentes"], ["tags", "Tags RFID"], ["reglas", "Reglas"]];
 const ROLES = { residente: "Residente", admin: "Administrador", conserje: "Conserje" };

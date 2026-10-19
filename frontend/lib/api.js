@@ -34,6 +34,9 @@ export async function login(edificio_id, email, password) {
 
 export const apiHasBackend = () => Boolean(BASE);
 
+// Sólo superadmin: resumen de todos los edificios.
+export const listarEdificios = (sess) => http(sess, "GET", "/edificios");
+
 // ---------- cliente unificado (real o demo) ----------
 export function client(sess) {
   if (sess.demo) return demoClient();

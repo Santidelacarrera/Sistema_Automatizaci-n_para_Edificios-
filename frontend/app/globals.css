@@ -136,6 +136,12 @@ input[type=text], input[type=email], input[type=password], input:not([type]) { b
 .envio fieldset { border: 0; padding: 0; margin: 0; display: flex; gap: 1rem; align-items: center; } .envio legend { font-weight: 600; font-size: .9rem; float: left; margin-right: 1rem; }
 .chk { display: flex; flex-direction: row; align-items: center; gap: .4rem; font-weight: 400; }
 
+/* ---------- superadmin ---------- */
+.selector-edificio { display: grid; gap: .2rem; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; color: var(--papel); }
+.selector-edificio select { font: 600 .95rem var(--texto); padding: .35rem .5rem; background: var(--papel); color: var(--tinta); border: 2px solid var(--luz); }
+.edificios-vista { max-width: 62rem; }
+.edificios-vista .tabla .der { text-align: right; }
+
 /* ---------- administración ---------- */
 .admin-vista { max-width: 62rem; }
 .subtabs { display: flex; gap: .5rem; margin: 0 0 1.25rem; border-bottom: 2px solid var(--hormigon-2); }
