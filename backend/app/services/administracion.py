@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import rules, validacion
-from ..models import Edificio, Regla, Residente, Rol, Tag, TipoTag, Unidad
+from ..models import Edificio, EstadoTag, Evento, Regla, Residente, Rol, Tag, TipoTag, Unidad, Vehiculo
 from ..security import hash_password
 from . import access
 
@@ -142,3 +142,36 @@ def validar_y_guardar_regla(db: Session, ed: Edificio, regla, cambios: dict):
         regla.tipo, regla.params, regla.activa = datos["tipo"], datos["params"], bool(datos["activa"])
     db.flush()
     return regla
+
+
+def cambiar_estado_tag(db: Session, ed: Edificio, tag: Tag, estado: str, motivo: str = "") -> Tag:
+    """Activa, marca perdido o bloquea un sticker. Queda en la bitácora; surte efecto en la siguiente lectura."""
+    anterior = tag.estado
+    tag.estado = estado
+    db.add(Evento(edificio_id=ed.id, tipo="tag.estado",
+                  payload={"tag_id": tag.id, "de": anterior, "a": estado, "motivo": motivo[:200]}))
+    db.flush()
+    return tag
+
+
+def reasignar_tag(db: Session, ed: Edificio, tag: Tag, unidad_id: int, residente_id: int | None,
+                  vehiculo_id: int | None) -> Tag:
+    """Pasa el sticker a otro departamento. El vehículo que lo tenía queda sin sticker."""
+    _unidad_del_edificio(db, ed.id, unidad_id)
+    if residente_id is not None:
+        r = db.get(Residente, residente_id)
+        if not r or r.edificio_id != ed.id or r.unidad_id != unidad_id:
+            raise AdminError("El residente debe pertenecer al departamento de destino", 422)
+    for v in db.scalars(select(Vehiculo).where(Vehiculo.tag_id == tag.id)):
+        v.tag_id = None
+    if vehiculo_id is not None:
+        v = db.get(Vehiculo, vehiculo_id)
+        if not v or v.edificio_id != ed.id or v.unidad_id != unidad_id or not v.activo:
+            raise AdminError("El vehículo debe ser activo y del departamento de destino", 422)
+        v.tag_id = tag.id
+    anterior = tag.unidad_id
+    tag.unidad_id, tag.residente_id = unidad_id, residente_id
+    db.add(Evento(edificio_id=ed.id, tipo="tag.reasignado",
+                  payload={"tag_id": tag.id, "de_unidad": anterior, "a_unidad": unidad_id}))
+    db.flush()
+    return tag

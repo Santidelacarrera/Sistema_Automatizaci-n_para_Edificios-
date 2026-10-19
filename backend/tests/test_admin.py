@@ -135,7 +135,7 @@ def test_editar_tag_desactivar_y_desvincular(client, seed, db):
     client.patch(f"/edificios/edificio_a/tags/{tid}", headers=h, json={"activo": False})
     api = client.post("/api/v1/edificio_a/validar-acceso", json={"edificio_id": "edificio_a", "token_acceso": "AB12CD34"},
                       headers={"X-Device-Key": "keyA"})
-    assert api.status_code == 403 and "desactivado" in api.json()["detail"]
+    assert api.status_code == 403 and "bloqueado" in api.json()["detail"]
     assert db.get(Tag, tid).activo is False
 
 

@@ -12,7 +12,9 @@ from sqlalchemy.orm import Session
 from .. import validacion
 from ..db import get_db
 from ..models import Edificio, EspacioComun, Regla, Residente, Rol, Tag, Unidad
-from ..schemas import ReglaIn, ReglaPatch, ResidenteIn, ResidentePatch, TagIn, TagPatch
+from ..models import EstadoTag, Evento, Vehiculo
+from ..schemas import (AjustesAccesoIn, ReglaIn, ReglaPatch, ResidenteIn, ResidentePatch, TagIn, TagMotivo,
+                       TagPatch, TagReasignar)
 from ..security import Principal, require_roles, tenant_of
 from ..services import administracion
 from ..services.administracion import AdminError
@@ -106,8 +108,79 @@ def listar_tags(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
                       .join(Unidad, Unidad.id == Tag.unidad_id)
                       .outerjoin(Residente, Residente.id == Tag.residente_id)
                       .where(Tag.edificio_id == ed.id).order_by(Unidad.numero, Tag.id)).all()
-    return [{"id": t.id, "uid": t.uid, "tipo": t.tipo.value, "activo": t.activo, "unidad_id": t.unidad_id,
-             "unidad": n, "residente_id": t.residente_id, "residente": nombre} for t, n, nombre in rows]
+    patentes = dict(db.execute(select(Vehiculo.tag_id, Vehiculo.patente).where(
+        Vehiculo.edificio_id == ed.id, Vehiculo.tag_id.is_not(None), Vehiculo.activo.is_(True))).all())
+    return [{"id": t.id, "uid": t.uid, "formato": t.formato, "tipo": t.tipo.value, "estado": t.estado,
+             "activo": t.activo, "unidad_id": t.unidad_id, "unidad": n, "residente_id": t.residente_id,
+             "residente": nombre, "patente": patentes.get(t.id, ""),
+             "fecha_alta": t.fecha_alta.isoformat() + "Z",
+             "ultima_lectura": t.ultima_lectura.isoformat() + "Z" if t.ultima_lectura else None}
+            for t, n, nombre in rows]
+
+
+def _tag_del_edificio(db: Session, ed: Edificio, tag_id: int) -> Tag:
+    t = db.get(Tag, tag_id)
+    if not t or t.edificio_id != ed.id:
+        raise HTTPException(404, "Tag no existe")
+    return t
+
+
+@router.post("/tags/{tag_id}/activar")
+def activar_tag(edificio_id: str, tag_id: int, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    t = administracion.cambiar_estado_tag(db, ed, _tag_del_edificio(db, ed, tag_id), EstadoTag.activo.value)
+    db.commit()
+    return {"id": t.id, "estado": t.estado}
+
+
+@router.post("/tags/{tag_id}/perder")
+def perder_tag(edificio_id: str, tag_id: int, body: TagMotivo, user: Admin, db: Session = Depends(get_db)):
+    """Marca el sticker como perdido: deja de abrir desde la siguiente lectura."""
+    ed = _ed(db, user, edificio_id)
+    t = administracion.cambiar_estado_tag(db, ed, _tag_del_edificio(db, ed, tag_id),
+                                          EstadoTag.perdido.value, body.motivo)
+    db.commit()
+    return {"id": t.id, "estado": t.estado}
+
+
+@router.post("/tags/{tag_id}/bloquear")
+def bloquear_tag(edificio_id: str, tag_id: int, body: TagMotivo, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    t = administracion.cambiar_estado_tag(db, ed, _tag_del_edificio(db, ed, tag_id),
+                                          EstadoTag.bloqueado.value, body.motivo)
+    db.commit()
+    return {"id": t.id, "estado": t.estado}
+
+
+@router.post("/tags/{tag_id}/reasignar")
+def reasignar_tag(edificio_id: str, tag_id: int, body: TagReasignar, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    t = _tag_del_edificio(db, ed, tag_id)
+    try:
+        administracion.reasignar_tag(db, ed, t, body.unidad_id, body.residente_id, body.vehiculo_id)
+    except AdminError as e:
+        _responder_error(db, e)
+    db.commit()
+    return {"id": t.id, "unidad_id": t.unidad_id}
+
+
+@router.get("/ajustes-acceso")
+def ver_ajustes(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    return {"modo_acceso": ed.modo_acceso, "ventana_coincidencia_s": ed.ventana_coincidencia_s,
+            "antirrebote_s": ed.antirrebote_s, "anti_passback": ed.anti_passback,
+            "umbral_confianza_patente": ed.umbral_confianza_patente}
+
+
+@router.patch("/ajustes-acceso")
+def cambiar_ajustes(edificio_id: str, body: AjustesAccesoIn, user: Admin, db: Session = Depends(get_db)):
+    ed = _ed(db, user, edificio_id)
+    cambios = _cambios(body)
+    for campo, valor in cambios.items():
+        setattr(ed, campo, valor)
+    db.add(Evento(edificio_id=ed.id, tipo="ajustes.acceso", payload={"cambios": cambios}))
+    db.commit()
+    return ver_ajustes(edificio_id, user, db)
 
 
 @router.post("/tags", status_code=201)

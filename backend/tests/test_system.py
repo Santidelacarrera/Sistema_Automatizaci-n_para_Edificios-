@@ -30,9 +30,9 @@ def test_tags_vehiculares_maximo_por_unidad(client, seed):
     uid = seed["edificio_a", "101"].id
     for i in (1, 2):
         assert client.post("/edificios/edificio_a/tags", headers=h,
-                           json={"unidad_id": uid, "uid": f"AA00000{i}", "tipo": "vehicular"}).status_code == 201
+                           json={"unidad_id": uid, "uid": f"E2801170{i:016X}", "tipo": "vehicular"}).status_code == 201
     r = client.post("/edificios/edificio_a/tags", headers=h,
-                    json={"unidad_id": uid, "uid": "AA000003", "tipo": "vehicular"})
+                    json={"unidad_id": uid, "uid": "E280117000000000000000AA", "tipo": "vehicular"})
     assert r.status_code == 409
     # peatonales no cuentan contra el límite
     assert client.post("/edificios/edificio_a/tags", headers=h,

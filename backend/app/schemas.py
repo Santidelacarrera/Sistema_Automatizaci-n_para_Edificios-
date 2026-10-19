@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -15,6 +16,9 @@ class ValidarAccesoIn(BaseModel):
     edificio_id: str
     token_acceso: str = Field(min_length=1, max_length=80)
     punto: str = "peatonal"
+    tipo: Literal["sticker", "patente"] | None = None  # None = comportamiento anterior
+    confianza: float | None = Field(None, ge=0, le=1)  # sólo patentes (LPR)
+    direccion: Literal["entrada", "salida"] | None = None  # sólo con anti-passback
 
 
 class UnidadIn(BaseModel):
@@ -99,6 +103,25 @@ class ReglaPatch(BaseModel):
     tipo: str | None = None
     params: dict | None = None
     activa: bool | None = None
+
+
+class TagReasignar(BaseModel):
+    unidad_id: int
+    residente_id: int | None = None
+    vehiculo_id: int | None = None  # patente que queda asociada a este sticker (opcional)
+
+
+class TagMotivo(BaseModel):
+    motivo: str = Field("", max_length=200)
+
+
+class AjustesAccesoIn(BaseModel):
+    """Cómo se decide la entrada vehicular y los tiempos de la lectura."""
+    modo_acceso: Literal["sticker_o_patente", "sticker_y_patente", "solo_sticker", "solo_patente"] | None = None
+    ventana_coincidencia_s: int | None = Field(None, ge=1, le=120)
+    antirrebote_s: int | None = Field(None, ge=0, le=60)
+    anti_passback: bool | None = None
+    umbral_confianza_patente: float | None = Field(None, ge=0, le=1)
 
 
 class CircularIn(BaseModel):

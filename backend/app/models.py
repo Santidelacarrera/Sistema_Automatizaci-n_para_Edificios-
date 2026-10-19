@@ -2,8 +2,9 @@
 import enum
 from datetime import date, datetime
 
-from sqlalchemy import (JSON, Boolean, Date, DateTime, Enum, ForeignKey, Index, Integer,
+from sqlalchemy import (JSON, Boolean, Date, DateTime, Enum, Float, ForeignKey, Index, Integer,
                         Numeric, String, UniqueConstraint)
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .config import utcnow
@@ -22,6 +23,20 @@ class TipoTag(str, enum.Enum):
     peatonal = "peatonal"    # RFID 13.56 MHz / llavero
 
 
+class EstadoTag(str, enum.Enum):
+    activo = "activo"
+    perdido = "perdido"        # el residente lo reportó perdido: deja de abrir de inmediato
+    bloqueado = "bloqueado"    # bloqueo administrativo (p. ej. morosidad, uso indebido)
+
+
+class ModoAcceso(str, enum.Enum):
+    """Qué credenciales vehiculares se exigen para abrir el portón."""
+    sticker_o_patente = "sticker_o_patente"  # cualquiera de las dos (más cómodo)
+    sticker_y_patente = "sticker_y_patente"  # ambas, del mismo vehículo (frente a clonación)
+    solo_sticker = "solo_sticker"
+    solo_patente = "solo_patente"
+
+
 class EstadoVisita(str, enum.Enum):
     reservada = "reservada"
     llego = "llego"
@@ -37,6 +52,11 @@ class Edificio(Base):
     max_estac_por_unidad: Mapped[int] = mapped_column(Integer, default=2)
     tolerancia_visita_min: Mapped[int] = mapped_column(Integer, default=20)
     device_api_key: Mapped[str] = mapped_column(String(80), unique=True)
+    modo_acceso: Mapped[str] = mapped_column(String(30), default=ModoAcceso.sticker_o_patente.value)
+    ventana_coincidencia_s: Mapped[int] = mapped_column(Integer, default=10)  # sticker_y_patente
+    antirrebote_s: Mapped[int] = mapped_column(Integer, default=3)           # misma credencial repetida
+    anti_passback: Mapped[bool] = mapped_column(Boolean, default=False)      # requiere dirección en la lectura
+    umbral_confianza_patente: Mapped[float] = mapped_column(Float, default=0.85)
 
 
 class Unidad(Base):
@@ -73,9 +93,24 @@ class Tag(Base):
     edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
     unidad_id: Mapped[int] = mapped_column(ForeignKey("unidades.id"))
     residente_id: Mapped[int | None] = mapped_column(ForeignKey("residentes.id"))
-    uid: Mapped[str] = mapped_column(String(40))
+    uid: Mapped[str] = mapped_column(String(40))  # canónico: ver services/credenciales.py
+    formato: Mapped[str] = mapped_column(String(12), default="epc")  # epc | wiegand26 | wiegand34 | rc522
     tipo: Mapped[TipoTag] = mapped_column(Enum(TipoTag))
-    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    estado: Mapped[str] = mapped_column(String(12), default=EstadoTag.activo.value)
+    fecha_alta: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    ultima_lectura: Mapped[datetime | None] = mapped_column(DateTime)
+
+    @hybrid_property
+    def activo(self) -> bool:
+        return self.estado == EstadoTag.activo.value
+
+    @activo.inplace.setter
+    def _set_activo(self, valor: bool) -> None:
+        self.estado = EstadoTag.activo.value if valor else EstadoTag.bloqueado.value
+
+    @activo.inplace.expression
+    def _activo_expr(cls):
+        return cls.estado == EstadoTag.activo.value
 
 
 class Visita(Base):
@@ -177,10 +212,23 @@ class AccesoLog(Base):
     __tablename__ = "accesos_log"
     id: Mapped[int] = mapped_column(primary_key=True)
     edificio_id: Mapped[str] = mapped_column(String(40), index=True)
-    token: Mapped[str] = mapped_column(String(80))
+    token: Mapped[str] = mapped_column(String(80))  # valor canónico de la credencial
     punto: Mapped[str] = mapped_column(String(40))
+    fuente: Mapped[str] = mapped_column(String(12), default="")  # sticker | patente | qr | tag | ""
     permitido: Mapped[bool] = mapped_column(Boolean)
-    motivo: Mapped[str] = mapped_column(String(120), default="")
+    motivo: Mapped[str] = mapped_column(String(160), default="")
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class LecturaPendiente(Base):
+    """Lectura de sticker o de patente esperando su par (modo sticker_y_patente). Expira con la ventana."""
+    __tablename__ = "lecturas_pendientes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(String(40), index=True)
+    punto: Mapped[str] = mapped_column(String(40))
+    fuente: Mapped[str] = mapped_column(String(12))  # sticker | patente
+    valor: Mapped[str] = mapped_column(String(80))
+    vehiculo_id: Mapped[int | None] = mapped_column(ForeignKey("vehiculos.id"))
     creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
@@ -195,3 +243,4 @@ class Vehiculo(Base):
     descripcion: Mapped[str] = mapped_column(String(80), default="")  # "Mazda 3 gris"
     tag_id: Mapped[int | None] = mapped_column(ForeignKey("tags.id"))  # sticker opcional
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    adentro: Mapped[bool] = mapped_column(Boolean, default=False)  # anti-passback: última pasada fue entrada
