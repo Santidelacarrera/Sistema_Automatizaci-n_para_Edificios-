@@ -83,6 +83,17 @@ def evaluar(db: Session, edificio_id: str, accion: str, ctx: dict) -> Decision:
     return d
 
 
+def multa_cancelacion(db: Session, edificio_id: str, accion: str, inicio: datetime, ahora: datetime) -> float:
+    """Suma las multas de las reglas ``multa_cancelacion`` que aplican si se cancela con menos de ``horas`` de aviso."""
+    aviso_h = (inicio - ahora).total_seconds() / 3600
+    total = 0.0
+    for r in db.scalars(select(Regla).where(Regla.edificio_id == edificio_id, Regla.accion == accion,
+                                            Regla.tipo == "multa_cancelacion", Regla.activa.is_(True))):
+        if aviso_h < r.params.get("horas", 0):
+            total += float(r.params.get("monto", 0))
+    return total
+
+
 # ---------- validación al crear o editar (la evaluación de arriba asume datos válidos) ----------
 TIPOS = {"horario": {"desde", "hasta", "dias"}, "max_por_mes": {"max"}, "bloquear_morosos": {"deuda_max"},
          "anticipacion": {"min_horas", "max_dias"}, "multa_cancelacion": {"horas", "monto"}}

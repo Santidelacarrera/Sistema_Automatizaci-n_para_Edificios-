@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -167,6 +167,54 @@ def reservar_espacio(edificio_id: str, body: ReservaEspacioIn, user: User, db: S
                      vencimiento=body.desde.date()))
     db.commit()
     return {"id": r.id, "tarifa": float(esp.tarifa)}
+
+
+@router.post("/reservas-espacio/{reserva_id}/cancelar")
+def cancelar_reserva(edificio_id: str, reserva_id: int, user: User, db: Session = Depends(get_db)):
+    """Cancela una reserva. Si se cancela con menos aviso que el de la regla multa_cancelacion,
+    se carga la multa; si el cargo de la tarifa aún no tiene abonos, se anula."""
+    ed = _ed(db, user, edificio_id)
+    r = db.get(ReservaEspacio, reserva_id)
+    if not r or r.edificio_id != ed.id:
+        raise HTTPException(404, "Reserva no existe")
+    _unidad_propia(db, user, ed, r.unidad_id)  # residente sólo cancela las de su unidad
+    if r.estado != "confirmada":
+        raise HTTPException(409, "La reserva ya estaba cancelada")
+    ahora = utcnow()
+    if r.hasta <= ahora:
+        raise HTTPException(409, "La reserva ya terminó")
+    esp = db.get(EspacioComun, r.espacio_id)
+    multa = rules.multa_cancelacion(db, ed.id, esp.accion, r.desde, ahora)
+    r.estado = "cancelada"
+    tarifa_anulada = False
+    if float(esp.tarifa) > 0:
+        cargo_tarifa = db.scalar(select(Cargo).where(
+            Cargo.edificio_id == ed.id, Cargo.unidad_id == r.unidad_id, Cargo.concepto == f"Reserva {esp.nombre}",
+            Cargo.periodo == r.desde.strftime("%Y-%m"), Cargo.saldo == Cargo.monto))  # sólo si no tiene abonos
+        if cargo_tarifa:
+            cargo_tarifa.saldo = 0
+            tarifa_anulada = True
+    if multa > 0:
+        db.add(Cargo(edificio_id=ed.id, unidad_id=r.unidad_id, periodo=ahora.strftime("%Y-%m"),
+                     concepto=f"Multa cancelación {esp.nombre}", monto=multa, saldo=multa,
+                     vencimiento=(ahora + timedelta(days=30)).date()))
+    db.commit()
+    return {"estado": "cancelada", "multa": multa, "tarifa_anulada": tarifa_anulada}
+
+
+@router.get("/visitas/{visita_id}/qr.png")
+def qr_visita(edificio_id: str, visita_id: int, user: User, db: Session = Depends(get_db)):
+    """Imagen PNG del código QR de una visita. Residente sólo de su unidad; admin/conserje ven todas."""
+    import io
+    import qrcode
+    ed = _ed(db, user, edificio_id)
+    v = db.get(Visita, visita_id)
+    if not v or v.edificio_id != ed.id:
+        raise HTTPException(404, "Visita no existe")
+    _unidad_propia(db, user, ed, v.unidad_id)
+    buf = io.BytesIO()
+    qrcode.make(v.codigo_qr).save(buf, format="PNG")
+    return Response(buf.getvalue(), media_type="image/png", headers={"Cache-Control": "no-store"})
 
 
 @router.get("/visitas/cupos")
