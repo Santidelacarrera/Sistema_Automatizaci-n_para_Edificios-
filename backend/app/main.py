@@ -20,6 +20,7 @@ app.add_middleware(CORSMiddleware, allow_origins=os.getenv("CORS_ORIGINS", "http
                    allow_methods=["*"], allow_headers=["*"])
 for r in (auth.router, devices.router, edificio.router, panel.router, administracion.router, webhooks.router):
     app.include_router(r)
+app.include_router(administracion.edificios_router)
 
 
 @app.get("/health")

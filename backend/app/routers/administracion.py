@@ -20,6 +20,27 @@ from ..services.administracion import AdminError
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["administracion"])
 Admin = Annotated[Principal, Depends(require_roles(Rol.admin))]
 
+# Listado de todos los edificios: sólo superadmin (no pasa por el filtro de tenant).
+edificios_router = APIRouter(prefix="/edificios", tags=["administracion"])
+
+
+@edificios_router.get("")
+def listar_edificios(user: Annotated[Principal, Depends(require_roles(Rol.superadmin))],
+                     db: Session = Depends(get_db)):
+    """Resumen de cada edificio: departamentos, residentes activos y deuda total."""
+    from sqlalchemy import func
+    from ..models import Cargo
+    deuda = dict(db.execute(select(Cargo.edificio_id, func.sum(Cargo.saldo)).where(Cargo.saldo > 0)
+                            .group_by(Cargo.edificio_id)).all())
+    filas = []
+    for ed in db.scalars(select(Edificio).order_by(Edificio.nombre)):
+        unidades = db.scalar(select(func.count(Unidad.id)).where(Unidad.edificio_id == ed.id))
+        residentes = db.scalar(select(func.count(Residente.id)).where(
+            Residente.edificio_id == ed.id, Residente.activo.is_(True)))
+        filas.append({"id": ed.id, "nombre": ed.nombre, "unidades": unidades, "residentes": residentes,
+                      "deuda_total": float(deuda.get(ed.id, 0) or 0)})
+    return filas
+
 
 def _ed(db: Session, user: Principal, edificio_id: str) -> Edificio:
     tenant_of(user, edificio_id)
