@@ -1,0 +1,5 @@
+numero;coeficiente;estacionamientos;codigo_cobro;nombre;rut;email;telefono;depto
+101;0,25;2;CC-A-101;;;;;
+;;;;Ana Pérez;12.345.678-5;ana@ejemplo.cl;+56 9 1111 2222;101
+102;0,25;1;CC-A-102;;;;;
+;;;;Beto Soto;11.111.111-1;beto@ejemplo.cl;+56 9 3333 4444;102

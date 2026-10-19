@@ -1,12 +1,18 @@
 services:
   db:
     image: postgres:16
-    environment: {POSTGRES_USER: edificios, POSTGRES_PASSWORD: ${DB_PASSWORD:?define DB_PASSWORD}, POSTGRES_DB: edificios}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: edificios
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?define DB_PASSWORD}
+      POSTGRES_DB: edificios
     volumes: [pgdata:/var/lib/postgresql/data]
   redis:
     image: redis:7
+    restart: unless-stopped
   api:
     build: ./backend
+    restart: unless-stopped
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://edificios:${DB_PASSWORD}@db:5432/edificios
@@ -17,6 +23,7 @@ services:
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
   worker:
     build: ./backend
+    restart: unless-stopped
     command: celery -A app.tasks.celery worker -l info
     env_file: .env
     environment:
@@ -26,6 +33,7 @@ services:
     depends_on: [db, redis]
   beat:
     build: ./backend
+    restart: unless-stopped
     command: celery -A app.tasks.celery beat -l info
     env_file: .env
     environment:

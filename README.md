@@ -15,19 +15,20 @@ Backend multi-tenant (FastAPI + PostgreSQL + Celery/Redis) y firmware ESP32 (Mic
 | Patentes (LPR) + sticker RFID | ✅ tabla `vehiculos`, el lector abre por patente o por tag |
 | Cobranza: recordatorios WhatsApp/correo y `POST /pagos` para su sistema de pagos | ✅ |
 
+## Puesta en marcha
+Ver [docs/PUESTA_EN_MARCHA.md](docs/PUESTA_EN_MARCHA.md): instalación, carga de datos (seed, CSV), Evolution API, SMTP/SES, HTTPS y lista de pruebas manuales.
+
 ## Ejecutar
 ```bash
 cd backend && pip install -r requirements.txt && pytest      # tests
-uvicorn app.main:app --reload                                # dev (SQLite)
+alembic upgrade head && uvicorn app.main:app --reload         # dev (SQLite)
 cp .env.example .env && docker compose up --build            # PostgreSQL + Redis + worker + beat
 ```
 Docs interactivas: `/docs`. Lectores: `POST /api/v1/{edificio_id}/validar-acceso` con header `X-Device-Key`.
 
 ## Pendientes / decisiones
-- Migraciones (Alembic), seed de los 4 edificios y alta de edificios/API keys (hoy se crean por SQL/consola).
-- Generación de imagen QR, reserva de visitas/quincho conversacional por WhatsApp (hoy responde cupos/deuda/ayuda).
+- Reserva de visitas/quincho conversacional por WhatsApp (hoy responde cupos/deuda/ayuda). El QR ya existe como PNG en la API.
 - Conciliación: formato CSV genérico (`fecha,descripcion,monto,id`); adaptar al formato real del banco.
-- Multas por cancelación: la regla se evalúa pero aún no hay endpoint de cancelación que la cobre.
 - Producción: HTTPS en lectores (urequests sobre TLS), rotación de claves, rate limiting, secreto JWT ≥32 bytes.
 
 ## Panel web
