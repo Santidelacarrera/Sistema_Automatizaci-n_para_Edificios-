@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -6,8 +7,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 JWT_POR_DEFECTO = "cambiar-en-produccion"
 
 
+_RAIZ = Path(__file__).resolve().parents[2]  # raíz del repositorio (en Docker no existe ese archivo: no pasa nada)
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Primero el .env de la raíz (el que usa Docker Compose y el asistente), luego el del directorio actual.
+    model_config = SettingsConfigDict(env_file=(_RAIZ / ".env", ".env"), extra="ignore")
 
     entorno: str = "desarrollo"  # desarrollo | produccion
     cors_origins: str = "http://localhost:3000"  # separados por coma

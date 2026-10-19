@@ -22,7 +22,7 @@ PATRONES = [
 # Valores que son ejemplos o marcadores, no secretos reales.
 MARCADORES = ("cambiar", "pegar", "ejemplo", "example", "usuario", "clave", "password", "contrasena",
               "xxx", "<", "${", "tu-", "your", "changeme", "placeholder", "host", "...", "secreto",
-              "none", "edificio")
+              "none", "edificio", "*")  # "*" = valor ya enmascarado (p. ej. ****abcd)
 LARGO_MINIMO_ASIGNADO = 12
 EXCLUIR_SIEMPRE = {"scripts/escaner_secretos.py"}  # su propio código describe los patrones
 

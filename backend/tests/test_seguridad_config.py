@@ -58,7 +58,7 @@ def test_no_marca_ejemplos_ni_marcadores():
 
 def test_produccion_con_jwt_por_defecto_no_arranca():
     cfg = Settings(entorno="produccion", jwt_secret=JWT_POR_DEFECTO,
-                   database_url="postgresql+psycopg://u:p@h/db")
+                   database_url="postgresql+psycopg://usuario:clave@host/db")
     with pytest.raises(RuntimeError, match="JWT_SECRET"):
         validar_para_arranque(cfg)
 
@@ -71,7 +71,7 @@ def test_produccion_con_sqlite_no_arranca():
 
 def test_produccion_con_secretos_propios_arranca_y_desarrollo_siempre():
     validar_para_arranque(Settings(entorno="produccion", jwt_secret="x" * 40,
-                                   database_url="postgresql+psycopg://u:p@h/db"))
+                                   database_url="postgresql+psycopg://usuario:clave@host/db"))
     validar_para_arranque(Settings(entorno="desarrollo"))
     with pytest.raises(RuntimeError, match="ENTORNO"):
         validar_para_arranque(Settings(entorno="pruebas"))
