@@ -15,6 +15,8 @@ de entorno, nunca en el repositorio.
 - Docker y Docker Compose (para el despliegue).
 - PostgreSQL 16 y Redis 7 si se usa sin Docker (en Docker vienen incluidos).
 
+> **Credenciales:** no las escriba en ningún archivo del repositorio. Ejecute `python scripts/configurar_entorno.py` (crea `.env`) y `python scripts/verificar_conexiones.py`. Ver [docs/CREDENCIALES.md](CREDENCIALES.md).
+
 ## 2. Instalar en desarrollo
 
 ```bash

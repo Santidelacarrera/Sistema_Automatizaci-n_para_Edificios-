@@ -1,10 +1,20 @@
+# Uso con base de datos externa (Supabase u otra) — recomendado:
+#   1) python scripts/configurar_entorno.py      (escribe DATABASE_URL en .env)
+#   2) docker compose up -d --build
+#
+# Uso con PostgreSQL local de prueba (perfil opcional):
+#   1) poner DB_PASSWORD en .env y dejar DATABASE_URL vacía
+#   2) docker compose --profile db-local up -d --build
+#
+# Todos los valores sensibles vienen de .env (nunca de este archivo).
 services:
   db:
+    profiles: ["db-local"]          # sólo si se activa el perfil db-local
     image: postgres:16
     restart: unless-stopped
     environment:
       POSTGRES_USER: edificios
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?define DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-}
       POSTGRES_DB: edificios
     volumes: [pgdata:/var/lib/postgresql/data]
   redis:
@@ -15,10 +25,11 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+psycopg://edificios:${DB_PASSWORD}@db:5432/edificios
+      # Si .env trae DATABASE_URL (Supabase), se usa esa; si no, la base local del perfil db-local.
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://edificios:${DB_PASSWORD:-}@db:5432/edificios}
       REDIS_URL: redis://redis:6379/0
       CELERY_EAGER: "false"
-    depends_on: [db, redis]
+    depends_on: [redis]
     ports: ["8000:8000"]
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
   worker:
@@ -27,10 +38,10 @@ services:
     command: celery -A app.tasks.celery worker -l info
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+psycopg://edificios:${DB_PASSWORD}@db:5432/edificios
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://edificios:${DB_PASSWORD:-}@db:5432/edificios}
       REDIS_URL: redis://redis:6379/0
       CELERY_EAGER: "false"
-    depends_on: [db, redis]
+    depends_on: [redis]
   beat:
     build: ./backend
     restart: unless-stopped
