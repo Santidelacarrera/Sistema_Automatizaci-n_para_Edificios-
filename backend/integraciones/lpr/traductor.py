@@ -44,7 +44,8 @@ class Traductor:
         if self._es_duplicada(lectura.patente):
             return Resultado("duplicada", motivo="misma patente dentro de la ventana de deduplicación")
         self._vistas[lectura.patente] = self.reloj()
-        cuerpo = {"edificio_id": self.cfg.edificio_id, "token_acceso": lectura.patente, "punto": "vehicular"}
+        cuerpo = {"edificio_id": self.cfg.edificio_id, "token_acceso": lectura.patente, "punto": "vehicular",
+                  "tipo": "patente", "confianza": lectura.confianza}
         try:
             r = self.http.post(f"/api/v1/{self.cfg.edificio_id}/validar-acceso", json=cuerpo,
                                headers={"X-Device-Key": self.cfg.device_key})

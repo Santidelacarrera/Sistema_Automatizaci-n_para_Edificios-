@@ -19,6 +19,11 @@ cámara ──POST /lpr/evento──▶ traductor (puerto 8090) ──POST /api/
   inesperada: portón cerrado (estado `error_backend`).
 - No guarda la patente en disco. La respuesta del traductor no repite la patente.
 - No decide accesos por sí mismo: la regla vive en el backend (`services/access.py`).
+- Envía `tipo: "patente"` y la `confianza`. Con el modo `sticker_y_patente` el backend empareja la
+  patente con la lectura del sticker dentro de la ventana de coincidencia (ver
+  `docs/PORTON_UHF.md`).
+- Formatos de patente chilena de 6 caracteres: antiguo `AA1234` y nuevo `BCDF12`
+  (`formato_patente`). Motos y otros formatos de 5 a 7 caracteres se aceptan como `otro`.
 
 ## Configuración (variables de entorno)
 

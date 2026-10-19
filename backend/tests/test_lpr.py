@@ -174,3 +174,49 @@ def test_servidor_baja_confianza_y_formato_invalido(servidor):
     baja = servidor.post("/lpr/evento", json={"patente": "BBCD12", "confianza": 0.4}, headers=h)
     assert baja.status_code == 202 and baja.json()["estado"] == "rechazada_confianza" and baja.json()["abrir"] is False
     assert servidor.post("/lpr/evento", json={"patente": "BBCD12", "confianza": 93}, headers=h).status_code == 422
+
+
+# ---------- formatos chilenos y tipo de credencial ----------
+@pytest.mark.parametrize("patente,formato", [("BCDF12", "chileno_nuevo"), ("AA1234", "chileno_antiguo"),
+                                             ("1AB23", "otro"), ("ABC12", "otro")])
+def test_formato_de_patente_chilena(patente, formato):
+    from integraciones.lpr.lectura import formato_patente
+    assert formato_patente(patente) == formato
+
+
+def test_traductor_envia_tipo_patente_y_confianza():
+    vistos = {}
+
+    def backend(request):
+        vistos["cuerpo"] = request.read().decode()
+        return httpx.Response(200, json={"abrir": True, "motivo": "Patente de residente"})
+    t = Traductor(CFG, http=httpx.Client(base_url="http://testserver", transport=httpx.MockTransport(backend)))
+    t.procesar(Lectura("BBCD12", 0.91))
+    assert '"tipo":"patente"' in vistos["cuerpo"] and '"confianza":0.91' in vistos["cuerpo"]
+
+
+def test_patente_por_traductor_completa_el_modo_sticker_y_patente(client, seed, db):
+    """El sticker se lee primero; la cámara (vía traductor) envía la patente y el portón abre."""
+    from app.models import Edificio, TipoTag
+    from app.services import access
+    ed = db.get(Edificio, "edificio_a")
+    ed.modo_acceso = "sticker_y_patente"
+    ed.antirrebote_s = 0
+    tag = access.asignar_tag(db, ed, seed["edificio_a", "101"].id, "E280117000000000000000B1", TipoTag.vehicular)
+    access.registrar_vehiculo(db, ed, seed["edificio_a", "101"].id, "BBCD12", "Mazda", tag.id)
+    db.commit()
+    espera = client.post("/api/v1/edificio_a/validar-acceso", headers={"X-Device-Key": "keyA"},
+                         json={"edificio_id": "edificio_a", "token_acceso": "E280117000000000000000B1",
+                               "punto": "vehicular", "tipo": "sticker"})
+    assert espera.status_code == 403 and "Esperando la patente" in espera.json()["detail"]
+    res = Traductor(CFG, http=client).procesar(Lectura("BBCD12", 0.95))
+    assert res.abrir is True and res.motivo == "Sticker y patente coinciden"
+
+
+def test_traductor_no_abre_con_patente_de_baja_confianza_en_modo_y(client, seed, db):
+    from app.models import Edificio
+    ed = db.get(Edificio, "edificio_a")
+    ed.modo_acceso = "sticker_y_patente"
+    db.commit()
+    res = Traductor(CFG, http=client).procesar(Lectura("BBCD12", 0.40))
+    assert res.estado == "rechazada_confianza" and res.abrir is False
