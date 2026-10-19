@@ -10,9 +10,10 @@ Backend multi-tenant (FastAPI + PostgreSQL + Celery/Redis) y firmware ESP32 (Mic
 | 1.2 Correo masivo (Celery + SMTP, plantillas HTML) | ✅ código; no probado contra SMTP/SES real |
 | 1.3 Acceso vehicular/peatonal, máx. estacionamientos, visitas con QR, cupos, no-show 20 min | ✅ |
 | 1.4 Prorrata (coeficiente/consumo) y conciliación bancaria (RUT / código de cobro) | ✅ cartola CSV; sin webhook bancario real |
-| 2 Firmware ESP32 + W5500 + RC522 | ⚠️ escrito, **no probado en hardware** |
+| 2 Firmware ESP32 + W5500 (lector configurable: Wiegand, RS485 o RC522) | ⚠️ escrito y probado con simulador; **sin probar en hardware** (ver `firmware/esp32/README.md`) |
 | Panel web Next.js (`frontend/`): fachada, portón/patentes, visitas, cobranza | ✅ probado con navegador en modo demo; contra el backend real sin probar |
-| Patentes (LPR) + sticker RFID | ✅ tabla `vehiculos`, el lector abre por patente o por tag |
+| Stickers UHF + patente (LPR) | ✅ modos de acceso (sticker, patente, ambos con coincidencia), antirrebote, anti-passback, bloqueo de stickers; probado con tests y simulador |
+| Llaveros RC522 (13,56 MHz) | ✅ sólo para la puerta peatonal. **No sirve para stickers UHF** |
 | Cobranza: recordatorios WhatsApp/correo y `POST /pagos` para su sistema de pagos | ✅ |
 
 ## Puesta en marcha
