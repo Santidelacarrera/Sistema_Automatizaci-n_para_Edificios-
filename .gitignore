@@ -5,3 +5,9 @@ __pycache__/
 .pytest_cache/
 .graph-indexer/
 firmware/esp32/config_local.py
+.env
+.env.*
+!.env.example
+.env.bak
+*.env.bak
+config_local.py
