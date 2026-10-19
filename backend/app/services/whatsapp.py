@@ -8,8 +8,10 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..models import Residente
+from .resultado import ENVIADO, ERROR, NO_CONFIGURADO, ResultadoEnvio
 
 INTENCIONES = ("reservar_visita", "reservar_quincho", "consultar_deuda", "otro")
+CANAL = "whatsapp"
 
 _KEYWORDS = {
     "consultar_deuda": ("deuda", "saldo", "gasto común", "gasto comun", "cuánto debo", "cuanto debo", "pagar"),
@@ -76,13 +78,37 @@ def identificar_residente(db: Session, telefono: str) -> Residente | None:
     return None
 
 
-def enviar(telefono: str, texto: str) -> bool:
-    if not (settings.evolution_url and settings.evolution_instance):
-        return False  # modo desarrollo: no hay gateway configurado
+def faltantes() -> list[str]:
+    """Nombres de las variables de entorno que faltan para enviar. Nunca incluye sus valores."""
+    requeridas = {"EVOLUTION_URL": settings.evolution_url, "EVOLUTION_INSTANCE": settings.evolution_instance,
+                  "EVOLUTION_APIKEY": settings.evolution_apikey}
+    return [nombre for nombre, valor in requeridas.items() if not valor]
+
+
+def configurado() -> bool:
+    return not faltantes()
+
+
+def motivo_no_configurado() -> str:
+    faltan = faltantes()
+    return f"Falta {', '.join(faltan)} en .env (Evolution API no configurada)" if faltan else ""
+
+
+def enviar(telefono: str, texto: str) -> ResultadoEnvio:
+    """Envía un mensaje y devuelve el resultado explícito. No lanza excepciones por fallos de red."""
+    if not telefono:
+        return ResultadoEnvio(CANAL, NO_CONFIGURADO, "El residente no tiene teléfono registrado")
+    if not configurado():
+        return ResultadoEnvio(CANAL, NO_CONFIGURADO, motivo_no_configurado())
     try:
         r = httpx.post(f"{settings.evolution_url}/message/sendText/{settings.evolution_instance}",
                        headers={"apikey": settings.evolution_apikey}, timeout=10,
                        json={"number": telefono, "text": texto})
-        return r.is_success
-    except httpx.HTTPError:
-        return False
+    except httpx.TimeoutException:
+        return ResultadoEnvio(CANAL, ERROR, "Evolution API no respondió a tiempo", transitorio=True)
+    except httpx.HTTPError as e:
+        return ResultadoEnvio(CANAL, ERROR, f"No se pudo conectar con Evolution API ({e.__class__.__name__})",
+                              transitorio=True)
+    if r.is_success:
+        return ResultadoEnvio(CANAL, ENVIADO)
+    return ResultadoEnvio(CANAL, ERROR, f"Evolution API respondió HTTP {r.status_code}", transitorio=r.status_code >= 500)

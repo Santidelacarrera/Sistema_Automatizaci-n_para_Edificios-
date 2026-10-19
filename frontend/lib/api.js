@@ -115,8 +115,11 @@ function demoClient() {
     },
     delVehiculo: async (id) => { data.unidades.forEach((u) => { u.vehiculos = u.vehiculos.filter((v) => v.id !== id); }); return { ok: true }; },
     recordatorios: async (b) => {
+      // Modo demo: no sale ningún mensaje; cada envío se muestra como no enviado, con su motivo.
       const sel = cob().morosos.filter((m) => !b.unidad_ids || b.unidad_ids.includes(m.unidad_id));
-      return { unidades: sel.length, whatsapp: b.canales.includes("whatsapp") ? sel.length : 0, email: b.canales.includes("email") ? sel.length : 0, sin_contacto: [], demo: true };
+      const motivo = "Modo demo: el navegador no envía mensajes";
+      const detalle = sel.flatMap((m) => b.canales.map((canal) => ({ unidad: m.numero, residente: "(demo)", canal, estado: "no_configurado", motivo })));
+      return { unidades: sel.length, whatsapp: 0, email: 0, sin_contacto: sel.map((m) => m.numero), detalle, no_enviados: detalle.length, demo: true };
     },
   };
 }

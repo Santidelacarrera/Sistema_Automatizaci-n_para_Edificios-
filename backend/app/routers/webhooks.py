@@ -27,8 +27,8 @@ async def whatsapp_webhook(request: Request, x_webhook_token: str | None = Heade
     telefono, texto = parsed
     r = whatsapp.identificar_residente(db, telefono)
     if not r:
-        whatsapp.enviar(telefono, "No encontramos tu número en ningún edificio. Contacta a la administración.")
-        return {"residente": None}
+        envio = whatsapp.enviar(telefono, "No encontramos tu número en ningún edificio. Contacta a la administración.")
+        return {"residente": None, "envio": envio.estado}
     intent = whatsapp.clasificar(texto)
     if intent == "consultar_deuda":
         resp = f"Tu deuda actual es ${finance.deuda_unidad(db, r.unidad_id):,.0f}."
@@ -41,8 +41,9 @@ async def whatsapp_webhook(request: Request, x_webhook_token: str | None = Heade
         resp = "Indícanos fecha y horario para reservar el quincho; validaremos la normativa del edificio."
     else:
         resp = AYUDA.format(nombre=r.nombre.split()[0])
-    whatsapp.enviar(telefono, resp)
-    return {"residente": r.id, "intent": intent, "respuesta": resp}
+    envio = whatsapp.enviar(telefono, resp)
+    return {"residente": r.id, "intent": intent, "respuesta": resp, "envio": envio.estado,
+            "motivo_envio": envio.motivo}
 
 
 def _ahora_rango():

@@ -25,6 +25,7 @@ label { display: grid; gap: .25rem; font-size: .9rem; font-weight: 600; }
 input[type=text], input[type=email], input[type=password], input:not([type]) { background: var(--papel); border: 2px solid var(--tinta); padding: .6rem .7rem; font-weight: 400; width: 100%; }
 .aviso { margin: .75rem 0 0; padding: .6rem .8rem; font-size: .9rem; border-left: 5px solid; background: var(--papel); }
 .aviso.ok { border-color: var(--verde); } .aviso.err { border-color: var(--ladrillo); }
+.aviso p { margin: 0; } .aviso ul { margin: .4rem 0 0; padding-left: 1.1rem; }
 .vacio, .nota { color: var(--tinta-2); font-size: .92rem; margin: .4rem 0; max-width: 56ch; }
 
 /* ---------- entrada ---------- */

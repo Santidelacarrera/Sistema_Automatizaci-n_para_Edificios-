@@ -151,7 +151,7 @@ def test_whatsapp_webhook(client, seed):
     r = client.post("/webhooks/whatsapp", json=payload, headers={"X-Webhook-Token": "tok"})
     assert r.status_code == 200 and r.json()["intent"] == "consultar_deuda"
     desconocido = {**payload, "data": {**payload["data"], "key": {"remoteJid": "56900000000@s.whatsapp.net"}}}
-    assert client.post("/webhooks/whatsapp", json=desconocido, headers={"X-Webhook-Token": "tok"}).json() == {"residente": None}
+    assert client.post("/webhooks/whatsapp", json=desconocido, headers={"X-Webhook-Token": "tok"}).json() == {"residente": None, "envio": "no_configurado"}
     propio = {**payload, "data": {**payload["data"], "key": {"remoteJid": "x@s.whatsapp.net", "fromMe": True}}}
     assert client.post("/webhooks/whatsapp", json=propio, headers={"X-Webhook-Token": "tok"}).json() == {"ignorado": True}
 

@@ -14,7 +14,7 @@ from ..models import (AccesoLog, Cargo, Edificio, EstadoVisita, Pago, Residente,
                       Vehiculo, Visita)
 from ..schemas import PagoIn, RecordatorioIn, VehiculoIn
 from ..security import Principal, require_roles, tenant_of
-from ..services import access, cobranza, finance
+from ..services import access, cobranza, diagnostico as diag, finance
 
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["panel"])
 Staff = Annotated[Principal, Depends(require_roles(Rol.admin, Rol.conserje))]
@@ -59,6 +59,13 @@ def panel(edificio_id: str, user: Staff, db: Session = Depends(get_db)):
                       "vencida": float(vencida.get(u.id, 0)), "residentes": res[u.id],
                       "vehiculos": veh[u.id], "visitas_activas": vis[u.id]} for u in unidades],
     }
+
+
+@router.get("/diagnostico")
+def diagnostico(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Canales configurados y advertencias de despliegue. Sólo admin; nunca incluye secretos."""
+    _ed(db, user, edificio_id)
+    return diag.reporte()
 
 
 @router.get("/accesos")

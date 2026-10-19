@@ -1,10 +1,15 @@
 """Tareas asíncronas Celery (broker Redis). Con CELERY_EAGER=true corren en proceso (dev/tests)."""
+import logging
+
 from celery import Celery
 
 from .config import settings
 from .db import SessionLocal
 from .models import Cargo, Edificio, Residente, Unidad
 from .services import access, email
+from .services.resultado import ERROR
+
+log = logging.getLogger(__name__)
 
 celery = Celery("edificios", broker=settings.redis_url, backend=settings.redis_url)
 celery.conf.task_always_eager = settings.celery_eager
@@ -21,9 +26,15 @@ def liberar_no_show() -> int:
         return n
 
 
-@celery.task(name="app.tasks.enviar_email", autoretry_for=(OSError,), retry_backoff=True, max_retries=5)
-def enviar_email(destino: str, asunto: str, html: str) -> bool:
-    return email.enviar(destino, asunto, html)
+@celery.task(name="app.tasks.enviar_email", bind=True, max_retries=5)
+def enviar_email(self, destino: str, asunto: str, html: str) -> dict:
+    """Reintenta sólo fallos transitorios (red, 4xx SMTP); los permanentes quedan registrados en el log."""
+    res = email.enviar(destino, asunto, html)
+    if res.estado == ERROR and res.transitorio:
+        raise self.retry(exc=OSError(res.motivo), countdown=min(30 * 2 ** self.request.retries, 900))
+    if res.estado == ERROR:
+        log.error("Correo a %s no enviado: %s", destino, res.motivo)
+    return res.a_dict()
 
 
 @celery.task(name="app.tasks.enviar_gastos_comunes")

@@ -1,6 +1,25 @@
 import { useState } from "react";
 import { clp } from "../../lib/api";
 
+const CANAL = { whatsapp: "WhatsApp", email: "Correo" };
+
+// Convierte la respuesta de recordatorios en un aviso: cuántos salieron y, si no salió, por qué.
+function resumenEnvio(r) {
+  const det = r.detalle || [];
+  if (!det.length) return { ok: true, t: "No había residentes con contacto que avisar.", lineas: [] };
+  const bien = det.filter((d) => d.estado === "enviado" || d.estado === "encolado");
+  const mal = det.filter((d) => d.estado === "no_configurado" || d.estado === "error");
+  const porMotivo = new Map();
+  for (const d of mal) {
+    const clave = `${CANAL[d.canal] || d.canal}: ${d.motivo || "sin detalle"}`;
+    porMotivo.set(clave, (porMotivo.get(clave) || 0) + 1);
+  }
+  const lineas = [...porMotivo].map(([k, n]) => `${k} (${n} ${n === 1 ? "vez" : "veces"})`);
+  const t = `${bien.length} aviso(s) enviado(s) o en cola${mal.length ? `, ${mal.length} no enviado(s)` : ""}.` +
+    (r.sin_contacto?.length ? ` Sin contacto: ${r.sin_contacto.join(", ")}.` : "");
+  return { ok: mal.length === 0, t, lineas };
+}
+
 export default function Cobranza({ cob, api, onChange }) {
   const [sel, setSel] = useState(new Set());
   const [canales, setCanales] = useState({ whatsapp: true, email: true });
@@ -13,9 +32,9 @@ export default function Cobranza({ cob, api, onChange }) {
     setBusy(true); setMsg(null);
     try {
       const r = await api.recordatorios({ unidad_ids: sel.size ? [...sel] : null, canales: Object.keys(canales).filter((c) => canales[c]), mensaje_extra: extra });
-      setMsg({ ok: true, t: `${r.unidades} departamento(s): ${r.whatsapp} por WhatsApp, ${r.email} por correo.${r.sin_contacto.length ? " Sin contacto: " + r.sin_contacto.join(", ") + "." : ""}` });
+      setMsg(resumenEnvio(r));
       await onChange();
-    } catch (e) { setMsg({ ok: false, t: e.message }); }
+    } catch (e) { setMsg({ ok: false, t: e.message, lineas: [] }); }
     setBusy(false);
   };
   return (
@@ -51,7 +70,12 @@ export default function Cobranza({ cob, api, onChange }) {
           </div>
         </>
       )}
-      {msg && <p role="status" className={`aviso ${msg.ok ? "ok" : "err"}`}>{msg.t}</p>}
+      {msg && (
+        <div role="status" className={`aviso ${msg.ok ? "ok" : "err"}`}>
+          <p>{msg.t}</p>
+          {msg.lineas?.length > 0 && <ul>{msg.lineas.map((l) => <li key={l}>{l}</li>)}</ul>}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,6 @@
 """Suscriptores del bus de eventos: notificaciones en tiempo real al departamento."""
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,11 +8,15 @@ from . import events
 from .models import Residente
 from .services import whatsapp
 
+log = logging.getLogger(__name__)
+
 
 def _notificar_unidad(db: Session, unidad_id: int, texto: str) -> None:
     for r in db.scalars(select(Residente).where(Residente.unidad_id == unidad_id, Residente.activo.is_(True))):
         if r.telefono:
-            whatsapp.enviar(r.telefono, texto)
+            res = whatsapp.enviar(r.telefono, texto)
+            if res.estado == "error":
+                log.warning("Notificación WhatsApp a unidad %s no enviada: %s", unidad_id, res.motivo)
 
 
 @events.on("visita.llego")

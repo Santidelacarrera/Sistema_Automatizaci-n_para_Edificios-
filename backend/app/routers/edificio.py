@@ -14,7 +14,8 @@ from ..models import (Cargo, Edificio, EspacioComun, LecturaMedidor, Regla, Resi
 from ..schemas import (CircularIn, GenerarGastosIn, LecturaIn, ReglaIn, ReservaEspacioIn, ResidenteIn,
                        TagIn, UnidadIn, VisitaIn)
 from ..security import Principal, current_user, hash_password, require_roles, tenant_of
-from ..services import access, finance, reconciliation
+from ..services import access, email, finance, reconciliation
+from ..services.resultado import ENCOLADO, NO_CONFIGURADO
 
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["edificio"])
 Admin = Annotated[Principal, Depends(require_roles(Rol.admin))]
@@ -122,15 +123,19 @@ def generar_gastos(edificio_id: str, body: GenerarGastosIn, user: Admin, db: Ses
 @router.post("/gastos-comunes/enviar/{periodo}")
 def enviar_gastos(edificio_id: str, periodo: str, user: Admin, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
+    if not email.configurado():
+        return {"encolado": False, "estado": NO_CONFIGURADO, "motivo": email.motivo_no_configurado()}
     tasks.enviar_gastos_comunes.delay(ed.id, periodo)
-    return {"encolado": True}
+    return {"encolado": True, "estado": ENCOLADO, "motivo": ""}
 
 
 @router.post("/circulares")
 def enviar_circular(edificio_id: str, body: CircularIn, user: Admin, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
+    if not email.configurado():
+        return {"encolado": False, "estado": NO_CONFIGURADO, "motivo": email.motivo_no_configurado()}
     tasks.enviar_circular.delay(ed.id, body.asunto, body.cuerpo_html)
-    return {"encolado": True}
+    return {"encolado": True, "estado": ENCOLADO, "motivo": ""}
 
 
 @router.post("/conciliacion")
