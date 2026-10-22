@@ -70,6 +70,26 @@ La clave real vive en la base: la crea `scripts/seed.py` al cargar el edificio y
 vez**. Guárdela en el gestor de contraseñas y úsela en el `config_local.py` del lector. Sólo guárdela en
 `.env` si ya la tiene; generar una nueva aquí no coincidiría con la base.
 
+## 2b. Qué se usa con Supabase y qué no hace falta
+
+| Servicio | Variables en `.env` | Notas |
+|---|---|---|
+| Supabase (PostgreSQL) | `DATABASE_URL`, `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` | Único servicio de Supabase que usa el sistema. `DB_POOL_SIZE` limita las conexiones que API, worker y beat abren al pooler. |
+| Redis (cola de Celery) | ninguna | En Docker lo levanta el propio compose (`redis:7`); Supabase no lo ofrece. Fuera de Docker, `REDIS_URL` (valor por defecto `redis://localhost:6379/0`). |
+| WhatsApp (Evolution API) | `EVOLUTION_URL`, `EVOLUTION_INSTANCE`, `EVOLUTION_APIKEY`, `WHATSAPP_WEBHOOK_TOKEN` | Servicio aparte de Supabase. |
+| Correo (SES) | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Servicio aparte de Supabase. |
+| IA (Anthropic) | `ANTHROPIC_API_KEY` | Opcional. |
+| Panel y sesiones | `JWT_SECRET`, `CORS_ORIGINS`, `ENTORNO` | Generados localmente por el asistente. |
+
+**No necesita de Supabase:** la *Data API* (REST automático), *Storage*, *Auth*, *Realtime* ni la clave
+`service_role`. El backend se conecta directamente a PostgreSQL con `DATABASE_URL`. Déjelos desactivados
+o sin usar.
+
+**Cómo queda el archivo `.env`:** cada variable tiene una línea de explicación encima. Las que aún no
+tienen valor están comentadas (`# DATABASE_URL=`), así la aplicación usa su valor por defecto en lugar de
+leer una cadena vacía. Para activar una, quite el `#` y escriba el valor, o ejecute
+`python scripts/configurar_entorno.py`, que escribe el archivo completo y pide los secretos ocultos.
+
 ## 3. Reglas de uso
 
 - **No use la API automática de Supabase** (PostgREST / *Data API*) para estas tablas. Contienen datos

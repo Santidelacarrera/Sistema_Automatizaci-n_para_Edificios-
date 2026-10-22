@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     entorno: str = "desarrollo"  # desarrollo | produccion
     cors_origins: str = "http://localhost:3000"  # separados por coma
     database_url: str = "sqlite:///./dev.db"
+    db_pool_size: int = 5      # conexiones por proceso (API, worker y beat abren las suyas)
+    db_max_overflow: int = 5   # conexiones extra en picos; el pooler de Supabase limita el total
     jwt_secret: str = JWT_POR_DEFECTO
     jwt_expire_minutes: int = 60 * 8
     redis_url: str = "redis://localhost:6379/0"

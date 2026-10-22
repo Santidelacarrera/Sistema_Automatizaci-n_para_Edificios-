@@ -123,11 +123,34 @@ def validar_puerto(valor: str) -> str | None:
 
 # ---------- archivo .env ----------
 PLANTILLA = [
-    "ENTORNO", "DATABASE_URL", "JWT_SECRET", "WHATSAPP_WEBHOOK_TOKEN", "CORS_ORIGINS",
+    "ENTORNO", "DATABASE_URL", "DB_POOL_SIZE", "DB_MAX_OVERFLOW", "DB_PASSWORD",
+    "JWT_SECRET", "WHATSAPP_WEBHOOK_TOKEN", "CORS_ORIGINS",
     "EVOLUTION_URL", "EVOLUTION_INSTANCE", "EVOLUTION_APIKEY",
     "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM",
     "ANTHROPIC_API_KEY",
 ]
+
+# Explicación breve de cada variable: se escribe encima en .env para que sepa de dónde sale cada dato.
+DESCRIPCION = {
+    "ENTORNO": "desarrollo | produccion. En produccion el servidor exige JWT propio y PostgreSQL.",
+    "DATABASE_URL": "Supabase: Project Settings > Database > Connection string (Session pooler, puerto 5432). "
+                    "Vacio = SQLite local (solo desarrollo).",
+    "DB_POOL_SIZE": "Conexiones por proceso a la base (API, worker y beat). Con el pooler de Supabase conviene pocas.",
+    "DB_MAX_OVERFLOW": "Conexiones extra en picos. Vacio = 5.",
+    "DB_PASSWORD": "Solo para el perfil de Docker db-local (PostgreSQL local de prueba). No se usa con Supabase.",
+    "JWT_SECRET": "Firma las sesiones del panel. Lo genera el asistente (minimo 32 caracteres).",
+    "WHATSAPP_WEBHOOK_TOKEN": "Secreto del webhook de Evolution API (cabecera X-Webhook-Token). Lo genera el asistente.",
+    "CORS_ORIGINS": "Direccion(es) del panel, separadas por coma. Ej.: http://localhost:3000",
+    "EVOLUTION_URL": "Evolution API: URL donde esta instalado (sin barra final).",
+    "EVOLUTION_INSTANCE": "Evolution API: nombre de la instancia de WhatsApp del edificio.",
+    "EVOLUTION_APIKEY": "Evolution API: clave de administracion de la instalacion.",
+    "SMTP_HOST": "Amazon SES: consola SES > SMTP settings (email-smtp.<region>.amazonaws.com).",
+    "SMTP_PORT": "587 (STARTTLS).",
+    "SMTP_USER": "Usuario SMTP de SES (no es la clave de AWS).",
+    "SMTP_PASSWORD": "Clave SMTP de SES (se genera en la consola SES).",
+    "SMTP_FROM": "Remitente verificado en SES.",
+    "ANTHROPIC_API_KEY": "Opcional: clasificacion de mensajes de WhatsApp con IA. Vacio = palabras clave.",
+}
 
 
 def _valor_env(valor: str) -> str:
@@ -141,11 +164,18 @@ def _valor_env(valor: str) -> str:
 
 
 def construir_env(valores: dict[str, str]) -> str:
-    """Contenido de .env: primero las claves de la plantilla en orden fijo, luego las claves de dispositivo."""
+    """Contenido de .env. Cada variable de la plantilla lleva su explicación; las vacías quedan comentadas
+    (así la app usa sus valores por defecto en vez de leer una cadena vacía)."""
     lineas = ["# Generado por scripts/configurar_entorno.py. NO subir a Git.", ""]
     for clave in PLANTILLA:
-        if clave in valores:
-            lineas.append(f"{clave}={_valor_env(valores[clave])}")
+        if clave in DESCRIPCION:
+            lineas.append(f"# {DESCRIPCION[clave]}")
+        valor = valores.get(clave, "")
+        if valor:
+            lineas.append(f"{clave}={_valor_env(valor)}")
+        else:
+            lineas.append(f"# {clave}=")
+        lineas.append("")
     for clave in sorted(valores):
         if clave.startswith("DEVICE_KEY_"):
             lineas.append(f"{clave}={_valor_env(valores[clave])}")
