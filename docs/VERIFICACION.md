@@ -7,8 +7,8 @@ Redis locales). Cada fila dice qué se probó, con qué comando y qué quedó si
 
 | Qué | Comando | Resultado |
 |---|---|---|
-| Suite del backend (SQLite) | `cd backend && pytest -q` | 213 pasan |
-| Suite del backend (PostgreSQL 16 real) | `TEST_DATABASE_URL=postgresql+psycopg://… pytest -q` | 212 pasan, 1 se omite (prueba específica de SQLite) |
+| Suite del backend (SQLite) | `cd backend && pytest -q` | 215 pasan, 2 se omiten (las de PostgreSQL) |
+| Suite del backend (PostgreSQL 16 real) | `TEST_DATABASE_URL=postgresql+psycopg://… pytest -q` | 216 pasan, 1 se omite (prueba específica de SQLite) |
 | Carreras de concurrencia (PostgreSQL) | `pytest tests/test_concurrencia_pg.py` | Pasan con el bloqueo de filas; **sin él fallan** (se aceptaban 10 y 11 reservas con 6 cupos) |
 | Migraciones en PostgreSQL | `alembic upgrade head && alembic check` | Sin diferencias entre modelos y migraciones |
 | Panel, modo demo | `npx playwright test` (en `frontend/`) | 15/15 |
@@ -31,6 +31,8 @@ Redis locales). Cada fila dice qué se probó, con qué comando y qué quedó si
 5. **Clave de lector guardada en claro**: ahora se guarda su hash SHA-256 y se puede rotar desde el panel.
 6. **Panel mostraba datos viejos** al cambiar de sección (hasta 10 s): ahora refresca al cambiar.
 7. **Next.js 14.2.15** con avisos críticos: actualizado a 15.5.
+8. **Cartolas sin límite de tamaño** (riesgo de agotar memoria): ahora se rechazan sobre 5 MB con 413.
+9. **Sin cabeceras de seguridad** en API y panel: ahora hay `nosniff`, anti-marcos, `no-store` en datos personales, HSTS en producción y una política de contenido (CSP) en el panel.
 
 ## Qué NO se probó
 
