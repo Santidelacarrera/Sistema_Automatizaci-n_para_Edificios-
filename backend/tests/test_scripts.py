@@ -18,7 +18,7 @@ def _seed(*extra):
 def test_seed_crea_edificio_unidades_y_admin(db):
     assert _seed() == 0
     ed = db.get(Edificio, "edificio_c")
-    assert ed and len(ed.device_api_key) >= 32
+    assert ed and len(ed.device_api_key) == 64  # hash SHA-256, no la clave en claro
     unidades = db.query(Unidad).filter_by(edificio_id="edificio_c").order_by(Unidad.numero).all()
     assert [u.numero for u in unidades] == ["101", "102"]
     assert [u.codigo_cobro for u in unidades] == ["CC-EDIFICIOC-101", "CC-EDIFICIOC-102"]

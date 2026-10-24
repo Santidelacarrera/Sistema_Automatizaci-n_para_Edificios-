@@ -75,6 +75,11 @@ def tenant_of(user: Principal, edificio_id: str) -> str:
     return edificio_id
 
 
+def hash_clave_dispositivo(clave: str) -> str:
+    """Las claves de lector son aleatorias de 256 bits: SHA-256 basta y evita guardarlas en claro."""
+    return hashlib.sha256(clave.encode()).hexdigest()
+
+
 def device_building(
     edificio_id: str,
     x_device_key: Annotated[str | None, Header()] = None,
@@ -82,6 +87,6 @@ def device_building(
 ) -> Edificio:
     """Autenticación de lectores ESP32: API key por edificio."""
     ed = db.get(Edificio, edificio_id)
-    if not ed or not x_device_key or not hmac.compare_digest(ed.device_api_key, x_device_key):
+    if not ed or not x_device_key or not hmac.compare_digest(ed.device_api_key, hash_clave_dispositivo(x_device_key)):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Dispositivo no autorizado")
     return ed

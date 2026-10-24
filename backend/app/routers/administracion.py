@@ -9,13 +9,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+import secrets
+
 from .. import validacion
 from ..db import get_db
 from ..models import Edificio, EspacioComun, Regla, Residente, Rol, Tag, Unidad
 from ..models import EstadoTag, Evento, Vehiculo
 from ..schemas import (AjustesAccesoIn, PruebaAlcanceIn, ReglaIn, ReglaPatch, ResidenteIn, ResidentePatch, TagIn,
                        TagMotivo, TagPatch, TagReasignar, TagVincular)
-from ..security import Principal, require_roles, tenant_of
+from ..security import Principal, hash_clave_dispositivo, require_roles, tenant_of
 from ..services import administracion
 from ..services.administracion import AdminError
 
@@ -287,3 +289,14 @@ def editar_regla(edificio_id: str, regla_id: int, body: ReglaPatch, user: Admin,
         _responder_error(db, e)
     db.commit()
     return {"id": r.id, "activa": r.activa}
+
+
+@router.post("/dispositivos/rotar-clave")
+def rotar_clave_dispositivo(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Genera una nueva X-Device-Key. Se muestra una sola vez; los lectores con la anterior quedan sin acceso."""
+    ed = _ed(db, user, edificio_id)
+    clave = secrets.token_urlsafe(32)
+    ed.device_api_key = hash_clave_dispositivo(clave)
+    db.add(Evento(edificio_id=ed.id, tipo="dispositivos.clave_rotada", payload={"por": user.residente_id}))
+    db.commit()
+    return {"device_key": clave, "aviso": "Guárdela ahora: no se vuelve a mostrar. Reconfigure los lectores."}

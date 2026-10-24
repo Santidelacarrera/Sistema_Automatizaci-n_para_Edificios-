@@ -24,6 +24,7 @@ from sqlalchemy import inspect  # noqa: E402
 from sqlalchemy.exc import SQLAlchemyError  # noqa: E402
 
 from app import validacion  # noqa: E402
+from app.security import hash_clave_dispositivo
 from app.db import SessionLocal, engine  # noqa: E402
 from app.models import Edificio, Residente, Rol, Unidad  # noqa: E402
 from app.security import hash_password  # noqa: E402
@@ -118,7 +119,7 @@ def crear(db, cfg: dict, password: str) -> dict:
                         cupos_visitas=int(ed_cfg.get("cupos_visitas", 6)),
                         max_estac_por_unidad=int(ed_cfg.get("max_estac_por_unidad", 2)),
                         tolerancia_visita_min=int(ed_cfg.get("tolerancia_visita_min", 20)),
-                        device_api_key=clave_dispositivo)
+                        device_api_key=hash_clave_dispositivo(clave_dispositivo))  # sólo se guarda el hash
     db.add(edificio)
     db.flush()
     unidades = {}

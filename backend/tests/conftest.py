@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from app.db import Base, SessionLocal, engine
 from app.main import app
 from app.models import Edificio, Residente, Rol, Unidad
-from app.security import hash_password
+from app.security import hash_clave_dispositivo, hash_password
 
 
 @pytest.fixture()
@@ -32,7 +32,7 @@ def client(db):
 def seed(db):
     """2 edificios para probar aislamiento multi-tenant."""
     for eid, key in (("edificio_a", "keyA"), ("edificio_b", "keyB")):
-        db.add(Edificio(id=eid, nombre=eid.upper(), device_api_key=key, cupos_visitas=6))
+        db.add(Edificio(id=eid, nombre=eid.upper(), device_api_key=hash_clave_dispositivo(key), cupos_visitas=6))
         for n, coef, est in (("101", 0.5, 2), ("102", 0.3, 1), ("103", 0.2, 0)):
             db.add(Unidad(edificio_id=eid, numero=n, coeficiente=coef, estacionamientos=est,
                           codigo_cobro=f"CC-{eid[-1].upper()}-{n}"))
