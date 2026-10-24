@@ -91,3 +91,15 @@ test("móvil: el portón no obliga a desplazarse en horizontal", async ({ page }
   const desbordado = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   expect(desbordado).toBe(false);
 });
+
+test("ajustes: generar clave nueva pide confirmación y la muestra una vez", async ({ page }) => {
+  await entrarDemo(page);
+  await page.getByRole("button", { name: "Administración" }).click();
+  await page.getByRole("button", { name: "Acceso", exact: true }).click();
+  await page.getByRole("button", { name: "Generar clave nueva" }).click();
+  await expect(page.getByRole("alertdialog")).toContainText("dejarán de abrir");
+  await page.getByRole("button", { name: "Sí, generar clave nueva" }).click();
+  await expect(page.locator(".clave-visible")).toContainText("demo-");
+  await page.getByRole("button", { name: "Ya la guardé" }).click();
+  await expect(page.locator(".clave-visible")).toHaveCount(0);
+});

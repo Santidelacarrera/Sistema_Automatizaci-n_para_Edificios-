@@ -209,3 +209,7 @@ input[type=text], input[type=email], input[type=password], input:not([type]) { b
   .ventana.encendida { animation: luz 3.2s ease-in-out infinite; }
   @keyframes luz { 50% { box-shadow: inset 0 0 0 3px var(--tinta), 0 0 32px rgba(240,176,58,.9); } }
 }
+
+.clave-lectores { margin-top: 2rem; max-width: 40rem; }
+.clave-lectores h3 { font: 700 1.5rem/1 var(--display); margin: 0 0 .5rem; }
+.clave-visible { font-size: 1rem; word-break: break-all; user-select: all; }
