@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PG_CLAVE: clave-efimera-de-ci  # base desechable del job, no es un secreto real
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -20,7 +23,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: ci
-          POSTGRES_PASSWORD: ci-solo-para-pruebas
+          POSTGRES_PASSWORD: ${{ env.PG_CLAVE }}
           POSTGRES_DB: edificios
         ports: ["5432:5432"]
         options: >-
@@ -40,7 +43,7 @@ jobs:
         run: pytest -q
       - name: Migraciones contra PostgreSQL real
         env:
-          DATABASE_URL: postgresql+psycopg://ci:ci-solo-para-pruebas@localhost:5432/edificios
+          DATABASE_URL: postgresql+psycopg://ci:${{ env.PG_CLAVE }}@localhost:5432/edificios
         run: |
           alembic upgrade head
           alembic check

@@ -18,7 +18,7 @@ from ..models import EstadoTag, Evento, Vehiculo
 from ..schemas import (AjustesAccesoIn, PruebaAlcanceIn, ReglaIn, ReglaPatch, ResidenteIn, ResidentePatch, TagIn,
                        TagMotivo, TagPatch, TagReasignar, TagVincular)
 from ..security import Principal, hash_clave_dispositivo, require_roles, tenant_of
-from ..services import administracion
+from ..services import administracion, privacidad
 from ..services.administracion import AdminError
 
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["administracion"])
@@ -300,3 +300,30 @@ def rotar_clave_dispositivo(edificio_id: str, user: Admin, db: Session = Depends
     db.add(Evento(edificio_id=ed.id, tipo="dispositivos.clave_rotada", payload={"por": user.residente_id}))
     db.commit()
     return {"device_key": clave, "aviso": "Guárdela ahora: no se vuelve a mostrar. Reconfigure los lectores."}
+
+
+@router.get("/residentes/{residente_id}/datos-personales")
+def datos_personales(edificio_id: str, residente_id: int, user: Admin, db: Session = Depends(get_db)):
+    """Derecho de acceso: todo lo que el sistema guarda de la persona. Queda registrado."""
+    ed = _ed(db, user, edificio_id)
+    r = db.get(Residente, residente_id)
+    if not r or r.edificio_id != ed.id:
+        raise HTTPException(404, "Residente no existe")
+    db.add(Evento(edificio_id=ed.id, tipo="privacidad.exportacion", payload={"residente_id": r.id, "por": user.residente_id}))
+    db.commit()
+    return privacidad.exportar(db, r)
+
+
+@router.post("/residentes/{residente_id}/anonimizar")
+def anonimizar_residente(edificio_id: str, residente_id: int, user: Admin, db: Session = Depends(get_db)):
+    """Derecho de supresión: borra los datos identificables. No se puede deshacer."""
+    ed = _ed(db, user, edificio_id)
+    r = db.get(Residente, residente_id)
+    if not r or r.edificio_id != ed.id:
+        raise HTTPException(404, "Residente no existe")
+    if r.id == user.residente_id:
+        raise HTTPException(409, "No puede anonimizar su propia cuenta")
+    privacidad.anonimizar(db, r)
+    db.add(Evento(edificio_id=ed.id, tipo="privacidad.anonimizacion", payload={"residente_id": r.id, "por": user.residente_id}))
+    db.commit()
+    return {"ok": True}

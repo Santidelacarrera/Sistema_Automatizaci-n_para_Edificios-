@@ -15,6 +15,7 @@ celery = Celery("edificios", broker=settings.redis_url, backend=settings.redis_u
 celery.conf.task_always_eager = settings.celery_eager
 celery.conf.beat_schedule = {
     "liberar-no-show": {"task": "app.tasks.liberar_no_show", "schedule": 60.0},
+    "purgar-datos-vencidos": {"task": "app.tasks.purgar_datos", "schedule": 86400.0},  # una vez al día
 }
 
 
@@ -71,3 +72,12 @@ def enviar_circular(edificio_id: str, asunto: str, cuerpo_html: str) -> int:
             enviar_email.delay(r.email, asunto, html)
             n += 1
     return n
+
+
+@celery.task(name="app.tasks.purgar_datos")
+def purgar_datos() -> dict:
+    from .services import retencion
+    with SessionLocal() as db:
+        res = retencion.purgar(db)
+        db.commit()
+        return res

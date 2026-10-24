@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     login_max_intentos: int = 5  # fallos por cuenta antes de bloquear
     login_max_intentos_ip: int = 30  # fallos por IP antes de bloquear
     login_ventana_min: int = 15  # ventana y duración del bloqueo
+    # Retención de datos personales (días). Ver docs/PRIVACIDAD.md. 0 = no purgar (no recomendado).
+    retencion_accesos_dias: int = 180      # bitácora del portón: patentes y códigos de sticker
+    retencion_visitas_dias: int = 90       # nombre y patente de visitas ya terminadas
+    retencion_eventos_dias: int = 365      # bitácora de eventos y auditoría
+    retencion_intentos_login_dias: int = 30
     zona_horaria: str = "America/Santiago"  # hora de pared de los 4 edificios
     jwt_secret: str = JWT_POR_DEFECTO
     jwt_expire_minutes: int = 60 * 8
