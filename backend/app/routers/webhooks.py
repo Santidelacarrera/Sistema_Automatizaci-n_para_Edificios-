@@ -48,5 +48,5 @@ async def whatsapp_webhook(request: Request, x_webhook_token: str | None = Heade
 
 def _ahora_rango():
     from datetime import timedelta
-    from ..config import utcnow
-    return utcnow(), utcnow() + timedelta(minutes=1)
+    from ..config import ahora_local
+    return ahora_local(), ahora_local() + timedelta(minutes=1)

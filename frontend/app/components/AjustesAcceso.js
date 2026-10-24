@@ -8,6 +8,42 @@ export const MODOS = [
   { valor: "solo_patente", titulo: "Sólo patente", texto: "Ignora el sticker. Depende por completo de la cámara y de la luz." },
 ];
 
+function ClaveLectores({ api }) {
+  const [confirmar, setConfirmar] = useState(false);
+  const [clave, setClave] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const rotar = async () => {
+    setBusy(true); setMsg(null);
+    try { setClave((await api.rotarClaveLectores()).device_key); setConfirmar(false); }
+    catch (e) { setMsg(mensajeError(e.detail ?? e.message)); }
+    setBusy(false);
+  };
+  return (
+    <section className="clave-lectores" aria-labelledby="clave-titulo">
+      <h3 id="clave-titulo">Clave de los lectores</h3>
+      <p className="ayuda">Cada lector se identifica con una clave. Si se pierde un lector o sospecha de una filtración, genere una nueva: los lectores con la clave anterior dejan de abrir hasta que se les cargue la nueva.</p>
+      {clave ? (
+        <div role="status" className="aviso ok">
+          <p>Nueva clave (se muestra una sola vez; cópiela ahora):</p>
+          <p><code className="clave-visible">{clave}</code></p>
+          <button type="button" className="btn sec" onClick={() => navigator.clipboard?.writeText(clave)}>Copiar</button>{" "}
+          <button type="button" className="btn sec" onClick={() => setClave(null)}>Ya la guardé</button>
+        </div>
+      ) : confirmar ? (
+        <div className="aviso err" role="alertdialog" aria-label="Confirmar cambio de clave">
+          <p>Los lectores dejarán de abrir hasta que les cargue la clave nueva. ¿Continuar?</p>
+          <button type="button" className="btn" disabled={busy} onClick={rotar}>Sí, generar clave nueva</button>{" "}
+          <button type="button" className="btn sec" onClick={() => setConfirmar(false)}>Cancelar</button>
+        </div>
+      ) : (
+        <button type="button" className="btn sec" onClick={() => setConfirmar(true)}>Generar clave nueva</button>
+      )}
+      {msg && <p role="status" className="aviso err">{msg}</p>}
+    </section>
+  );
+}
+
 export default function AjustesAcceso({ api }) {
   const [a, setA] = useState(null);
   const [errores, setErrores] = useState({});
@@ -40,6 +76,7 @@ export default function AjustesAcceso({ api }) {
 
   const modo = MODOS.find((m) => m.valor === a.modo_acceso);
   return (
+    <>
     <form className="form-admin" onSubmit={guardar} noValidate aria-labelledby="ajustes-titulo">
       <h3 id="ajustes-titulo">Cómo abre el portón</h3>
       <fieldset className="modos">
@@ -81,5 +118,7 @@ export default function AjustesAcceso({ api }) {
       <div className="acciones"><button className="btn" disabled={busy}>Guardar ajustes</button></div>
       {msg && <p role="status" className={`aviso ${msg.ok ? "ok" : "err"}`}>{msg.t}</p>}
     </form>
+    <ClaveLectores api={api} />
+    </>
   );
 }

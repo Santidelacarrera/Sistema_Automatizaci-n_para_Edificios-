@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from app.config import utcnow
+from app.config import ahora_local
 from app.models import Cargo, EstadoVisita, Regla, Visita
 from app.services import access, finance, reconciliation
 
@@ -60,7 +60,7 @@ def test_visitas_cupos_qr_y_no_show(db, seed):
     from app.models import Edificio
     ed = db.get(Edificio, "edificio_a")
     uid = seed["edificio_a", "101"].id
-    ini = utcnow() + timedelta(minutes=1)
+    ini = ahora_local() + timedelta(minutes=1)
     vs = [access.reservar_visita(db, ed, uid, f"V{i}", ini, ini + timedelta(hours=2)) for i in range(6)]
     try:
         access.reservar_visita(db, ed, uid, "V7", ini, ini + timedelta(hours=1))
@@ -73,7 +73,7 @@ def test_visitas_cupos_qr_y_no_show(db, seed):
     ok3, motivo = access.validar_acceso(db, ed, vs[0].codigo_qr)
     assert ok and not ok3 and "usos" in motivo
     # no-show: llegada tardía > 20 min libera el cupo
-    vs[1].desde = utcnow() - timedelta(minutes=21)
+    vs[1].desde = ahora_local() - timedelta(minutes=21)
     assert access.liberar_no_show(db, ed) == 1
     assert vs[1].estado == EstadoVisita.no_show
     assert access.reservar_visita(db, ed, uid, "Nuevo", ini, ini + timedelta(hours=1))
@@ -89,7 +89,7 @@ def test_motor_reglas_quincho(client, seed, db):
                          ("max_por_mes", {"max": 1}), ("bloquear_morosos", {"deuda_max": 0})):
         client.post("/edificios/edificio_a/reglas", headers=h,
                     json={"accion": "reservar_quincho", "tipo": tipo, "params": params})
-    dia = (utcnow() + timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
+    dia = (ahora_local() + timedelta(days=3)).replace(hour=0, minute=0, second=0, microsecond=0)
     mk = lambda d, h1, h2: {"espacio_id": esp.id, "desde": (d + timedelta(hours=h1)).isoformat(),
                             "hasta": (d + timedelta(hours=h2)).isoformat()}
     assert client.post("/edificios/edificio_a/reservas-espacio", headers=h, json=mk(dia, 6, 8)).status_code == 422

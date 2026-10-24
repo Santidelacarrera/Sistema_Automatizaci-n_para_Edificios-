@@ -19,6 +19,19 @@ async def lifespan(_):
 
 
 app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan)
+@app.middleware("http")
+async def cabeceras_de_seguridad(request, call_next):
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "no-referrer")
+    if request.url.path.startswith(("/auth", "/edificios", "/api")):
+        resp.headers.setdefault("Cache-Control", "no-store")  # respuestas con datos personales: no cachear
+    if settings.entorno == "produccion":
+        resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    return resp
+
+
 app.add_middleware(CORSMiddleware,
                    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
                    allow_methods=["*"], allow_headers=["*"])

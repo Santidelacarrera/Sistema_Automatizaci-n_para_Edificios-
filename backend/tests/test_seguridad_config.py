@@ -81,3 +81,18 @@ def test_cors_se_lee_de_la_configuracion(monkeypatch):
     monkeypatch.setenv("CORS_ORIGINS", "https://panel.ejemplo.cl, https://otro.ejemplo.cl")
     cfg = Settings()
     assert cfg.cors_origins == "https://panel.ejemplo.cl, https://otro.ejemplo.cl"
+
+
+def test_cabeceras_de_seguridad_y_sin_cache_en_datos_personales(client):
+    r = client.get("/health")
+    assert r.headers["X-Content-Type-Options"] == "nosniff" and r.headers["X-Frame-Options"] == "DENY"
+    r = client.post("/auth/login", json={"edificio_id": "x", "email": "a@b.cl", "password": "nada-importa"})
+    assert r.headers["Cache-Control"] == "no-store"
+
+
+def test_cartola_enorme_se_rechaza_sin_leerla_entera(client, seed):
+    from conftest import login
+    h = login(client, "edificio_a", "ana@x.cl")
+    grande = b"fecha,descripcion,monto\n" + b"01/01/2026,x,1\n" * 400_000  # ~6 MB
+    r = client.post("/edificios/edificio_a/conciliacion", headers=h, files={"cartola": ("c.csv", grande, "text/csv")})
+    assert r.status_code == 413

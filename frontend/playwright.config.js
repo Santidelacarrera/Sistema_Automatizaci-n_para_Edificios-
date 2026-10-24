@@ -10,6 +10,8 @@ module.exports = defineConfig({
     baseURL: process.env.PW_BASE_URL || "http://localhost:3000",
     channel: process.env.PW_CHANNEL || undefined,
     trace: "retain-on-failure",
+    // PW_CHROMIUM=/ruta/al/chromium usa un navegador ya instalado (sin descargar nada).
+    launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
   },
   webServer: process.env.PW_BASE_URL ? undefined : {
     command: "npm run build && npm run start",

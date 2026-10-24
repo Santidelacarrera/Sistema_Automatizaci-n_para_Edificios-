@@ -1,4 +1,5 @@
 """Comunicación de cobranza: estado de cuenta y recordatorios por WhatsApp y correo."""
+from ..config import hoy_local
 from datetime import date
 
 from sqlalchemy import func, select
@@ -10,7 +11,7 @@ from .resultado import ENCOLADO, ERROR, NO_CONFIGURADO, ResultadoEnvio
 
 
 def morosos(db: Session, edificio_id: str) -> list[dict]:
-    hoy = date.today()
+    hoy = hoy_local()
     filas = db.execute(
         select(Unidad.id, Unidad.numero, Unidad.codigo_cobro, func.sum(Cargo.saldo),
                func.min(Cargo.vencimiento), func.sum(Cargo.saldo).filter(Cargo.vencimiento < hoy))

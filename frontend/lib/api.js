@@ -74,6 +74,7 @@ function adminClient(req) {
     desvincularTag: (id) => req("POST", `/tags/${id}/desvincular`),
     ajustesAcceso: () => req("GET", "/ajustes-acceso"),
     guardarAjustes: (b) => req("PATCH", "/ajustes-acceso", b),
+    rotarClaveLectores: () => req("POST", "/dispositivos/rotar-clave"),
     pruebasAlcance: () => req("GET", "/pruebas-alcance"),
     anotarPruebaAlcance: (b) => req("POST", "/pruebas-alcance", b),
   };
@@ -182,6 +183,7 @@ function demoClient() {
       t.patente = veh.patente; return { id };
     },
     desvincularTag: async (id) => { tagDemo(id).patente = ""; return { id }; },
+    rotarClaveLectores: async () => ({ device_key: "demo-" + Math.random().toString(36).slice(2, 14), aviso: "Clave de ejemplo: en modo demo no cambia nada." }),
     ajustesAcceso: async () => ({ ...ajustes }),
     guardarAjustes: async (b) => { ajustes = { ...ajustes, ...Object.fromEntries(Object.entries(b).filter(([, v]) => v !== null && v !== undefined)) }; return { ...ajustes }; },
     pruebasAlcance: async () => pruebas,

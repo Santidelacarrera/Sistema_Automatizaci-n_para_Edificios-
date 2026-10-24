@@ -1,7 +1,7 @@
 """QR de visitas (PNG) y cancelación de reservas de espacios comunes con multa."""
 from datetime import timedelta
 
-from app.config import utcnow
+from app.config import ahora_local
 from app.models import Cargo, EspacioComun, Regla, Visita
 from app.services import access
 
@@ -11,7 +11,7 @@ from conftest import login
 def _visita(db, seed):
     from app.models import Edificio
     ed = db.get(Edificio, "edificio_a")
-    ini = utcnow() + timedelta(hours=5)
+    ini = ahora_local() + timedelta(hours=5)
     return access.reservar_visita(db, ed, seed["edificio_a", "101"].id, "Visita QR", ini, ini + timedelta(hours=2))
 
 
@@ -30,7 +30,7 @@ def test_qr_visita_devuelve_png_solo_a_su_unidad(client, seed, db):
 
 
 def _reservar(client, h, espacio_id, desde_h, dur_h=2, unidad=None):
-    d = utcnow() + timedelta(hours=desde_h)
+    d = ahora_local() + timedelta(hours=desde_h)
     body = {"espacio_id": espacio_id, "desde": d.isoformat(), "hasta": (d + timedelta(hours=dur_h)).isoformat()}
     if unidad:
         body["unidad_id"] = unidad

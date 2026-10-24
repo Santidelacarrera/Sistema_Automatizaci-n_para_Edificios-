@@ -70,6 +70,9 @@ function Panel({ sess: sesionInicial, onSalir }) {
 
   useEffect(() => { setData(null); setSel(null); cargar(); const t = setInterval(cargar, 10000); return () => clearInterval(t); }, [cargar]);
 
+  // Al cambiar de sección se refresca al tiro: el portón y la cobranza no deben mostrar datos de hace 10 s.
+  useEffect(() => { cargar(); }, [vista]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!ES_SUPERADMIN(sesionInicial)) return;
     listarEdificios(sesionInicial).then(setEdificios).catch((e) => setErrEdificios(e.message));
