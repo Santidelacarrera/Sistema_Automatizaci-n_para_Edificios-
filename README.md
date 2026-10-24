@@ -90,14 +90,17 @@ Cada componente se marca con una de tres categorías. No se deben confundir:
 | Migraciones Alembic (0001, 0002) | Probado con ejecución real | `upgrade`, `downgrade`, `check` sin diferencias |
 | Carga de datos (`seed.py`, `importar_csv.py`, `importar_stickers.py`) | Probado con ejecución real | Tests y CLI sobre base migrada |
 | Panel web (administración, portón, ficha, ajustes, prueba de alcance) | Probado con ejecución real | Playwright en modo demo, Chrome real (14/14) |
-| Panel contra el backend real | Sin probar | Modo demo únicamente |
+| Panel contra el backend real | Probado con ejecución real | Playwright contra API + panel con datos sembrados (`scripts/e2e_real.sh`, 3/3) |
+| PostgreSQL 16 real | Probado con ejecución real | Migraciones (`upgrade` + `check`) y suite completa contra PostgreSQL; carreras de concurrencia reproducidas sin bloqueo y corregidas |
+| Celery + Redis reales | Probado con ejecución real | Worker en proceso `solo` ejecutó `purgar_datos`, `liberar_no_show` y `enviar_email` por la cola |
+| Bloqueo de login, rotación de clave de lector, retención y anonimización | Probado con ejecución real | Suite de backend |
 | Firmware ESP32 (Wiegand, RS485, RC522, relé, red) | Probado con simulador / Sin probar en equipo | Codificador Wiegand y cruce con el backend; hardware no |
 | Traductor LPR | Probado con simulador / doble | Tests contra el backend en memoria |
 | Cámaras LPR Hikvision y Dahua | Sin probar | Esqueleto; responde 501 hasta confirmar el formato |
 | WhatsApp (Evolution API) | Probado con doble | Sin instancia real |
 | Correo (SMTP / SES) | Probado con doble | Sin envío real |
-| Supabase (PostgreSQL) | Sin probar | Probado con SQLite; la conexión real depende de la configuración del usuario |
-| Docker Compose | Sin probar | El YAML se valida; no se ejecutó `docker compose up` |
+| Supabase (PostgreSQL) | Sin probar | El motor es PostgreSQL y está probado; falta la conexión a **su** proyecto de Supabase |
+| Docker Compose | Sin probar | `docker compose config` valida el YAML y los perfiles; este entorno no tiene demonio de Docker, así que no se ejecutó `up` |
 | Asistente `configurar_entorno.py` y `verificar_conexiones.py` | Probado con ejecución real | Tests con consola simulada; verificación real contra el `.env` |
 
 ---
@@ -303,25 +306,26 @@ Limitaciones actuales, sin maquillar:
   interrupciones del lector). La lista de pruebas de banco está en `firmware/esp32/README.md`.
 - **Transporte sin cifrar** entre lectores y servidor (HTTP en red local). Requiere HTTPS antes de
   producción.
-- **Sin límite de intentos de inicio de sesión** ni bloqueo por fuerza bruta.
-- **Sin rotación de la `X-Device-Key` desde el panel**; hoy se rota con un script y reconfigurando
-  cada lector.
 - **Cámaras Hikvision y Dahua** sin implementar: esqueleto que responde `501` hasta confirmar el
   formato del modelo.
 - **Deduplicación del traductor LPR en memoria**: con más de un proceso habría que moverla a Redis.
 - **WhatsApp y correo** verificados sólo con dobles; el webhook depende de que Evolution API envíe
   la cabecera configurada.
-- **Panel contra el backend real** sin una prueba E2E automatizada (sólo modo demo).
-- **Next.js 14.2.15** tiene un aviso de seguridad publicado; pendiente de actualizar.
+
+- **Dependencias:** Next.js 15 y React 19 sin avisos críticos; quedan 2 avisos de `postcss` (uso en el build, no
+  procesa entradas de usuarios) que se cierran al pasar a Next 16.
+- **Privacidad:** plazos, bases legales y avisos requieren revisión de un abogado antes del 1 de diciembre de 2026
+  (`docs/PRIVACIDAD.md`).
+- **Correo real (SMTP/SES)** y **WhatsApp real (Evolution API)** sin probar contra servicios reales.
 
 Próximos pasos, en orden de prioridad:
 
-1. Verificación con Supabase real y con un lector en banco (`firmware/esp32/README.md`).
+1. Verificación con **su** proyecto de Supabase (`python scripts/verificar_conexiones.py`) y con un lector en banco (`firmware/esp32/README.md`).
 2. HTTPS delante de la API, del panel y de los lectores.
-3. Límite de intentos y bloqueo temporal en `/auth/login`.
-4. Pruebas E2E del panel contra el backend real con datos sembrados.
-5. Rotación de claves de dispositivo desde el panel.
-6. Actualización de Next.js a una versión sin avisos abiertos.
+3. Revisión legal de `docs/PRIVACIDAD.md` y avisos a residentes.
+4. Pruebas con WhatsApp (Evolution) y correo (SMTP/SES) reales.
+5. Cámara de patentes: confirmar modelo, formato y política de grabación.
+6. Pasar a Next 16 cuando el equipo lo decida (cierra los avisos de `postcss`).
 
 ---
 
@@ -331,6 +335,8 @@ Próximos pasos, en orden de prioridad:
 |---|---|
 | [`docs/PUESTA_EN_MARCHA.md`](docs/PUESTA_EN_MARCHA.md) | Instalación, carga de datos, Evolution API, correo, HTTPS, Docker, respaldos y pruebas manuales |
 | [`docs/CREDENCIALES.md`](docs/CREDENCIALES.md) | Dónde obtener cada credencial, uso del asistente, rotación y respuesta ante filtraciones |
+| [`docs/VERIFICACION.md`](docs/VERIFICACION.md) | Qué se probó de verdad, con qué comandos y qué falta |
+| [`docs/PRIVACIDAD.md`](docs/PRIVACIDAD.md) | Datos que trata el sistema, plazos de retención, derechos de los titulares y pendientes legales |
 | [`docs/PORTON_UHF.md`](docs/PORTON_UHF.md) | Compra de stickers y lector, prueba de muestra, modos de acceso, clonación y pruebas de producción |
 | [`firmware/esp32/README.md`](firmware/esp32/README.md) | Cableado, advertencia de niveles lógicos 5 V / 3,3 V, configuración del equipo y pruebas de banco |
 | [`backend/integraciones/lpr/README.md`](backend/integraciones/lpr/README.md) | Configuración del traductor de cámaras de patentes |
