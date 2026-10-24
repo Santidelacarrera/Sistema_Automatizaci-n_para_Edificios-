@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,6 +20,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./dev.db"
     db_pool_size: int = 5      # conexiones por proceso (API, worker y beat abren las suyas)
     db_max_overflow: int = 5   # conexiones extra en picos; el pooler de Supabase limita el total
+    login_max_intentos: int = 5  # fallos por cuenta antes de bloquear
+    login_max_intentos_ip: int = 30  # fallos por IP antes de bloquear
+    login_ventana_min: int = 15  # ventana y duración del bloqueo
+    zona_horaria: str = "America/Santiago"  # hora de pared de los 4 edificios
     jwt_secret: str = JWT_POR_DEFECTO
     jwt_expire_minutes: int = 60 * 8
     redis_url: str = "redis://localhost:6379/0"
@@ -54,6 +59,20 @@ def validar_para_arranque(cfg: Settings = settings) -> None:
             raise RuntimeError("En producción JWT_SECRET debe ser propio y tener al menos 32 caracteres")
         if cfg.database_url.startswith("sqlite"):
             raise RuntimeError("En producción no se usa SQLite: configure DATABASE_URL (PostgreSQL)")
+
+
+def ahora_local() -> datetime:
+    """Hora de pared en la zona del negocio, sin tzinfo.
+
+    Las fechas que escribe una persona (reservas, ventanas de visita, horarios de reglas) se
+    guardan y comparan en esta hora local. Los instantes técnicos (bitácora, lecturas, JWT)
+    siguen en UTC con ``utcnow()``.
+    """
+    return datetime.now(ZoneInfo(settings.zona_horaria)).replace(tzinfo=None)
+
+
+def hoy_local():
+    return ahora_local().date()
 
 
 def utcnow() -> datetime:

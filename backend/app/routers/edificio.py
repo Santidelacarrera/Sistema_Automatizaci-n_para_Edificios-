@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import rules, tasks
-from ..config import utcnow
+from ..config import ahora_local
 from ..db import get_db
 from ..models import (Cargo, Edificio, EspacioComun, LecturaMedidor, Residente, ReservaEspacio,
                       Rol, Unidad, Visita)
@@ -180,7 +180,7 @@ def cancelar_reserva(edificio_id: str, reserva_id: int, user: User, db: Session 
     _unidad_propia(db, user, ed, r.unidad_id)  # residente sólo cancela las de su unidad
     if r.estado != "confirmada":
         raise HTTPException(409, "La reserva ya estaba cancelada")
-    ahora = utcnow()
+    ahora = ahora_local()
     if r.hasta <= ahora:
         raise HTTPException(409, "La reserva ya terminó")
     esp = db.get(EspacioComun, r.espacio_id)
@@ -220,5 +220,5 @@ def qr_visita(edificio_id: str, visita_id: int, user: User, db: Session = Depend
 @router.get("/visitas/cupos")
 def cupos(edificio_id: str, user: User, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
-    ocupados = access.cupos_ocupados(db, ed.id, utcnow(), utcnow() + timedelta(minutes=1))
+    ocupados = access.cupos_ocupados(db, ed.id, ahora_local(), ahora_local() + timedelta(minutes=1))
     return {"total": ed.cupos_visitas, "ocupados": ocupados, "libres": ed.cupos_visitas - ocupados}

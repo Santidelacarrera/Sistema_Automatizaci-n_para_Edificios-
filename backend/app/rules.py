@@ -14,7 +14,7 @@ from datetime import datetime, time
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .config import utcnow
+from .config import ahora_local
 from .models import EspacioComun, Regla
 
 
@@ -49,7 +49,7 @@ def _bloquear_morosos(p, ctx):
 
 
 def _anticipacion(p, ctx):
-    horas = (ctx["inicio"] - ctx.get("ahora", utcnow())).total_seconds() / 3600
+    horas = (ctx["inicio"] - ctx.get("ahora", ahora_local())).total_seconds() / 3600
     if "min_horas" in p and horas < p["min_horas"]:
         return f"Requiere al menos {p['min_horas']} h de anticipación"
     if "max_dias" in p and horas > p["max_dias"] * 24:
@@ -67,7 +67,7 @@ def evaluar(db: Session, edificio_id: str, accion: str, ctx: dict) -> Decision:
     for r in reglas:
         if r.tipo == "multa_cancelacion":
             if ctx.get("cancelando") and "inicio" in ctx:
-                horas = (ctx["inicio"] - ctx.get("ahora", utcnow())).total_seconds() / 3600
+                horas = (ctx["inicio"] - ctx.get("ahora", ahora_local())).total_seconds() / 3600
                 if horas < r.params.get("horas", 0):
                     d.multa += float(r.params.get("monto", 0))
             continue

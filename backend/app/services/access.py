@@ -11,7 +11,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from .. import events
-from ..config import utcnow
+from ..config import ahora_local, utcnow
 from ..models import (AccesoLog, Edificio, EstadoTag, EstadoVisita, LecturaPendiente, ModoAcceso, Residente,
                       Tag, TipoTag, Unidad, Vehiculo, Visita)
 from .credenciales import CredencialInvalida, detectar_formato, normalizar
@@ -119,7 +119,7 @@ def reservar_visita(db: Session, edificio: Edificio, unidad_id: int, nombre: str
 
 def liberar_no_show(db: Session, edificio: Edificio | None = None) -> int:
     """Libera reservas cuya llegada excedió la tolerancia (por defecto 20 min)."""
-    ahora = utcnow()
+    ahora = ahora_local()  # desde/hasta de una visita están en hora local
     q = select(Visita).where(Visita.estado == EstadoVisita.reservada, Visita.usos == 0)
     if edificio:
         q = q.where(Visita.edificio_id == edificio.id)
@@ -272,7 +272,7 @@ def _autorizar_visita_patente(db: Session, ed: Edificio, valor: str, ahora) -> D
         return Decision(False, "Patente no registrada: las visitas usan su código QR", "denegada")
     v = db.scalar(select(Visita).where(Visita.edificio_id == ed.id, Visita.patente != "", Visita.patente == valor,
                                        Visita.estado.in_([EstadoVisita.reservada, EstadoVisita.llego]),
-                                       Visita.hasta >= ahora))
+                                       Visita.hasta >= ahora_local()))
     if not v:
         return Decision(False, "Patente no registrada en este edificio", "denegada")
     return _pasar_visita(db, ed, v, ahora)
@@ -344,6 +344,7 @@ def _visita_por_qr(db: Session, ed: Edificio, token: str):
 def _pasar_visita(db: Session, ed: Edificio, v: Visita, ahora) -> Decision:
     if v.estado in (EstadoVisita.cancelada, EstadoVisita.no_show):
         return Decision(False, f"Reserva {v.estado.value}", "denegada")
+    ahora = ahora_local()  # la ventana de la visita está en hora local
     if ahora < v.desde - timedelta(minutes=5) or ahora > v.hasta:
         return Decision(False, "Fuera de horario de la reserva", "denegada")
     if v.usos >= v.usos_max:

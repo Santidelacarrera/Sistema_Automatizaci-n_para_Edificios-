@@ -1,6 +1,6 @@
 """Endpoints de lectura/gestión que alimentan el panel web."""
 from collections import defaultdict
-from datetime import date
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import events
-from ..config import utcnow
+from ..config import ahora_local, hoy_local, utcnow
 from ..db import get_db
 from ..models import (AccesoLog, Cargo, Edificio, EstadoVisita, Pago, Residente, Rol, Tag, Unidad,
                       Vehiculo, Visita)
@@ -33,11 +33,11 @@ def _ed(db: Session, user: Principal, edificio_id: str) -> Edificio:
 def panel(edificio_id: str, user: Staff, db: Session = Depends(get_db)):
     """Fachada: una entrada por unidad con deuda, residentes, vehículos y visitas activas."""
     ed = _ed(db, user, edificio_id)
-    ahora = utcnow()
+    ahora = ahora_local()
     deuda = dict(db.execute(select(Cargo.unidad_id, func.sum(Cargo.saldo)).where(
         Cargo.edificio_id == ed.id, Cargo.saldo > 0).group_by(Cargo.unidad_id)).all())
     vencida = dict(db.execute(select(Cargo.unidad_id, func.sum(Cargo.saldo)).where(
-        Cargo.edificio_id == ed.id, Cargo.saldo > 0, Cargo.vencimiento < date.today())
+        Cargo.edificio_id == ed.id, Cargo.saldo > 0, Cargo.vencimiento < hoy_local())
         .group_by(Cargo.unidad_id)).all())
     res, veh, vis = defaultdict(list), defaultdict(list), defaultdict(int)
     for r in db.scalars(select(Residente).where(Residente.edificio_id == ed.id, Residente.activo.is_(True))):
@@ -81,10 +81,10 @@ def accesos(edificio_id: str, user: Staff, limit: int = 50, db: Session = Depend
 def visitas(edificio_id: str, user: Staff, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
     rows = db.execute(select(Visita, Unidad.numero).join(Unidad, Unidad.id == Visita.unidad_id).where(
-        Visita.edificio_id == ed.id, Visita.hasta >= utcnow() - __import__("datetime").timedelta(hours=6))
+        Visita.edificio_id == ed.id, Visita.hasta >= ahora_local() - timedelta(hours=6))
         .order_by(Visita.desde)).all()
     return [{"id": v.id, "unidad": n, "nombre": v.nombre_visita, "patente": v.patente,
-             "desde": v.desde.isoformat() + "Z", "hasta": v.hasta.isoformat() + "Z",
+             "desde": v.desde.isoformat(), "hasta": v.hasta.isoformat(),
              "estado": v.estado.value, "usa_estacionamiento": v.usa_estacionamiento} for v, n in rows]
 
 
@@ -134,7 +134,7 @@ def registrar_pago(edificio_id: str, body: PagoIn, user: Admin, db: Session = De
         return {"duplicado": True}
     from ..services.reconciliation import _aplicar
     excedente = _aplicar(db, u.id, body.monto)
-    db.add(Pago(edificio_id=ed.id, unidad_id=u.id, monto=body.monto, fecha=date.today(),
+    db.add(Pago(edificio_id=ed.id, unidad_id=u.id, monto=body.monto, fecha=hoy_local(),
                 referencia=body.referencia[:200], ref_banco=body.ref_externa, conciliado=True))
     db.flush()
     events.publish(db, ed.id, "pago.conciliado",

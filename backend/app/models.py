@@ -244,3 +244,13 @@ class Vehiculo(Base):
     tag_id: Mapped[int | None] = mapped_column(ForeignKey("tags.id"))  # sticker opcional
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     adentro: Mapped[bool] = mapped_column(Boolean, default=False)  # anti-passback: última pasada fue entrada
+
+
+class IntentoLogin(Base):
+    """Intentos de inicio de sesión: base del bloqueo temporal por fuerza bruta."""
+    __tablename__ = "intentos_login"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    clave: Mapped[str] = mapped_column(String(220), index=True)  # "edificio|correo" en minúsculas
+    ip: Mapped[str] = mapped_column(String(64), default="", index=True)
+    exitoso: Mapped[bool] = mapped_column(Boolean, default=False)
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
