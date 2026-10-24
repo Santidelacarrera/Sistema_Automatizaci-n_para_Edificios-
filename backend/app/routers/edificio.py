@@ -16,6 +16,8 @@ from ..security import Principal, current_user, require_roles, tenant_of
 from ..services import access, email, finance, reconciliation
 from ..services.resultado import ENCOLADO, NO_CONFIGURADO
 
+MAX_CARTOLA_BYTES = 5_000_000
+
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["edificio"])
 Admin = Annotated[Principal, Depends(require_roles(Rol.admin))]
 User = Annotated[Principal, Depends(current_user)]
@@ -107,7 +109,10 @@ def enviar_circular(edificio_id: str, body: CircularIn, user: Admin, db: Session
 async def conciliar(edificio_id: str, user: Admin, cartola: UploadFile = File(...), db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
     try:
-        movs = reconciliation.leer_cartola(await cartola.read())
+        datos = await cartola.read(MAX_CARTOLA_BYTES + 1)  # lee de más sólo para detectar el exceso
+        if len(datos) > MAX_CARTOLA_BYTES:
+            raise HTTPException(413, f"La cartola supera {MAX_CARTOLA_BYTES // 1_000_000} MB. Divídala por meses.")
+        movs = reconciliation.leer_cartola(datos)
     except (ValueError, KeyError) as e:
         raise HTTPException(422, f"Cartola inválida: {e}")
     res = reconciliation.conciliar(db, ed.id, movs)
