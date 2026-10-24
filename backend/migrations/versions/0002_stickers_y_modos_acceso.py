@@ -23,7 +23,7 @@ def upgrade() -> None:
         b.add_column(sa.Column("formato", sa.String(12), nullable=False, server_default="epc"))
         b.add_column(sa.Column("fecha_alta", sa.DateTime(), nullable=True))
         b.add_column(sa.Column("ultima_lectura", sa.DateTime(), nullable=True))
-    op.execute("UPDATE tags SET estado = 'bloqueado' WHERE activo = 0 OR activo = false")
+    op.execute("UPDATE tags SET estado = 'bloqueado' WHERE activo = false")
     op.execute("UPDATE tags SET fecha_alta = CURRENT_TIMESTAMP WHERE fecha_alta IS NULL")
     with op.batch_alter_table("tags") as b:
         b.alter_column("fecha_alta", nullable=False)
@@ -71,7 +71,7 @@ def downgrade() -> None:
             b.drop_column(c)
     with op.batch_alter_table("tags") as b:
         b.add_column(sa.Column("activo", sa.Boolean(), nullable=False, server_default=sa.true()))
-    op.execute("UPDATE tags SET activo = CASE WHEN estado = 'activo' THEN 1 ELSE 0 END")
+    op.execute("UPDATE tags SET activo = CASE WHEN estado = 'activo' THEN true ELSE false END")
     with op.batch_alter_table("tags") as b:
         b.drop_column("ultima_lectura")
         b.drop_column("fecha_alta")

@@ -35,7 +35,7 @@ class Decision:
 
 def asignar_tag(db: Session, edificio: Edificio, unidad_id: int, uid: str,
                 tipo: TipoTag, residente_id: int | None = None, formato: str | None = None) -> Tag:
-    unidad = db.get(Unidad, unidad_id)
+    unidad = db.get(Unidad, unidad_id, with_for_update=True)  # serializa altas simultáneas de la unidad
     if not unidad or unidad.edificio_id != edificio.id:
         raise AccesoError("Unidad no existe en este edificio")
     if formato is None:  # stickers UHF vs llaveros RC522
@@ -71,7 +71,7 @@ def normalizar_patente(p: str) -> str:
 
 def registrar_vehiculo(db: Session, edificio: Edificio, unidad_id: int, patente: str,
                        descripcion: str = "", tag_id: int | None = None) -> Vehiculo:
-    unidad = db.get(Unidad, unidad_id)
+    unidad = db.get(Unidad, unidad_id, with_for_update=True)  # serializa altas simultáneas de la unidad
     if not unidad or unidad.edificio_id != edificio.id:
         raise AccesoError("Unidad no existe en este edificio")
     pat = normalizar_patente(patente)
@@ -105,6 +105,9 @@ def reservar_visita(db: Session, edificio: Edificio, unidad_id: int, nombre: str
                     patente: str = "", usa_estacionamiento: bool = True, usos_max: int = 2) -> Visita:
     if hasta <= desde:
         raise AccesoError("Rango horario inválido")
+    # Bloquea la fila del edificio hasta el commit: dos reservas simultáneas no pueden ver el mismo
+    # cupo libre (en PostgreSQL; SQLite ya serializa las escrituras).
+    db.execute(select(Edificio.id).where(Edificio.id == edificio.id).with_for_update())
     if usa_estacionamiento and cupos_ocupados(db, edificio.id, desde, hasta) >= edificio.cupos_visitas:
         raise AccesoError("Sin cupos de estacionamiento de visitas en ese horario")
     v = Visita(edificio_id=edificio.id, unidad_id=unidad_id, nombre_visita=nombre, patente=normalizar_patente(patente),

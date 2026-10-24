@@ -1,7 +1,10 @@
 """El .env de plantilla (variables vacías comentadas) lo lee la aplicación con valores por defecto, y la
 conexión a Supabase usa el pool configurado. Valores falsos."""
+import os
 import sys
 from pathlib import Path
+
+import pytest
 
 RAIZ = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(RAIZ / "scripts"))
@@ -38,6 +41,7 @@ def test_cadena_de_supabase_queda_activa_y_con_pool(tmp_path, monkeypatch):
     assert cfg.db_pool_size == 3 and cfg.db_max_overflow == 2
 
 
+@pytest.mark.skipif(bool(os.environ.get("TEST_DATABASE_URL")), reason="la suite corre contra PostgreSQL")
 def test_el_pool_solo_se_aplica_a_bases_que_no_son_sqlite():
     from app import db
     # En pruebas la base es SQLite: el motor no recibe argumentos de pool (SQLite no los admite).

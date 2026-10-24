@@ -41,12 +41,17 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Pruebas (SQLite)
         run: pytest -q
-      - name: Migraciones contra PostgreSQL real
+      - name: Migraciones contra PostgreSQL real (primero: la suite siguiente vacía la base)
         env:
           DATABASE_URL: postgresql+psycopg://ci:${{ env.PG_CLAVE }}@localhost:5432/edificios
         run: |
           alembic upgrade head
           alembic check
+      - name: Pruebas contra PostgreSQL real (incluye carreras de concurrencia)
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://ci:${{ env.PG_CLAVE }}@localhost:5432/edificios
+        run: |
+          pytest -q
 
   frontend:
     runs-on: ubuntu-latest

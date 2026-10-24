@@ -1,7 +1,8 @@
 import os
 import tempfile
 
-os.environ["DATABASE_URL"] = f"sqlite:///{tempfile.mkdtemp()}/test.db"
+# TEST_DATABASE_URL=postgresql+psycopg://... corre toda la suite contra PostgreSQL (la base se VACÍA en cada test).
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{tempfile.mkdtemp()}/test.db"
 os.environ["WHATSAPP_WEBHOOK_TOKEN"] = "tok"
 os.environ["CELERY_EAGER"] = "true"
 
@@ -18,6 +19,7 @@ from app.security import hash_clave_dispositivo, hash_password
 def db():
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
+    engine.dispose()  # PostgreSQL: descarta conexiones con tipos de las tablas recién recreadas
     with SessionLocal() as s:
         yield s
 
