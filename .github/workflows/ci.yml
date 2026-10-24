@@ -41,7 +41,7 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Pruebas (SQLite)
         run: pytest -q
-      - name: Migraciones contra PostgreSQL real (primero: la suite siguiente vacía la base)
+      - name: Migraciones contra PostgreSQL real (va primero, la suite siguiente vacía la base)
         env:
           DATABASE_URL: postgresql+psycopg://ci:${{ env.PG_CLAVE }}@localhost:5432/edificios
         run: |
