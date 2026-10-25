@@ -29,10 +29,12 @@ export E2E_DEVICE_KEY="$(echo "$SALIDA" | sed -n 's/^X-Device-Key[^:]*: //p' | h
 # estacionamientos para poder registrar vehículos
 $PY - <<PYEOF
 from app.db import SessionLocal
-from app.models import Unidad
+from app.models import EspacioComun, Regla, Unidad
 with SessionLocal() as db:
     for u in db.query(Unidad).filter_by(edificio_id="e2e_a"):
         u.estacionamientos = 2
+    db.add(EspacioComun(edificio_id="e2e_a", nombre="Quincho", accion="reservar_quincho", tarifa=5000))
+    db.add(Regla(edificio_id="e2e_a", accion="reservar_quincho", tipo="horario", params={"desde": "10:00", "hasta": "22:00"}))
     db.commit()
 PYEOF
 

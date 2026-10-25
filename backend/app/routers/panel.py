@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from .. import events
 from ..config import ahora_local, hoy_local, utcnow
 from ..db import get_db
-from ..models import (AccesoLog, Cargo, Edificio, EstadoVisita, Pago, Residente, Rol, Tag, Unidad,
-                      Vehiculo, Visita)
+from ..models import (AccesoLog, Cargo, Edificio, EspacioComun, EstadoVisita, Pago, Residente, ReservaEspacio, Rol,
+                      Tag, Unidad, Vehiculo, Visita)
 from ..schemas import PagoIn, RecordatorioIn, VehiculoIn
 from ..security import Principal, require_roles, tenant_of
 from ..services import access, cobranza, diagnostico as diag, finance
@@ -141,3 +141,28 @@ def registrar_pago(edificio_id: str, body: PagoIn, user: Admin, db: Session = De
                    {"unidad_id": u.id, "monto": body.monto, "deuda": finance.deuda_unidad(db, u.id)})
     db.commit()
     return {"duplicado": False, "excedente": excedente}
+
+
+@router.get("/reservas-espacio")
+def listar_reservas(edificio_id: str, user: Staff, db: Session = Depends(get_db)):
+    """Reservas de espacios comunes desde hace 7 días en adelante (hora local del edificio)."""
+    ed = _ed(db, user, edificio_id)
+    rows = db.execute(
+        select(ReservaEspacio, EspacioComun.nombre, Unidad.numero)
+        .join(EspacioComun, EspacioComun.id == ReservaEspacio.espacio_id)
+        .join(Unidad, Unidad.id == ReservaEspacio.unidad_id)
+        .where(ReservaEspacio.edificio_id == ed.id, ReservaEspacio.hasta >= ahora_local() - timedelta(days=7))
+        .order_by(ReservaEspacio.desde)).all()
+    return [{"id": r.id, "espacio": esp, "unidad": num, "desde": r.desde.isoformat(), "hasta": r.hasta.isoformat(),
+             "estado": r.estado} for r, esp, num in rows]
+
+
+@router.get("/gastos-comunes")
+def periodos_generados(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Períodos con gastos comunes ya generados: total emitido y saldo que aún falta cobrar."""
+    ed = _ed(db, user, edificio_id)
+    rows = db.execute(
+        select(Cargo.periodo, func.sum(Cargo.monto), func.sum(Cargo.saldo), func.count(func.distinct(Cargo.unidad_id)))
+        .where(Cargo.edificio_id == ed.id, Cargo.concepto.like("GC:%"))
+        .group_by(Cargo.periodo).order_by(Cargo.periodo.desc())).all()
+    return [{"periodo": p, "emitido": float(m), "pendiente": float(sal), "unidades": n} for p, m, sal, n in rows]

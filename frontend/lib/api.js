@@ -50,6 +50,20 @@ export function client(sess) {
     delVehiculo: (id) => http(sess, "DELETE", `${e}/vehiculos/${id}`),
     recordatorios: (b) => http(sess, "POST", `${e}/cobranza/recordatorios`, b),
     ...adminClient((m, p, b) => http(sess, m, `${e}${p}`, b)),
+    // La cartola va como multipart: el navegador fija el borde del formulario, por eso sin Content-Type.
+    conciliar: async (archivo) => {
+      const fd = new FormData(); fd.append("cartola", archivo);
+      const r = await fetch(`${BASE}${e}/conciliacion`, { method: "POST", headers: { Authorization: `Bearer ${sess.token}` }, body: fd });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new ApiError(r.status, data.detail ?? r.statusText);
+      return data;
+    },
+    // El QR exige sesión: se baja con el token y se muestra como imagen local (nunca en una URL pública).
+    qrVisita: async (id) => {
+      const r = await fetch(`${BASE}${e}/visitas/${id}/qr.png`, { headers: { Authorization: `Bearer ${sess.token}` } });
+      if (!r.ok) throw new ApiError(r.status, "No se pudo cargar el QR");
+      return URL.createObjectURL(await r.blob());
+    },
   };
 }
 
@@ -77,6 +91,15 @@ function adminClient(req) {
     rotarClaveLectores: () => req("POST", "/dispositivos/rotar-clave"),
     pruebasAlcance: () => req("GET", "/pruebas-alcance"),
     anotarPruebaAlcance: (b) => req("POST", "/pruebas-alcance", b),
+    reservarVisita: (b) => req("POST", "/visitas", b),
+    reservasEspacio: () => req("GET", "/reservas-espacio"),
+    reservarEspacio: (b) => req("POST", "/reservas-espacio", b),
+    cancelarReserva: (id) => req("POST", `/reservas-espacio/${id}/cancelar`),
+    periodosGastos: () => req("GET", "/gastos-comunes"),
+    generarGastos: (b) => req("POST", "/gastos-comunes/generar", b),
+    enviarGastos: (periodo) => req("POST", `/gastos-comunes/enviar/${periodo}`),
+    enviarCircular: (b) => req("POST", "/circulares", b),
+    cargarLectura: (b) => req("POST", "/lecturas", b),
   };
 }
 
@@ -158,7 +181,51 @@ function demoClient() {
   const nid = (lista) => Math.max(0, ...lista.map((x) => x.id)) + 1;
   const fallo = (msg, status = 422) => { throw new ApiError(status, msg); };
   const tagDemo = (id) => { const t = tags.find((x) => x.id === id); if (!t) fallo("Tag no existe", 404); return t; };
+  let reservas = [];
+  let periodos = [];
   const admin = {
+    reservarVisita: async (b) => {
+      const ocupados = visitas.filter((v) => v.usa_estacionamiento && v.estado !== "no_show" && new Date(v.desde) < new Date(b.hasta) && new Date(v.hasta) > new Date(b.desde)).length;
+      if (b.usa_estacionamiento && ocupados >= 6) fallo("Sin cupos de estacionamiento de visitas en ese horario", 409);
+      const u = data.unidades.find((x) => x.id === b.unidad_id) || fallo("Unidad no existe en este edificio", 404);
+      const v = { id: nid(visitas), unidad: u.numero, nombre: b.nombre_visita, patente: (b.patente || "").toUpperCase().replace(/[^A-Z0-9]/g, ""),
+        desde: b.desde, hasta: b.hasta, estado: "reservada", usa_estacionamiento: b.usa_estacionamiento };
+      visitas.push(v); return { id: v.id, codigo_qr: "demo-" + v.id };
+    },
+    reservasEspacio: async () => reservas.map((r) => ({ ...r })),
+    reservarEspacio: async (b) => {
+      const esp = espacios.find((x) => x.id === b.espacio_id) || fallo("Espacio no existe", 404);
+      if (new Date(b.hasta) <= new Date(b.desde)) fallo("Rango horario inválido");
+      if (reservas.some((r) => r.espacio === esp.nombre && r.estado === "confirmada" && new Date(r.desde) < new Date(b.hasta) && new Date(r.hasta) > new Date(b.desde))) fallo("Espacio ya reservado en ese horario", 409);
+      const h = (d) => { const x = new Date(d); return x.getHours() * 60 + x.getMinutes(); };
+      if (h(b.desde) < 600 || h(b.hasta) > 1320) fallo({ motivos: ["Horario permitido: 10:00–22:00"] });
+      const u = data.unidades.find((x) => x.id === b.unidad_id);
+      const r = { id: nid(reservas), espacio: esp.nombre, unidad: u.numero, desde: b.desde, hasta: b.hasta, estado: "confirmada" };
+      reservas.push(r); return { id: r.id, tarifa: esp.tarifa };
+    },
+    cancelarReserva: async (id) => {
+      const r = reservas.find((x) => x.id === id) || fallo("Reserva no existe", 404);
+      if (r.estado !== "confirmada") fallo("La reserva ya estaba cancelada", 409);
+      const horas = (new Date(r.desde) - new Date()) / 3600000;
+      r.estado = "cancelada"; return { estado: "cancelada", multa: horas < 24 ? 15000 : 0, tarifa_anulada: horas >= 24 };
+    },
+    periodosGastos: async () => periodos.map((p) => ({ ...p })),
+    generarGastos: async (b) => {
+      if (periodos.some((p) => p.periodo === b.periodo)) fallo(`Ya se generaron gastos comunes para ${b.periodo}`);
+      const total = b.gastos.reduce((s, g) => s + Number(g.monto), 0);
+      periodos.unshift({ periodo: b.periodo, emitido: total, pendiente: total, unidades: data.unidades.length });
+      return { periodo: b.periodo, total, unidades: data.unidades.length };
+    },
+    enviarGastos: async () => ({ encolado: false, estado: "no_configurado", motivo: "Modo ejemplo: no se envía ningún correo." }),
+    enviarCircular: async () => ({ encolado: false, estado: "no_configurado", motivo: "Modo ejemplo: no se envía ningún correo." }),
+    cargarLectura: async () => ({ ok: true }),
+    conciliar: async (archivo) => {
+      const texto = await archivo.text();
+      const filas = texto.trim().split("\n").slice(1).filter(Boolean);
+      return { conciliados: filas.slice(0, 1).map((f, i) => ({ id: "demo" + i, unidad: "101", monto: 50000, excedente: 0 })),
+        sin_match: filas.slice(1).map((f, i) => ({ id: "demo-s" + i, descripcion: f.split(",")[1] || "", monto: Number(f.split(",")[2]) || 0 })), duplicados: 0, demo: true };
+    },
+    qrVisita: async () => "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><rect width="160" height="160" fill="#fff"/><rect x="12" y="12" width="44" height="44" fill="#1b2336"/><rect x="104" y="12" width="44" height="44" fill="#1b2336"/><rect x="12" y="104" width="44" height="44" fill="#1b2336"/><rect x="70" y="70" width="20" height="20" fill="#1b2336"/><rect x="104" y="104" width="44" height="12" fill="#1b2336"/></svg>'),
     residentes: async () => residentes.map((r) => ({ ...r, unidad: unidadNum(r.unidad_id) })),
     crearResidente: async (b) => {
       if (residentes.some((r) => r.rut.replace(/\D/g, "") === b.rut.replace(/\D/g, ""))) fallo("El RUT ya está registrado en este edificio", 409);

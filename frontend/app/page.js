@@ -6,10 +6,13 @@ import Edificios from "./components/Edificios";
 import Cobranza from "./components/Cobranza";
 import Drawer from "./components/Drawer";
 import Fachada from "./components/Fachada";
+import Finanzas from "./components/Finanzas";
 import Porton from "./components/Porton";
+import Reservas from "./components/Reservas";
 import Visitas from "./components/Visitas";
 
-const VISTAS = [["fachada", "Fachada"], ["porton", "Portón"], ["visitas", "Visitas"], ["cobranza", "Cobranza"], ["admin", "Administración"]];
+const VISTAS = [["fachada", "Fachada"], ["porton", "Portón"], ["visitas", "Visitas"], ["reservas", "Reservas"], ["cobranza", "Cobranza"], ["finanzas", "Finanzas"], ["admin", "Administración"]];
+const SOLO_ADMIN = ["admin", "finanzas", "reservas"]; // reservas usa la lista de espacios, que es de administración
 const PUEDE_ADMIN = (sess) => sess.demo || sess.rol === "admin" || sess.rol === "superadmin";
 const ES_SUPERADMIN = (sess) => !sess.demo && sess.rol === "superadmin";
 
@@ -96,7 +99,7 @@ function Panel({ sess: sesionInicial, onSalir }) {
             </select>
           </label>)}
         <nav aria-label="Secciones">
-          {(ES_SUPERADMIN(sesionInicial) ? [["edificios", "Edificios"], ...VISTAS] : VISTAS).filter(([k]) => k !== "admin" || PUEDE_ADMIN(sess)).map(([k, t]) => (
+          {(ES_SUPERADMIN(sesionInicial) ? [["edificios", "Edificios"], ...VISTAS] : VISTAS).filter(([k]) => !SOLO_ADMIN.includes(k) || PUEDE_ADMIN(sess)).map(([k, t]) => (
             <button key={k} className={vista === k ? "tab on" : "tab"} aria-current={vista === k ? "page" : undefined} onClick={() => setVista(k)}>
               {t}{k === "cobranza" && cob.morosos.length > 0 ? <sup>{cob.morosos.length}</sup> : null}
             </button>))}
@@ -117,8 +120,10 @@ function Panel({ sess: sesionInicial, onSalir }) {
           {u && <Drawer key={u.id} u={u} api={api} onClose={() => setSel(null)} onChange={cargar} esAdmin={PUEDE_ADMIN(sess)} unidades={data.unidades} />}
         </>)}
         {vista === "porton" && <Porton accesos={accesos} data={data} />}
-        {vista === "visitas" && <Visitas visitas={visitas} data={data} />}
+        {vista === "visitas" && <Visitas visitas={visitas} data={data} api={api} />}
         {vista === "cobranza" && <Cobranza cob={cob} api={api} onChange={cargar} />}
+        {vista === "reservas" && PUEDE_ADMIN(sess) && <Reservas key={edificioId} api={api} data={data} onChange={cargar} />}
+        {vista === "finanzas" && PUEDE_ADMIN(sess) && <Finanzas key={edificioId} api={api} data={data} onChange={cargar} />}
         {vista === "admin" && PUEDE_ADMIN(sess) && <Administracion key={edificioId} api={api} data={data} />}
         {vista === "edificios" && ES_SUPERADMIN(sesionInicial) && <Edificios lista={edificios} activo={edificioId} onAbrir={abrirEdificio} error={errEdificios} />}
       </main>
