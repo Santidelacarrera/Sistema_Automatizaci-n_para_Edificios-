@@ -53,6 +53,59 @@ jobs:
         run: |
           pytest -q
 
+  respaldos:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ${{ env.PG_CLAVE }}
+          POSTGRES_DB: edificios
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Respaldo y restauración con datos reales sembrados
+        env:
+          DATABASE_URL: postgresql+psycopg://ci:${{ env.PG_CLAVE }}@localhost:5432/edificios
+          SEED_ADMIN_PASSWORD: ${{ env.PG_CLAVE }}-admin
+          RESPALDO_DIR: ${{ runner.temp }}/respaldos
+        run: |
+          cd backend
+          alembic upgrade head
+          python scripts/seed.py --id resp_a --nombre "Edificio Respaldo" --departamentos 101,102,103 \
+            --admin-nombre "Admin R" --admin-rut 11111111-1 --admin-email r@x.cl --admin-unidad 101 >/dev/null
+          cd ..
+          scripts/respaldo_db.sh
+          PGPASSWORD="$PG_CLAVE" createdb -h localhost -U ci restaurada
+          SALIDA="$(scripts/restaurar_db.sh "$RESPALDO_DIR"/edificios-*.dump "postgresql://ci:${PG_CLAVE}@localhost:5432/restaurada")"
+          echo "$SALIDA"
+          echo "$SALIDA" | grep -q '^unidades|3$' && echo "$SALIDA" | grep -q '^residentes|1$'
+
+  imagenes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Imagen de la API
+        run: docker build -t edificios-api ./backend
+      - name: Imagen del panel
+        run: docker build --build-arg NEXT_PUBLIC_API_URL=https://panel.ejemplo.cl -t edificios-panel ./frontend
+      - name: Compose válido
+        run: |
+          printf 'DOMINIO=panel.ejemplo.cl\nJWT_SECRET=valor-de-prueba-solo-validacion-12345678901234567890\n' > .env
+          docker compose config -q
+      - name: Caddyfile válido
+        run: docker run --rm -e DOMINIO=panel.ejemplo.cl -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

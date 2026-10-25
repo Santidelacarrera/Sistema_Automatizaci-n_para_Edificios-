@@ -42,4 +42,27 @@ app.include_router(administracion.edificios_router)
 
 @app.get("/health")
 def health():
+    """Vivo: el proceso responde. No toca la base (sirve para que el orquestador sepa si reiniciar)."""
     return {"ok": True}
+
+
+@app.get("/ready")
+def ready():
+    """Listo para recibir tráfico: la base responde y, si hay cola real, Redis también."""
+    from fastapi.responses import JSONResponse
+    from sqlalchemy import text
+    estado = {"base": "ok"}
+    try:
+        with engine.connect() as c:
+            c.execute(text("SELECT 1"))
+    except Exception:  # noqa: BLE001 - cualquier fallo de conexión significa "no listo"
+        estado["base"] = "falla"
+    if not settings.celery_eager:
+        try:
+            import redis
+            redis.Redis.from_url(settings.redis_url, socket_connect_timeout=2).ping()
+            estado["redis"] = "ok"
+        except Exception:  # noqa: BLE001
+            estado["redis"] = "falla"
+    ok = all(v == "ok" for v in estado.values())
+    return JSONResponse({"ok": ok, **estado}, status_code=200 if ok else 503)

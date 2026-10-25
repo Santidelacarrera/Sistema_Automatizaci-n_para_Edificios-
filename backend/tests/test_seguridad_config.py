@@ -96,3 +96,20 @@ def test_cartola_enorme_se_rechaza_sin_leerla_entera(client, seed):
     grande = b"fecha,descripcion,monto\n" + b"01/01/2026,x,1\n" * 400_000  # ~6 MB
     r = client.post("/edificios/edificio_a/conciliacion", headers=h, files={"cartola": ("c.csv", grande, "text/csv")})
     assert r.status_code == 413
+
+
+def test_ready_responde_y_health_no_toca_la_base(client):
+    assert client.get("/health").json() == {"ok": True}
+    r = client.get("/ready")
+    assert r.status_code == 200 and r.json()["base"] == "ok"
+
+
+def test_ready_devuelve_503_si_la_base_no_responde(client, monkeypatch):
+    from app import main
+
+    class Rota:
+        def connect(self):
+            raise RuntimeError("sin conexión")
+    monkeypatch.setattr(main, "engine", Rota())
+    r = client.get("/ready")
+    assert r.status_code == 503 and r.json()["base"] == "falla"

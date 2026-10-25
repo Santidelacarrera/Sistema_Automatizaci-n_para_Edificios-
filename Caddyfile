@@ -1,0 +1,28 @@
+# Proxy inverso con HTTPS automático (Let's Encrypt). DOMINIO viene de .env, p. ej. panel.miempresa.cl
+# El dominio debe apuntar a la IP pública del servidor y los puertos 80 y 443 deben estar abiertos.
+{$DOMINIO} {
+	encode zstd gzip
+
+	# La API vive en el mismo dominio que el panel (sin CORS). Todo lo demás es el panel.
+	@api path /auth/* /edificios /edificios/* /api/* /webhooks/* /health /ready /docs /openapi.json
+	handle @api {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy panel:3000
+	}
+
+	# Sólo las rutas del webhook y del lector aceptan cuerpos grandes de terceros; el resto se limita.
+	request_body {
+		max_size 6MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	log {
+		output stdout
+		format console
+	}
+}

@@ -160,20 +160,26 @@ Un error permanente (credenciales o destinatario rechazado) no se reintenta.
 
 ## 7. HTTPS y dominio
 
-El sistema no trae proxy HTTPS incluido. Opciones:
+El proyecto trae un proxy **Caddy** que obtiene y renueva solo el certificado de Let's Encrypt.
 
-- **Caddy** o **Nginx** delante de la API y del panel, con certificado de Let's Encrypt.
-  Redirigir HTTP a HTTPS y reenviar a `api:8000` (API) y `frontend:3000` (panel).
-- Los lectores (ESP32) deben usar HTTPS en producción. Hoy el firmware usa HTTP en la red local:
-  es un pendiente de seguridad, no un valor por defecto aceptable.
+1. Compre o use un dominio (p. ej. `administracion.miempresa.cl`) y haga que apunte a la IP pública del servidor.
+2. Abra los puertos **80 y 443** en el servidor. No abra el 8000 ni el 3000: la API y el panel quedan sólo detrás del proxy.
+3. Escriba el dominio en `.env` (`DOMINIO=administracion.miempresa.cl`, sin `https://`) y en `CORS_ORIGINS`.
+4. `docker compose up -d --build`. El panel y la API comparten dominio: el panel en `/` y la API en `/auth`, `/edificios`, `/api`, `/webhooks`.
 
-Pendiente de decisión: dominio y proxy. Ver la sección de pendientes.
+Qué hace el `Caddyfile`: redirige HTTP a HTTPS, comprime, limita los cuerpos a 6 MB, agrega HSTS y reenvía la IP real del cliente
+(la API la usa para el bloqueo de intentos de login). Los certificados se guardan en el volumen `caddy_datos`: no lo borre.
+
+Los lectores (ESP32) deben apuntar a `https://TU-DOMINIO` en producción. Hoy el firmware se probó sólo con HTTP en la red local.
+
+> Estado: la configuración de Compose valida y el panel se verificó como imagen standalone, pero **no se ha levantado
+> el conjunto con Docker ni se ha emitido un certificado real**; haga esa prueba con su dominio antes de instalar el portón.
 
 ## 8. Docker Compose
 
 ```bash
 cp .env.example .env          # completar, incluido DB_PASSWORD
-docker compose up -d --build  # db, redis, api (migra al arrancar), worker, beat
+docker compose up -d --build  # redis, api (migra al arrancar), panel, proxy HTTPS, worker, beat
 docker compose ps
 docker compose logs -f api
 ```
@@ -187,55 +193,34 @@ docker compose run --rm -v "$PWD/datos:/datos:ro" api python scripts/seed.py --a
 docker compose run --rm -v "$PWD/datos:/datos:ro" api python scripts/importar_csv.py --edificio edificio_a /datos/departamentos.csv
 ```
 
-Respaldo de la base:
+Comprobar que el sistema está sano: `curl https://TU-DOMINIO/ready` responde `{"ok": true, ...}` cuando la base y Redis contestan
+(`/health` sólo dice que el proceso está vivo).
+
+### Respaldos
+
+Funcionan con la base que use (Supabase o PostgreSQL propio). Necesita `pg_dump` (paquete `postgresql-client`) en la máquina que los corre.
 
 ```bash
-docker compose exec db pg_dump -U edificios edificios | gzip > respaldo_$(date +%F).sql.gz
+scripts/respaldo_db.sh                    # crea respaldos/edificios-AAAAMMDD-HHMMSS.dump (permiso 600)
+RESPALDO_DIAS=30 scripts/respaldo_db.sh   # conserva 30 días en vez de 14
 ```
 
-Restaurar en una base vacía: `gunzip -c respaldo.sql.gz | docker compose exec -T db psql -U edificios edificios`.
-Guardar los respaldos fuera del servidor y probar la restauración al menos una vez.
+Programe uno diario con cron, por ejemplo `15 3 * * *  cd /ruta/al/proyecto && scripts/respaldo_db.sh >> respaldos/respaldo.log 2>&1`,
+y copie la carpeta `respaldos/` fuera del servidor. El script comprueba que el archivo se pueda leer y nunca imprime la contraseña.
 
-## 9. Lista de pruebas manuales antes de poner el portón en producción
+**Pruebe la restauración** en una base vacía (nunca sobre la que está en uso):
 
-Marca cada una con fecha y responsable. No abrir el portón a residentes hasta completar todas.
+```bash
+createdb prueba_restauracion
+scripts/restaurar_db.sh respaldos/edificios-AAAAMMDD-HHMMSS.dump postgresql://usuario:clave@host/prueba_restauracion
+```
 
-**Portón y lectores**
-- [ ] Tag peatonal de un residente abre la puerta peatonal; el vehicular no lo acepta.
-- [ ] Tag vehicular abre el portón a menos de 15 m; una tarjeta desconocida no.
-- [ ] Tag desactivado en el panel deja de abrir de inmediato (cada lectura consulta al backend).
-- [ ] Sin red: el lector no abre y lo indica (fail-closed).
-- [ ] El relé se activa 1 segundo y el portón se cierra solo.
-- [ ] Lectura de patente de residente abre; de visita con reserva vigente, abre; sin reserva, no.
-- [ ] QR de visita: abre hasta el número de usos; fuera de su ventana horaria, no.
-
-**Visitas**
-- [ ] Reserva con cupos llenos se rechaza con mensaje claro.
-- [ ] Visita que no llega en 20 min libera su cupo.
-- [ ] El QR se ve bien en pantalla de celular y se puede imprimir.
-
-**Cobranza y pagos**
-- [ ] Gasto común generado con la prorrata correcta (suma exacta del total).
-- [ ] Recordatorio por WhatsApp llega a un teléfono de prueba y el panel lo muestra como enviado.
-- [ ] Recordatorio por correo llega (revisar spam) y el log del worker no muestra errores.
-- [ ] Pago registrado con referencia repetida no se aplica dos veces.
-- [ ] Cancelar una reserva con poco aviso (vía API `POST .../reservas-espacio/{id}/cancelar`) carga la multa.
-
-**Seguridad**
-- [ ] Un residente no ve ni cambia datos de otro edificio.
-- [ ] Un residente no entra a Administración.
-- [ ] `JWT_SECRET` y contraseñas del `.env` son los definitivos (no los de ejemplo).
-- [ ] El webhook de WhatsApp rechaza una llamada sin token.
-- [ ] HTTPS activo con certificado válido en API y panel.
-
-**Operación**
-- [ ] Respaldo generado y restauración probada en otra base.
-- [ ] Reinicio del servidor: los servicios vuelven solos (con `restart: unless-stopped` en `docker-compose.yml`).
-- [ ] Persona de contacto del edificio sabe qué hacer si el portón falla (falta escribir `docs/OPERACION.md`).
+Muestra cuántas filas trae cada tabla clave. El script se niega a restaurar sobre la base en uso salvo que agregue `--sobrescribir`.
+Un respaldo que nunca se restauró no se puede dar por bueno.
 
 ## Pendientes conocidos
 
-- Decisión de dominio y proxy HTTPS (sección 7).
+- Probar `docker compose up` con su dominio y emitir el primer certificado (sección 7).
 - Firmware ESP32: sin probar en hardware; HTTP en la red local.
 - Lector de patentes: sólo formato genérico; Hikvision y Dahua pendientes de confirmar el modelo.
 - Envío real por WhatsApp y correo: no probado contra servicios reales.

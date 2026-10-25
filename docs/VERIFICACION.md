@@ -7,12 +7,15 @@ Redis locales). Cada fila dice qué se probó, con qué comando y qué quedó si
 
 | Qué | Comando | Resultado |
 |---|---|---|
-| Suite del backend (SQLite) | `cd backend && pytest -q` | 215 pasan, 2 se omiten (las de PostgreSQL) |
+| Suite del backend (SQLite) | `cd backend && pytest -q` | 220 pasan, 2 se omiten (las de PostgreSQL) |
 | Suite del backend (PostgreSQL 16 real) | `TEST_DATABASE_URL=postgresql+psycopg://… pytest -q` | 216 pasan, 1 se omite (prueba específica de SQLite) |
 | Carreras de concurrencia (PostgreSQL) | `pytest tests/test_concurrencia_pg.py` | Pasan con el bloqueo de filas; **sin él fallan** (se aceptaban 10 y 11 reservas con 6 cupos) |
 | Migraciones en PostgreSQL | `alembic upgrade head && alembic check` | Sin diferencias entre modelos y migraciones |
-| Panel, modo demo | `npx playwright test` (en `frontend/`) | 15/15 |
-| Panel contra el backend real | `scripts/e2e_real.sh` | 3/3: login con error, recorrido (vehículo, lecturas del portón, bitácora) y sesión inválida |
+| Panel, modo demo | `npx playwright test` (en `frontend/`) | 20/20 |
+| Panel contra el backend real | `scripts/e2e_real.sh` | 4/4: login con error, recorrido (vehículo, lecturas del portón, bitácora), sesión inválida y reservas + finanzas (QR real, quincho con tarifa y reglas, gastos comunes, cartola) |
+| Respaldo y restauración | `scripts/respaldo_db.sh` y `scripts/restaurar_db.sh` | Contra PostgreSQL 16 real: el respaldo se lee, la restauración trae las mismas filas y el script se niega a pisar la base en uso |
+| Panel standalone (para Docker) | `NEXT_OUTPUT=standalone npm run build` + `node server.js` | Responde 200 con la política de contenido y sus estáticos |
+| `/ready` | `pytest tests/test_seguridad_config.py` | 200 con la base arriba, 503 con la base caída |
 | Celery + Redis reales | worker `--pool=solo` y `.delay()` | `purgar_datos`, `liberar_no_show` y `enviar_email` ejecutadas por la cola |
 | Build del panel | `npm run build` (Next 15.5, React 19) | Compila |
 | Escáner de secretos | `python scripts/escaner_secretos.py` | 0 hallazgos |
@@ -38,7 +41,7 @@ Redis locales). Cada fila dice qué se probó, con qué comando y qué quedó si
 
 - **Su proyecto de Supabase.** El motor es PostgreSQL y está probado, pero la conexión, el SSL y el pooler de su
   proyecto sólo se comprueban con `python scripts/verificar_conexiones.py` y sus credenciales.
-- **`docker compose up`:** este entorno no tiene el servicio de Docker. Sólo se validó la configuración.
+- **`docker compose up`, las imágenes y el proxy Caddy:** este entorno no tiene el servicio de Docker ni Caddy. Sólo se validó la configuración. El CI (`imagenes`) construye las imágenes y valida el `Caddyfile` en GitHub; el certificado HTTPS real sólo se emite con su dominio.
 - **WhatsApp (Evolution API) y correo (SMTP/SES) reales.** Se probaron con dobles; sin credenciales el sistema
   informa "no configurado".
 - **Hardware:** lector UHF, ESP32, relé, Ethernet y cámara de patentes. El firmware se probó con simulador; la
