@@ -113,3 +113,14 @@ def test_ready_devuelve_503_si_la_base_no_responde(client, monkeypatch):
     monkeypatch.setattr(main, "engine", Rota())
     r = client.get("/ready")
     assert r.status_code == 503 and r.json()["base"] == "falla"
+
+
+def test_base_saturada_responde_503_rapido_con_retry_after(client, monkeypatch):
+    from sqlalchemy.exc import TimeoutError as SATimeoutError
+    from app import main
+
+    def sin_conexion(*a, **k):
+        raise SATimeoutError("QueuePool limit reached")
+    monkeypatch.setattr("app.routers.auth.select", sin_conexion)  # primera consulta del login
+    r = client.post("/auth/login", json={"edificio_id": "x", "email": "a@b.cl", "password": "nada-importa"})
+    assert r.status_code == 503 and r.headers["Retry-After"] == "2"

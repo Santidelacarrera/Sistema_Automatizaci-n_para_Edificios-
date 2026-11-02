@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import TimeoutError as SATimeoutError
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import handlers  # noqa: F401  (registra suscriptores del bus)
@@ -19,6 +21,15 @@ async def lifespan(_):
 
 
 app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan)
+
+
+@app.exception_handler(SATimeoutError)
+async def base_saturada(request, exc):
+    """Sin conexión libre a la base: se responde rápido con 503 en vez de colgar al lector y al panel."""
+    return JSONResponse({"detail": "El servidor está ocupado. Reintente en unos segundos."}, status_code=503,
+                        headers={"Retry-After": "2"})
+
+
 @app.middleware("http")
 async def cabeceras_de_seguridad(request, call_next):
     resp = await call_next(request)

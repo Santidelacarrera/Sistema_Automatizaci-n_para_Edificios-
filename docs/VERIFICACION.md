@@ -21,6 +21,25 @@ Redis locales). Cada fila dice qué se probó, con qué comando y qué quedó si
 | Escáner de secretos | `python scripts/escaner_secretos.py` | 0 hallazgos |
 | `docker compose config` | con `.env` de prueba | Válido; el servicio `db` sólo aparece con `--profile db-local` |
 
+## Capacidad del portón (prueba de carga)
+
+`scripts/prueba_carga.py` manda lecturas a `validar-acceso` contra una API real con PostgreSQL 16 y 2 procesos de uvicorn
+(máquina de desarrollo, base en la misma máquina: los números son una referencia, no una promesa).
+
+| Concurrencia | Rendimiento | Latencia | Resultado |
+|---|---|---|---|
+| 1 (secuencial) | — | mediana 12 ms | normal |
+| 25 | ~240 pet/s | p50 99 ms, p95 162 ms | sin errores |
+| 50 | ~280 pet/s | p50 174 ms, p95 252 ms | sin errores |
+| 100 | ~106 pet/s | p95 8,5 s | 38 de 1500 responden 503 (cola de conexiones) |
+| 200 | ~107 pet/s | p95 2,2 s | sin errores |
+
+Un edificio con portón genera unas pocas lecturas por minuto: la capacidad probada es varios órdenes de magnitud mayor.
+La prueba encontró un defecto real: con el pool anterior (5+5 conexiones) y 100 peticiones simultáneas el rendimiento caía a
+18 pet/s con lecturas de 15 s colgadas. Ahora el pool por defecto es 10+10, la espera por una conexión es de 8 s como máximo
+y, si no hay, el servidor responde **503 con `Retry-After`** en vez de colgarse (el lector reintenta). Sin tope de hilos: se
+probó limitarlos al tamaño del pool y trababa el servicio.
+
 ## Defectos que esta verificación encontró y se corrigieron
 
 1. **La migración 0002 fallaba en PostgreSQL** (`activo = 0` sobre una columna booleana). Habría impedido

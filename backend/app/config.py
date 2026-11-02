@@ -18,8 +18,9 @@ class Settings(BaseSettings):
     entorno: str = "desarrollo"  # desarrollo | produccion
     cors_origins: str = "http://localhost:3000"  # separados por coma
     database_url: str = "sqlite:///./dev.db"
-    db_pool_size: int = 5      # conexiones por proceso (API, worker y beat abren las suyas)
-    db_max_overflow: int = 5   # conexiones extra en picos; el pooler de Supabase limita el total
+    db_pool_size: int = 10     # conexiones por proceso (API, worker y beat abren las suyas)
+    db_pool_timeout: int = 8   # segundos esperando una conexión libre; luego 503 (el lector reintenta, no se cuelga)
+    db_max_overflow: int = 10  # conexiones extra en picos; el pooler de Supabase limita el total
     login_max_intentos: int = 5  # fallos por cuenta antes de bloquear
     login_max_intentos_ip: int = 30  # fallos por IP antes de bloquear
     login_ventana_min: int = 15  # ventana y duración del bloqueo
