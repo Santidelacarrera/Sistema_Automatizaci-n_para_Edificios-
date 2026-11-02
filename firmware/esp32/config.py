@@ -2,10 +2,15 @@
 # (copiado de config_local.example.py, no se versiona). Ver README.md de esta carpeta.
 
 EDIFICIO_ID = "edificio_a"
-API_BASE = "http://192.168.10.10:8000"  # servidor central (HTTPS en producción: pendiente)
+API_BASE = "http://192.168.10.10:8000"  # servidor central (use https://... en producción con Caddy o dominio público)
 PUNTO = "vehicular"                     # "vehicular" (portón) | "peatonal" (puerta de llaveros)
 DIRECCION = None                        # "entrada" | "salida" | None. Sólo con anti-passback activo en el edificio
 IP = ("192.168.10.50", "255.255.255.0", "192.168.10.1", "8.8.8.8")  # IP fija del equipo (Ethernet W5500)
+
+# ---- sincronización horaria (NTP) ----
+# Requerido al usar HTTPS para validar la vigencia temporal de certificados TLS/SSL.
+SINCRONIZAR_NTP = True
+NTP_HOST = "pool.ntp.org"
 
 # ---- modelo de lector: "wiegand" | "rs485" | "rc522" | "simulado" ----
 LECTOR = "wiegand"

@@ -228,7 +228,7 @@ roles lo cubren.
 | Secretos en el repositorio | `.env` ignorado por Git; escáner de secretos en pruebas y en pre-commit. |
 | Configuración insegura en producción | `ENTORNO=produccion` impide arrancar con valores de ejemplo o con SQLite. |
 | Fuerza bruta a la sesión | Pendiente (ver hoja de ruta). |
-| Transporte del lector | HTTP en red local hoy; HTTPS pendiente (ver hoja de ruta). |
+| Transporte del lector | HTTP en red local o HTTPS configurando API_BASE y NTP en el firmware (ver firmware/esp32/README.md). |
 
 Para la revisión de amenazas por componente, ver `docs/PORTON_UHF.md` (clonación y pruebas de
 seguridad del portón) y `docs/CREDENCIALES.md` (rotación y respuesta a filtraciones).
@@ -325,11 +325,11 @@ Limitaciones actuales, sin maquillar:
 Próximos pasos, en orden de prioridad:
 
 1. Verificación con **su** proyecto de Supabase (`python scripts/verificar_conexiones.py`) y con un lector en banco (`firmware/esp32/README.md`).
-2. HTTPS hacia los lectores ESP32 (la API y el panel ya van detrás de Caddy con HTTPS automático).
+2. Prueba en banco del lector ESP32 con HTTPS contra el certificado de Caddy.
 3. Revisión legal de `docs/PRIVACIDAD.md` y avisos a residentes.
 4. Pruebas con WhatsApp (Evolution) y correo (SMTP/SES) reales.
 5. Cámara de patentes: confirmar modelo, formato y política de grabación.
-6. Pasar a Next 16 cuando el equipo lo decida (cierra los avisos de `postcss`).
+6. ~~Pasar a Next 16 cuando el equipo lo decida~~ (resuelto: override de PostCSS cierra los avisos manteniendo estabilidad en Next 15).
 
 ---
 
