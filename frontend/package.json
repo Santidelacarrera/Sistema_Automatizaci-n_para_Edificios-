@@ -1,21 +1,24 @@
 {
-  "name": "panel-edificios",
-  "private": true,
-  "version": "0.1.0",
-  "scripts": {
-    "dev": "next dev -p 3000",
-    "build": "next build",
-    "start": "next start -p 3000"
-  },
-  "dependencies": {
-    "@fontsource/big-shoulders-display": "^5.0.0",
-    "@fontsource/instrument-sans": "^5.0.0",
-    "next": "^15.5.28",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1"
-  },
-  "devDependencies": {
-    "@axe-core/playwright": "^4.14.0",
-    "@playwright/test": "^1.49.1"
-  }
+    "name":  "panel-edificios",
+    "private":  true,
+    "version":  "0.1.0",
+    "scripts":  {
+                    "dev":  "next dev -p 3000",
+                    "build":  "next build",
+                    "start":  "next start -p 3000"
+                },
+    "dependencies":  {
+                         "@fontsource/big-shoulders-display":  "^5.0.0",
+                         "@fontsource/instrument-sans":  "^5.0.0",
+                         "next":  "^15.5.28",
+                         "react":  "^19.3.1",
+                         "react-dom":  "^19.3.1"
+                     },
+    "devDependencies":  {
+                            "@axe-core/playwright":  "^4.14.0",
+                            "@playwright/test":  "^1.49.1"
+                        },
+    "overrides":  {
+                      "postcss":  "^8.5.32"
+                  }
 }

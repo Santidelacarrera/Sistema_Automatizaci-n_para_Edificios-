@@ -122,5 +122,5 @@ Marcar cada una con fecha y resultado antes de instalar en el portón.
 - El envío HTTP usa `urequests`. Su timeout depende de la versión de MicroPython; verificar en el
   equipo que `TIMEOUT_HTTP_S` realmente se aplica. Sin timeout, una conexión colgada puede demorar
   más de lo deseado (el watchdog lo cubre como último recurso).
-- Sin HTTPS: el tráfico entre el equipo y el servidor viaja en claro en la red local. Pendiente.
+- HTTPS: en producción cambie API_BASE en config.py a https://... (p. ej. el dominio de Caddy). MicroPython utiliza urequests sobre SSL/TLS; el equipo sincroniza automáticamente el reloj por NTP (SINCRONIZAR_NTP = True) para validar la vigencia de los certificados.
 - La clave `DEVICE_KEY` queda en el equipo; quien tenga acceso físico puede leerla. Rotarla si el equipo sale del portón.

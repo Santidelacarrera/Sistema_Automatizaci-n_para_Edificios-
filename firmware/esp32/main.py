@@ -58,6 +58,21 @@ def reconectar(nic):
     log("Ethernet %s" % ("conectada" if nic.isconnected() else "sin enlace"))
 
 
+def sincronizar_ntp(nic):
+    """Sincroniza el reloj del RTC por NTP. Esencial para TLS/HTTPS."""
+    if not getattr(config, "SINCRONIZAR_NTP", True):
+        return
+    if nic is None or not nic.isconnected():
+        return
+    try:
+        import ntptime
+        ntptime.host = getattr(config, "NTP_HOST", "pool.ntp.org")
+        ntptime.settime()
+        log("reloj RTC sincronizado vía NTP (%s)" % ntptime.host)
+    except Exception as e:
+        log("aviso NTP: %s (si usa HTTPS, verifique conectividad saliente para validar certificados)" % e)
+
+
 def abrir():
     if config.SIMULAR:
         log("SIMULADO: relé activo %d ms" % config.RELAY_MS)
@@ -98,6 +113,8 @@ def main():
     if config.DEVICE_KEY is None and not config.SIMULAR:
         raise RuntimeError("falta DEVICE_KEY: crear config_local.py a partir de config_local.example.py")
     nic = None if config.SIMULAR else conectar_ethernet()
+    if nic is not None and nic.isconnected():
+        sincronizar_ntp(nic)
     lector = LectorSimulado(config.SIMULAR_CODIGOS) if config.SIMULAR else crear_lector()
     wdt = None if config.SIMULAR else machine.WDT(timeout=config.WATCHDOG_MS)
     log("listo: lector=%s punto=%s direccion=%s simulado=%s" % (
