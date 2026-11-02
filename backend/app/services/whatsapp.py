@@ -42,6 +42,14 @@ def parse_evolution(payload: dict) -> tuple[str, str] | None:
     return normalizar_telefono(jid), texto.strip()
 
 
+def id_mensaje(payload: dict) -> str:
+    """Id único del mensaje de Evolution (para no procesarlo dos veces); vacío si no viene."""
+    data = payload.get("data") or {}
+    if isinstance(data, list):
+        data = data[0] if data else {}
+    return str((data.get("key") or {}).get("id") or "")[:120]
+
+
 def clasificar_keywords(texto: str) -> str:
     t = texto.lower()
     for intent, kws in _KEYWORDS.items():
@@ -104,6 +112,29 @@ def enviar(telefono: str, texto: str) -> ResultadoEnvio:
         r = httpx.post(f"{settings.evolution_url}/message/sendText/{settings.evolution_instance}",
                        headers={"apikey": settings.evolution_apikey}, timeout=10,
                        json={"number": telefono, "text": texto})
+    except httpx.TimeoutException:
+        return ResultadoEnvio(CANAL, ERROR, "Evolution API no respondió a tiempo", transitorio=True)
+    except httpx.HTTPError as e:
+        return ResultadoEnvio(CANAL, ERROR, f"No se pudo conectar con Evolution API ({e.__class__.__name__})",
+                              transitorio=True)
+    if r.is_success:
+        return ResultadoEnvio(CANAL, ENVIADO)
+    return ResultadoEnvio(CANAL, ERROR, f"Evolution API respondió HTTP {r.status_code}", transitorio=r.status_code >= 500)
+
+
+def enviar_imagen(telefono: str, png: bytes, leyenda: str = "") -> ResultadoEnvio:
+    """Envía una imagen PNG (p. ej. el QR de una visita) por Evolution API."""
+    import base64
+    if not telefono:
+        return ResultadoEnvio(CANAL, NO_CONFIGURADO, "El residente no tiene teléfono registrado")
+    if not configurado():
+        return ResultadoEnvio(CANAL, NO_CONFIGURADO, motivo_no_configurado())
+    try:
+        r = httpx.post(f"{settings.evolution_url}/message/sendMedia/{settings.evolution_instance}",
+                       headers={"apikey": settings.evolution_apikey}, timeout=20,
+                       json={"number": telefono, "mediatype": "image", "mimetype": "image/png",
+                             "media": base64.b64encode(png).decode(), "fileName": "qr-visita.png",
+                             "caption": leyenda})
     except httpx.TimeoutException:
         return ResultadoEnvio(CANAL, ERROR, "Evolution API no respondió a tiempo", transitorio=True)
     except httpx.HTTPError as e:

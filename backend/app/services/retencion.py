@@ -9,7 +9,7 @@ from sqlalchemy import delete, update
 from sqlalchemy.orm import Session
 
 from ..config import ahora_local, settings, utcnow
-from ..models import AccesoLog, Evento, IntentoLogin, LecturaPendiente, Visita
+from ..models import AccesoLog, ConversacionWA, Evento, IntentoLogin, LecturaPendiente, MensajeWA, Visita
 
 
 def purgar(db: Session) -> dict:
@@ -26,6 +26,10 @@ def purgar(db: Session) -> dict:
             IntentoLogin.creado < ahora - timedelta(days=settings.retencion_intentos_login_dias))).rowcount
     res["lecturas_pendientes"] = db.execute(delete(LecturaPendiente).where(
         LecturaPendiente.creado < ahora - timedelta(days=1))).rowcount  # nunca sirven pasada la ventana
+    # Estado técnico de WhatsApp: los ids de mensajes sólo sirven para frenar reintentos del webhook.
+    res["mensajes_wa"] = db.execute(delete(MensajeWA).where(MensajeWA.creado < ahora - timedelta(days=7))).rowcount
+    res["conversaciones_wa"] = db.execute(delete(ConversacionWA).where(
+        ConversacionWA.actualizado < ahora - timedelta(days=1))).rowcount
     if settings.retencion_visitas_dias > 0:
         # La visita se conserva sin datos personales: sirve para estadísticas de uso de cupos.
         res["visitas_anonimizadas"] = db.execute(update(Visita).where(

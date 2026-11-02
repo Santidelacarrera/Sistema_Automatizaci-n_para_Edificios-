@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import TimeoutError as SATimeoutError
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import handlers  # noqa: F401  (registra suscriptores del bus)
@@ -19,6 +21,15 @@ async def lifespan(_):
 
 
 app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan)
+
+
+@app.exception_handler(SATimeoutError)
+async def base_saturada(request, exc):
+    """Sin conexión libre a la base: se responde rápido con 503 en vez de colgar al lector y al panel."""
+    return JSONResponse({"detail": "El servidor está ocupado. Reintente en unos segundos."}, status_code=503,
+                        headers={"Retry-After": "2"})
+
+
 @app.middleware("http")
 async def cabeceras_de_seguridad(request, call_next):
     resp = await call_next(request)
@@ -42,4 +53,27 @@ app.include_router(administracion.edificios_router)
 
 @app.get("/health")
 def health():
+    """Vivo: el proceso responde. No toca la base (sirve para que el orquestador sepa si reiniciar)."""
     return {"ok": True}
+
+
+@app.get("/ready")
+def ready():
+    """Listo para recibir tráfico: la base responde y, si hay cola real, Redis también."""
+    from fastapi.responses import JSONResponse
+    from sqlalchemy import text
+    estado = {"base": "ok"}
+    try:
+        with engine.connect() as c:
+            c.execute(text("SELECT 1"))
+    except Exception:  # noqa: BLE001 - cualquier fallo de conexión significa "no listo"
+        estado["base"] = "falla"
+    if not settings.celery_eager:
+        try:
+            import redis
+            redis.Redis.from_url(settings.redis_url, socket_connect_timeout=2).ping()
+            estado["redis"] = "ok"
+        except Exception:  # noqa: BLE001
+            estado["redis"] = "falla"
+    ok = all(v == "ok" for v in estado.values())
+    return JSONResponse({"ok": ok, **estado}, status_code=200 if ok else 503)

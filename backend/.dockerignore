@@ -1,0 +1,7 @@
+__pycache__
+*.pyc
+tests
+.pytest_cache
+*.db
+.env*
+!.env.example

@@ -16,6 +16,8 @@ const csp = [
 ].join("; ");
 
 module.exports = {
+  // En Docker (NEXT_OUTPUT=standalone) el panel sale como un servidor mínimo; en desarrollo y E2E se usa `next start`.
+  ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" } : {}),
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {

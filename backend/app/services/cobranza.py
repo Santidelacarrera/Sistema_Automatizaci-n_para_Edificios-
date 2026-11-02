@@ -1,6 +1,5 @@
 """Comunicación de cobranza: estado de cuenta y recordatorios por WhatsApp y correo."""
 from ..config import hoy_local
-from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session

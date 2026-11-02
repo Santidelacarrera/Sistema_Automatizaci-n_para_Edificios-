@@ -20,7 +20,7 @@ def test_plantilla_vacia_no_rompe_la_configuracion(tmp_path, monkeypatch):
     cfg = Settings(_env_file=ruta)
     assert cfg.entorno == "desarrollo"
     assert cfg.database_url == "sqlite:///./dev.db"  # DATABASE_URL comentada: sin base remota aun
-    assert cfg.db_pool_size == 5 and cfg.db_max_overflow == 5
+    assert cfg.db_pool_size == 10 and cfg.db_max_overflow == 10
 
 
 def test_variables_vacias_quedan_comentadas_y_con_explicacion():

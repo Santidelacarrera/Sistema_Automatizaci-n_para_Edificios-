@@ -45,3 +45,14 @@ def test_plazo_cero_desactiva_la_purga(db, seed, monkeypatch):
     db.add(AccesoLog(edificio_id="edificio_a", token="T", punto="p", permitido=True, creado=_vieja(9999)))
     db.flush()
     assert retencion.purgar(db)["accesos"] == 0
+
+
+def test_purga_estado_tecnico_de_whatsapp(db, seed):
+    from app.models import ConversacionWA, MensajeWA
+    db.add_all([MensajeWA(msg_id="viejo", creado=_vieja(8)), MensajeWA(msg_id="nuevo", creado=_vieja(1)),
+                ConversacionWA(telefono="1", estado="pidiendo", datos={}, actualizado=_vieja(2)),
+                ConversacionWA(telefono="2", estado="pidiendo", datos={}, actualizado=utcnow())])
+    db.flush()
+    res = retencion.purgar(db)
+    assert res["mensajes_wa"] == 1 and res["conversaciones_wa"] == 1
+    assert [m.msg_id for m in db.query(MensajeWA)] == ["nuevo"] and [c.telefono for c in db.query(ConversacionWA)] == ["2"]

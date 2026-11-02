@@ -30,8 +30,34 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_EAGER: "false"
     depends_on: [redis]
-    ports: ["8000:8000"]
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    expose: ["8000"]   # sólo la ve el proxy: no se publica al exterior
+    # --proxy-headers: detrás del proxy, la IP del cliente viene en X-Forwarded-For (la usa el bloqueo de login).
+    # "*" es seguro porque este contenedor no tiene puertos publicados: sólo el proxy puede hablarle.
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 40s
+  panel:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMINIO:?defina DOMINIO en .env}
+    restart: unless-stopped
+    expose: ["3000"]
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMINIO: ${DOMINIO:?defina DOMINIO en .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_datos:/data      # certificados: no borrar, Let's Encrypt limita las emisiones
+      - caddy_config:/config
+    depends_on: [api, panel]
   worker:
     build: ./backend
     restart: unless-stopped
@@ -53,3 +79,5 @@ services:
     depends_on: [redis]
 volumes:
   pgdata:
+  caddy_datos:
+  caddy_config:

@@ -2,7 +2,7 @@
 from datetime import timedelta
 
 from app.config import ahora_local
-from app.models import Cargo, EspacioComun, Regla, Visita
+from app.models import Cargo, EspacioComun, Regla
 from app.services import access
 
 from conftest import login
