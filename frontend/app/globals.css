@@ -127,7 +127,7 @@ input[type=text], input[type=email], input[type=password], input:not([type]) { b
 .visitas li { display: grid; grid-template-columns: 4.2rem 1fr auto; gap: 1rem; align-items: center; background: var(--papel); padding: .6rem .8rem; }
 .visitas li div { display: grid; } .visitas li div span, .sin-pat { font-size: .85rem; color: var(--tinta-2); }
 .v-depto { font: 900 2rem/1 var(--display); }
-.v-llego { box-shadow: inset 8px 0 0 var(--luz); } .v-no_show { opacity: .6; } .v-reservada { box-shadow: inset 8px 0 0 var(--vidrio); }
+.v-llego { box-shadow: inset 8px 0 0 var(--luz); } .v-no_show { background: var(--hormigon-2); color: #3a4258; } .v-no_show .v-depto { color: #3a4258; } .v-reservada { box-shadow: inset 8px 0 0 var(--vidrio); }
 .tabla { border-collapse: collapse; width: 100%; max-width: 52rem; background: var(--papel); }
 .tabla th, .tabla td { padding: .55rem .8rem; text-align: left; border-bottom: 1px solid var(--hormigon-2); }
 .tabla th { font-size: .85rem; } .tabla .der { text-align: right; font-variant-numeric: tabular-nums; }
@@ -224,7 +224,7 @@ input[type=text], input[type=email], input[type=password], input:not([type]) { b
 .qr-visita figcaption { font-size: .85rem; color: var(--tinta-2); max-width: 28ch; }
 .lista-reservas { margin-top: 2rem; }
 .lista-reservas h3, .resultado-cartola h4 { font: 700 1.5rem/1 var(--display); margin: 0 0 .75rem; }
-.atenuada { opacity: .55; }
+.atenuada td { color: #4a5268; background: var(--hormigon-2); }
 .confirma { display: inline-flex; gap: .5rem; align-items: center; font-size: .9rem; }
 .mini.neutro { color: var(--tinta); }
 .solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

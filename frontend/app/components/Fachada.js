@@ -25,8 +25,10 @@ export default function Fachada({ data, filtro, seleccionada, onSelect }) {
   const libres = ed.cupos_visitas - ed.cupos_ocupados;
   return (
     <div className="fachada-wrap">
-      <div className="fachada" style={{ "--cols": cols }} role="grid" aria-label={`Fachada de ${ed.nombre}`}>
+      <div className="fachada" style={{ "--cols": cols }}>
         <div className="cornisa" aria-hidden="true" />
+        {/* El grid contiene sólo filas: la cornisa y el zócalo son decoración e información aparte. */}
+        <div role="grid" aria-label={`Fachada de ${ed.nombre}`}>
         {orden.map((p) => (
           <div className="piso" role="row" key={p}>
             <span className="piso-n" aria-hidden="true">{p}</span>
@@ -44,7 +46,8 @@ export default function Fachada({ data, filtro, seleccionada, onSelect }) {
             })}
           </div>
         ))}
-        <div className="zocalo" aria-label="Portón y estacionamientos de visitas">
+        </div>
+        <div className="zocalo" role="group" aria-label="Portón y estacionamientos de visitas">
           <div className="porton" aria-hidden="true"><span /><span /></div>
           <div className="bahias" title={`${libres} de ${ed.cupos_visitas} cupos de visita libres`}>
             {Array.from({ length: ed.cupos_visitas }, (_, i) => (
