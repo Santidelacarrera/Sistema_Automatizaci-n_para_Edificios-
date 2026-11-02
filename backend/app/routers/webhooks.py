@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..db import get_db
 from ..models import MensajeWA
-from ..services import access, finance, wa_conversacion, whatsapp
+from ..services import finance, wa_conversacion, whatsapp
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 

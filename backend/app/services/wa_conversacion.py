@@ -6,7 +6,7 @@ así funciona aunque haya varios procesos y sobrevive a reinicios.
 import io
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session

@@ -17,7 +17,6 @@ import simular_lector  # noqa: E402
 
 from app.models import TipoTag  # noqa: E402
 from app.services import access  # noqa: E402
-from conftest import login  # noqa: E402
 
 
 @pytest.mark.parametrize("largo,fac,card", [(26, 42, 12345), (26, 0, 0), (26, 255, 65535),

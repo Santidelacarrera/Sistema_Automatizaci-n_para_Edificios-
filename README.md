@@ -340,6 +340,7 @@ Próximos pasos, en orden de prioridad:
 |---|---|
 | [`docs/PUESTA_EN_MARCHA.md`](docs/PUESTA_EN_MARCHA.md) | Instalación, carga de datos, Evolution API, correo, HTTPS, Docker, respaldos y pruebas manuales |
 | [`docs/CREDENCIALES.md`](docs/CREDENCIALES.md) | Dónde obtener cada credencial, uso del asistente, rotación y respuesta ante filtraciones |
+| [`docs/OPERACION.md`](docs/OPERACION.md) | Revisión diaria, qué hacer si el portón no abre o el sistema no responde, altas, respaldos y actualizaciones |
 | [`docs/VERIFICACION.md`](docs/VERIFICACION.md) | Qué se probó de verdad, con qué comandos y qué falta |
 | [`docs/PRIVACIDAD.md`](docs/PRIVACIDAD.md) | Datos que trata el sistema, plazos de retención, derechos de los titulares y pendientes legales |
 | [`docs/PORTON_UHF.md`](docs/PORTON_UHF.md) | Compra de stickers y lector, prueba de muestra, modos de acceso, clonación y pruebas de producción |

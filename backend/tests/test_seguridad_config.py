@@ -117,7 +117,6 @@ def test_ready_devuelve_503_si_la_base_no_responde(client, monkeypatch):
 
 def test_base_saturada_responde_503_rapido_con_retry_after(client, monkeypatch):
     from sqlalchemy.exc import TimeoutError as SATimeoutError
-    from app import main
 
     def sin_conexion(*a, **k):
         raise SATimeoutError("QueuePool limit reached")

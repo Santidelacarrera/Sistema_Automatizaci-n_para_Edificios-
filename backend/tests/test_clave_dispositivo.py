@@ -1,4 +1,3 @@
-from sqlalchemy import select
 
 from app.models import Edificio
 from app.security import hash_clave_dispositivo

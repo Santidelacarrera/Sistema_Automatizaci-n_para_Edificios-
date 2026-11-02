@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import rules, validacion
-from ..models import Edificio, EstadoTag, Evento, Regla, Residente, Rol, Tag, TipoTag, Unidad, Vehiculo
+from ..models import Edificio, Evento, Regla, Residente, Rol, Tag, TipoTag, Unidad, Vehiculo
 from ..security import hash_password
 from . import access
 

@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from app.config import ahora_local
-from app.models import Cargo, EstadoVisita, Regla, Visita
+from app.models import Cargo, EstadoVisita
 from app.services import access, finance, reconciliation
 
 from conftest import login

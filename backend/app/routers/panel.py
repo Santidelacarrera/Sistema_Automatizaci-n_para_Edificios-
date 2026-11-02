@@ -8,10 +8,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import events
-from ..config import ahora_local, hoy_local, utcnow
+from ..config import ahora_local, hoy_local
 from ..db import get_db
 from ..models import (AccesoLog, Cargo, Edificio, EspacioComun, EstadoVisita, Pago, Residente, ReservaEspacio, Rol,
-                      Tag, Unidad, Vehiculo, Visita)
+                      Unidad, Vehiculo, Visita)
 from ..schemas import PagoIn, RecordatorioIn, VehiculoIn
 from ..security import Principal, require_roles, tenant_of
 from ..services import access, cobranza, diagnostico as diag, finance
