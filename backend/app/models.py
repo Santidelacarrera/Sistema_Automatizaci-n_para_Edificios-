@@ -254,3 +254,21 @@ class IntentoLogin(Base):
     ip: Mapped[str] = mapped_column(String(64), default="", index=True)
     exitoso: Mapped[bool] = mapped_column(Boolean, default=False)
     creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
+class ConversacionWA(Base):
+    """Conversación de WhatsApp a medias (p. ej. reservando una visita). Expira sola."""
+    __tablename__ = "conversaciones_wa"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    telefono: Mapped[str] = mapped_column(String(20), unique=True)
+    estado: Mapped[str] = mapped_column(String(20))  # pidiendo | confirmando
+    datos: Mapped[dict] = mapped_column(JSON, default=dict)
+    actualizado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class MensajeWA(Base):
+    """Id de cada mensaje ya procesado: Evolution API reintenta webhooks y no debe reservar dos veces."""
+    __tablename__ = "mensajes_wa"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    msg_id: Mapped[str] = mapped_column(String(120), unique=True)
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)

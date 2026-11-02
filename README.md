@@ -103,6 +103,7 @@ Cada componente se marca con una de tres categorías. No se deben confundir:
 | Panel: reservas (visita con QR, espacios, cancelación) y finanzas (gastos, cartola, circular, medidores) | Probado con ejecución real | Playwright en modo demo (20/20) y contra el backend real (4/4) |
 | Respaldo y restauración de PostgreSQL | Probado con ejecución real | `scripts/respaldo_db.sh` y `restaurar_db.sh` contra PostgreSQL 16: las filas restauradas coinciden |
 | Panel como imagen standalone | Probado con ejecución real | Build `NEXT_OUTPUT=standalone` y servidor Node respondiendo con CSP; la imagen Docker no se construyó |
+| WhatsApp: reserva de visitas conversacional (entiende nombre, día, hora y patente; pregunta lo que falta; confirma; envía el QR; ignora webhooks repetidos) | Probado con doble | Suite de backend con Evolution API simulada; el envío de imagen no se ha probado contra Evolution real |
 | Proxy HTTPS (Caddy) | Sin probar | Caddyfile escrito; no hay Caddy ni Docker en este entorno, no se emitió ningún certificado |
 | Docker Compose | Sin probar | `docker compose config` valida el YAML y los perfiles; este entorno no tiene demonio de Docker, así que no se ejecutó `up` |
 | Asistente `configurar_entorno.py` y `verificar_conexiones.py` | Probado con ejecución real | Tests con consola simulada; verificación real contra el `.env` |

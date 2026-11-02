@@ -142,6 +142,16 @@ qué canales están configurados y advierte si queda algún valor de ejemplo. No
 Notas de seguridad: el webhook sólo responde a mensajes de números registrados como residentes.
 A quien no esté registrado se le responde que contacte a la administración, sin revelar datos.
 
+### Qué pueden hacer los residentes por WhatsApp
+
+- **Reservar una visita**, escribiendo con sus palabras: «visita Juan Pérez mañana 18:00 patente BBCD12» o «quiero una visita para María el viernes a las 7 pm».
+  El sistema pregunta lo que falta (nombre, día u hora), resume la reserva y espera un **SÍ** explícito; recién ahí reserva y envía el **QR como imagen**.
+  Un **NO** cancela. La conversación expira a los 15 minutos y nada se reserva sin confirmar.
+- **Consultar su deuda** («cuánto debo»).
+- Las reservas de visitas respetan los cupos del edificio. La reserva del quincho por WhatsApp aún no está: se hace desde el panel.
+
+El envío del QR usa el endpoint `sendMedia` de Evolution API; verifique con su instancia que llegue la imagen (primera prueba manual de la lista del final).
+
 ## 6. Correo (SMTP o Amazon SES)
 
 Con SES, el servidor SMTP es `email-smtp.<región>.amazonaws.com` puerto `587` (STARTTLS). Las
