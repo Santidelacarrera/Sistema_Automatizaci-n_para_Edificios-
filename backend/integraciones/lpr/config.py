@@ -12,6 +12,7 @@ class Config:
     confianza_minima: float   # lecturas por debajo se rechazan sin llamar al backend
     dedup_segundos: int       # misma patente dentro de esta ventana se ignora
     adaptador: str            # generico | hikvision | dahua
+    redis_url: str = ""       # vacío = deduplicación en memoria; con valor = compartida entre réplicas
 
     @classmethod
     def desde_entorno(cls, env=os.environ) -> "Config":
@@ -27,4 +28,5 @@ class Config:
             confianza_minima=float(env.get("LPR_CONFIANZA_MINIMA", "0.85")),
             dedup_segundos=int(env.get("LPR_DEDUP_SEGUNDOS", "30")),
             adaptador=env.get("LPR_ADAPTADOR", "generico"),
+            redis_url=env.get("LPR_REDIS_URL", ""),
         )

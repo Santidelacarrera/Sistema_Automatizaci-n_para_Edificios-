@@ -36,6 +36,7 @@ cámara ──POST /lpr/evento──▶ traductor (puerto 8090) ──POST /api/
 | `LPR_CONFIANZA_MINIMA` | no | `0.85` | Decimal entre 0 y 1. |
 | `LPR_DEDUP_SEGUNDOS` | no | `30` | |
 | `LPR_ADAPTADOR` | no | `generico` | `generico`, `hikvision` (pendiente), `dahua` (pendiente). |
+| `LPR_REDIS_URL` | no | `redis://redis:6379/1` | Vacía: deduplicación en memoria (un proceso). Con valor: ventana compartida entre réplicas (`SET NX EX`, atómico). Si Redis cae, la lectura se envía igual y decide el backend. |
 
 Arranque (desde `backend/`):
 
@@ -83,4 +84,3 @@ cd backend && pytest tests/test_lpr.py
 
 - Probar con la cámara real y ajustar `LPR_CONFIANZA_MINIMA` con lecturas reales.
 - HTTPS entre cámara, traductor y backend (hoy HTTP en la red local).
-- La deduplicación vive en memoria: con más de un proceso del traductor habría que moverla a Redis.

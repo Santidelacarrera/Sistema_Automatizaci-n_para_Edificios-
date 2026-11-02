@@ -5,6 +5,8 @@ import tempfile
 os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{tempfile.mkdtemp()}/test.db"
 os.environ["WHATSAPP_WEBHOOK_TOKEN"] = "tok"
 os.environ["CELERY_EAGER"] = "true"
+# Clave de prueba de 32+ bytes (la de desarrollo por defecto es corta y PyJWT avisa en cada test).
+os.environ.setdefault("JWT_SECRET", "clave-de-pruebas-solo-para-la-suite-0123456789")
 
 import pytest
 from fastapi.testclient import TestClient
