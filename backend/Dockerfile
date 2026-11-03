@@ -5,6 +5,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY migrations ./migrations
 COPY scripts ./scripts
+COPY integraciones ./integraciones
 COPY alembic.ini ./
 RUN useradd -m app && chown -R app /srv
 USER app
