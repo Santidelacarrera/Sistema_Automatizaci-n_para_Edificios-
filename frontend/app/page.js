@@ -10,8 +10,9 @@ import Finanzas from "./components/Finanzas";
 import Porton from "./components/Porton";
 import Reservas from "./components/Reservas";
 import Visitas from "./components/Visitas";
+import PortalPropietario from "./components/PortalPropietario";
 
-const VISTAS = [["fachada", "Fachada"], ["porton", "Portón"], ["visitas", "Visitas"], ["reservas", "Reservas"], ["cobranza", "Cobranza"], ["finanzas", "Finanzas"], ["admin", "Administración"]];
+const VISTAS = [["fachada", "Fachada"], ["propietario", "Mi Depto"], ["porton", "Portón"], ["visitas", "Visitas"], ["reservas", "Reservas"], ["cobranza", "Cobranza"], ["finanzas", "Finanzas"], ["admin", "Administración"]];
 const SOLO_ADMIN = ["admin", "finanzas", "reservas"]; // reservas usa la lista de espacios, que es de administración
 const PUEDE_ADMIN = (sess) => sess.demo || sess.rol === "admin" || sess.rol === "superadmin";
 const ES_SUPERADMIN = (sess) => !sess.demo && sess.rol === "superadmin";
@@ -117,8 +118,9 @@ function Panel({ sess: sesionInicial, onSalir }) {
             </div>
             <Fachada data={data} filtro={filtro} seleccionada={sel} onSelect={setSel} />
           </section>
-          {u && <Drawer key={u.id} u={u} api={api} onClose={() => setSel(null)} onChange={cargar} esAdmin={PUEDE_ADMIN(sess)} unidades={data.unidades} />}
+          {u && <Drawer key={u.id} u={u} api={api} onClose={() => setSel(null)} onChange={cargar} esAdmin={PUEDE_ADMIN(sess)} unidades={data.unidades} onVerPortal={(id) => { setSel(id); setVista("propietario"); }} />}
         </>)}
+        {vista === "propietario" && <PortalPropietario data={data} api={api} sess={sess} deptoInicial={sel} />}
         {vista === "porton" && <Porton accesos={accesos} data={data} />}
         {vista === "visitas" && <Visitas visitas={visitas} data={data} api={api} />}
         {vista === "cobranza" && <Cobranza cob={cob} api={api} onChange={cargar} />}

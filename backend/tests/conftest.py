@@ -1,4 +1,6 @@
 import os
+
+os.environ["ENTORNO"] = "desarrollo"
 import tempfile
 
 # TEST_DATABASE_URL=postgresql+psycopg://... corre toda la suite contra PostgreSQL (la base se VACÍA en cada test).
