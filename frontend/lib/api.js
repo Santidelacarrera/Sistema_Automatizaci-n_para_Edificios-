@@ -22,21 +22,6 @@ async function http(sess, method, path, body) {
   return data;
 }
 
-async function subir(sess, path, campo, archivo) {
-  const fd = new FormData();
-  fd.append(campo, archivo);
-  const r = await fetch(BASE + path, { method: "POST", headers: { Authorization: `Bearer ${sess.token}` }, body: fd });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new ApiError(r.status, data.detail ?? r.statusText);
-  return data;
-}
-
-async function imagen(sess, path) {
-  const r = await fetch(BASE + path, { headers: { Authorization: `Bearer ${sess.token}` } });
-  if (!r.ok) throw new ApiError(r.status, "No se pudo cargar la imagen");
-  return URL.createObjectURL(await r.blob());
-}
-
 export async function login(edificio_id, email, password) {
   const r = await fetch(BASE + "/auth/login", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -80,8 +65,6 @@ export function client(sess) {
       return URL.createObjectURL(await r.blob());
     },
     ...comunidadClient((m, p, b) => http(sess, m, `${e}${p}`, b)),
-    conciliar: (archivo) => subir(sess, `${e}/conciliacion`, "cartola", archivo),
-    qrVisita: (id) => imagen(sess, `${e}/visitas/${id}/qr.png`),
   };
 }
 
@@ -100,16 +83,11 @@ function comunidadClient(req) {
     resolverAviso: (id, aprobar, motivo = "") => req("POST", `/avisos-pago/${id}/resolver`, { aprobar, motivo }),
     cobrarIntereses: (b) => req("POST", "/cobranza/intereses", b),
     resumenFinanzas: () => req("GET", "/finanzas/resumen"),
-    generarGastos: (b) => req("POST", "/gastos-comunes/generar", b),
-    enviarGastos: (periodo) => req("POST", `/gastos-comunes/enviar/${periodo}`),
-    enviarCircular: (b) => req("POST", "/circulares", b),
     editarComunicado: (id, b) => req("PATCH", `/comunicados/${id}`, b),
     editarEspacio: (id, b) => req("PATCH", `/espacios/${id}`, b),
     cupos: () => req("GET", "/visitas/cupos"),
     espaciosComunes: () => req("GET", "/espacios-comunes"),
     disponibilidad: (id, fecha) => req("GET", `/espacios-comunes/${id}/disponibilidad?fecha=${fecha}`),
-    reservarEspacio: (b) => req("POST", "/reservas-espacio", b),
-    reservarVisita: (b) => req("POST", "/visitas", b),
     compartirVisita: (id, telefono = "") => req("GET", `/visitas/${id}/whatsapp?telefono=${encodeURIComponent(telefono)}`),
   };
 }
@@ -342,13 +320,13 @@ function demoClient() {
   ];
   let avisos = [{ id: 1, unidad_id: data.unidades[6].id, unidad: data.unidades[6].numero, monto: 96000, banco: "Banco Estado", nro_operacion: "OP-448812", fecha_transferencia: new Date().toISOString().slice(0, 10), estado: "pendiente", creado: iso(-60), motivo: "" }];
   const comunidad = {
-    miDepto: async () => ({
+    miDepto: async (uid) => { const u1 = data.unidades.find((x) => x.id === uid) || data.unidades[0]; return ({
       unidad: { id: u1.id, numero: u1.numero, codigo_cobro: u1.codigo_cobro, estacionamientos: u1.estacionamientos },
       cuenta: { estado: u1.vencida > 0 ? "moroso" : "al_dia", deuda: u1.deuda, vencida: u1.vencida,
         desglose: { cuota_base: Math.round(u1.deuda * 0.7), agua: Math.round(u1.deuda * 0.2), fondo_reserva: Math.round(u1.deuda * 0.1), intereses_multas: 0, otros: 0 }, cargos: [] },
       vehiculos: u1.vehiculos, tags: [], encomiendas_pendientes: encomiendas.filter((e) => e.unidad_id === u1.id && e.estado === "pendiente"),
       visitas_activas: [], avisos_pago: avisos.filter((a) => a.unidad_id === u1.id), comunicados: comunicados.slice(0, 5),
-    }),
+    }); },
     comunicados: async () => [...comunicados].sort((a, b) => Number(b.fijado) - Number(a.fijado)),
     publicarComunicado: async (b) => { const c = { id: nid(comunicados), publicado_at: new Date().toISOString(), vigente_hasta: null, fijado: false, categoria: "aviso", ...b }; comunicados.push(c); return { id: c.id }; },
     retirarComunicado: async (id) => { comunicados = comunicados.filter((c) => c.id !== id); return { ok: true }; },
@@ -374,17 +352,6 @@ function demoClient() {
       a.estado = aprobar ? "aprobado" : "rechazado"; a.motivo = motivo || ""; return { id, estado: a.estado, excedente: 0 };
     },
     cobrarIntereses: async (b) => { const m = cob().morosos.filter((x) => x.dias_atraso > 0); return { periodo: b.periodo, unidades: m.length, ya_aplicados: 0, total: Math.round(m.reduce((s, x) => s + x.vencido, 0) * b.tasa_mensual_pct / 100) }; },
-    generarGastos: async (b) => {
-      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(b.periodo)) fallo("Periodo inválido: use AAAA-MM");
-      const total = b.gastos.reduce((s, g) => s + Number(g.monto), 0);
-      return { periodo: b.periodo, total: total + (b.fondo_reserva_pct ? Math.round(b.gastos.filter((g) => (g.tipo || "ordinario") === "ordinario").reduce((s, g) => s + Number(g.monto), 0) * b.fondo_reserva_pct / 100) : 0), unidades: data.unidades.length };
-    },
-    enviarGastos: async () => ({ encolado: false, estado: "no_configurado", motivo: "Modo demo: el navegador no envía correos" }),
-    enviarCircular: async () => ({ encolado: false, estado: "no_configurado", motivo: "Modo demo: el navegador no envía correos" }),
-    conciliar: async (archivo) => {
-      const filas = (await archivo.text()).trim().split(/\r?\n/).slice(1).filter(Boolean);
-      return { conciliados: [], sin_match: filas.map((f, i) => ({ id: String(i), descripcion: f.split(",")[1] || "", monto: Number(f.split(",")[2]) || 0 })), duplicados: 0, ya_abonados_por_aviso: 0 };
-    },
     editarComunicado: async (id, b) => { const c = comunicados.find((x) => x.id === id); if (!c) fallo("Comunicado no existe", 404); Object.assign(c, b); return c; },
     editarEspacio: async (id, b) => {
       const e = espacios.find((x) => x.id === id); if (!e) fallo("Espacio no existe", 404);
@@ -393,12 +360,9 @@ function demoClient() {
       return { id, tarifa: e.tarifa, aforo: e.aforo };
     },
     cupos: async () => ({ total: data.edificio.cupos_visitas, ocupados: data.edificio.cupos_ocupados, libres: data.edificio.cupos_visitas - data.edificio.cupos_ocupados }),
-    qrVisita: async () => null,
     resumenFinanzas: async () => { const c = cob(); const mor = c.morosos.filter((x) => x.dias_atraso > 0).length; return { unidades: data.unidades.length, unidades_morosas: mor, morosidad_pct: Math.round(mor / data.unidades.length * 1000) / 10, deuda_total: c.total, deuda_vencida: c.morosos.reduce((s, x) => s + x.vencido, 0), avisos_pago_pendientes: avisos.filter((a) => a.estado === "pendiente").length }; },
     espaciosComunes: async () => espacios.map((e) => ({ ...e, horario: { desde: "10:00", hasta: "22:00" } })),
     disponibilidad: async () => ({ espacio: "Quincho", aforo: 20, tarifa: 10000, horario: { desde: "10:00", hasta: "22:00" }, abierto: true, ocupadas: [] }),
-    reservarEspacio: async () => fallo("Modo demo: las reservas no se guardan"),
-    reservarVisita: async () => fallo("Modo demo: las visitas no se guardan"),
     compartirVisita: async (id) => ({ mensaje: "Hola, te invito al depto 101. Muestra este código en la entrada: DEMO", url: "https://wa.me/?text=DEMO", codigo_qr: "DEMO" }),
   };
   return {

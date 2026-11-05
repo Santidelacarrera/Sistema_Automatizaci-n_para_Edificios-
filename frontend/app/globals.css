@@ -733,317 +733,10 @@ input:focus, select:focus, textarea:focus {
 .modo.on { border-color: var(--azul-accent); background: var(--azul-suave); }
 .modo b { display: block; margin-bottom: .2rem; color: var(--primario); }
 
-/* ---------- Portal del Propietario (Estilo EDIFITO) ---------- */
-.portal-propietario {
-  max-width: 64rem;
-  display: grid;
-  gap: 1.5rem;
-}
-.portal-header-card {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  color: #ffffff;
-  padding: 1.75rem 2rem;
-  border-radius: 16px;
-  box-shadow: var(--sombra-md);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-}
-.portal-badge-rol {
-  font-size: .78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  background: rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
-  padding: .25rem .75rem;
-  border-radius: 99px;
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  display: inline-block;
-  margin-bottom: .4rem;
-}
-.portal-bienvenida h2 {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0 0 .25rem;
-  letter-spacing: -.02em;
-}
-.portal-subtitulo { margin: 0; color: #94a3b8; font-size: .95rem; }
-.portal-depto-selector label { color: #cbd5e1; font-size: .8rem; margin-bottom: .2rem; }
-.portal-depto-selector select {
-  background: #0f172a;
-  color: #ffffff;
-  border: 1px solid #475569;
-  border-radius: 8px;
-  padding: .5rem .85rem;
-  font-weight: 600;
-}
-
-.portal-tabs {
-  display: flex;
-  gap: .5rem;
-  flex-wrap: wrap;
-  border-bottom: 2px solid var(--borde);
-  padding-bottom: .4rem;
-}
-.portal-tab {
-  background: #ffffff;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  padding: .6rem 1.1rem;
-  font-size: .92rem;
-  font-weight: 600;
-  color: var(--texto-2);
-  transition: all .15s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: .45rem;
-}
-.portal-tab:hover { background: var(--tarjeta-sub); color: var(--texto-1); }
-.portal-tab.on {
-  background: var(--azul-accent);
-  color: #ffffff;
-  border-color: var(--azul-accent);
-  box-shadow: var(--sombra-sm);
-}
-.p-badge {
-  background: #ef4444;
-  color: #fff;
-  font-size: .75rem;
-  font-weight: 700;
-  padding: 0 .5em;
-  border-radius: 99px;
-}
-
-.portal-grid-gastos {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-.card-principal-gasto, .card-notificar-pago, .card-generar-visita, .card-encomiendas, .card-comunicados, .card-vehiculos {
-  background: #ffffff;
-  padding: 1.75rem;
-  border-radius: 14px;
-  border: 1px solid var(--borde);
-  box-shadow: var(--sombra-md);
-}
-.card-cabecera {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1.25rem;
-}
-.periodo-tag { font-size: .8rem; font-weight: 600; color: var(--texto-2); text-transform: uppercase; }
-.card-cabecera h3 { margin: .2rem 0 0; font-size: 1.35rem; font-weight: 800; color: var(--primario); }
-.estado-pago-pill {
-  font-size: .82rem;
-  font-weight: 700;
-  padding: .35rem .85rem;
-  border-radius: 99px;
-}
-.pill-al-dia { background: var(--verde-fondo); color: var(--verde); border: 1px solid var(--verde-borde); }
-.pill-deudor { background: var(--rojo-fondo); color: var(--ladrillo); border: 1px solid #fecaca; }
-
-.monto-destacado-wrap {
-  background: var(--tarjeta-sub);
-  padding: 1.25rem 1.5rem;
-  border-radius: 12px;
-  border: 1px solid var(--borde);
-  margin-bottom: 1.5rem;
-}
-.monto-label { font-size: .85rem; font-weight: 600; color: var(--texto-2); text-transform: uppercase; }
-.monto-valor { font-size: 2.6rem; font-weight: 900; color: var(--primario); margin: .25rem 0; font-variant-numeric: tabular-nums; }
-.vencimiento-nota { margin: 0; font-size: .85rem; color: var(--texto-2); }
-
-.desglose-colilla h4 { font-size: 1rem; font-weight: 700; margin: 0 0 .85rem; color: var(--primario); }
-.fila-detalle {
-  display: flex;
-  justify-content: space-between;
-  padding: .65rem 0;
-  border-bottom: 1px solid var(--borde);
-  font-size: .92rem;
-  color: var(--texto-2);
-}
-.fila-detalle b { color: var(--texto-1); font-variant-numeric: tabular-nums; }
-.fila-detalle.deuda-anterior { color: var(--ladrillo); }
-.fila-detalle.deuda-anterior b { color: var(--ladrillo); }
-.fila-total {
-  display: flex;
-  justify-content: space-between;
-  padding: .9rem 0 .2rem;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--primario);
-}
-.fila-total b { font-size: 1.2rem; }
-
-.acciones-colilla { margin-top: 1.25rem; display: flex; gap: .75rem; }
-.btn-secundario {
-  background: #ffffff;
-  color: var(--texto-1);
-  border: 1.5px solid var(--borde-hover);
-  border-radius: 8px;
-  padding: .6rem 1.1rem;
-  font-weight: 600;
-  font-size: .88rem;
-  transition: all .15s;
-}
-.btn-secundario:hover { background: var(--tarjeta-sub); border-color: var(--texto-2); }
-
-.card-notificar-pago h3 { margin: 0 0 .35rem; font-size: 1.25rem; font-weight: 800; color: var(--primario); }
-.nota-pago { font-size: .88rem; color: var(--texto-2); margin: 0 0 1.25rem; }
-.form-notificar { display: grid; gap: 1rem; }
-.btn-primario-grande {
-  background: var(--verde);
-  color: #ffffff;
-  border: 0;
-  border-radius: 8px;
-  padding: .75rem 1.25rem;
-  font-weight: 700;
-  font-size: .95rem;
-  box-shadow: var(--sombra-sm);
-  transition: all .15s;
-}
-.btn-primario-grande:hover { background: #047857; transform: translateY(-1px); }
-.aviso-exito-pago {
-  background: var(--verde-fondo);
-  border: 1.5px solid var(--verde-borde);
-  padding: 1.1rem;
-  border-radius: 10px;
-  color: #065f46;
-}
-.aviso-exito-pago b { display: block; font-size: 1.05rem; margin-bottom: .3rem; }
-.aviso-exito-pago p { margin: 0; font-size: .88rem; }
-.datos-transferencia-box {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: var(--tarjeta-sub);
-  border-radius: 10px;
-  font-size: .85rem;
-  color: var(--texto-2);
-}
-.datos-transferencia-box b { color: var(--primario); display: block; margin-bottom: .25rem; }
-.datos-transferencia-box p { margin: 0; line-height: 1.5; }
-
-/* Encomiendas */
-.sub-card { color: var(--texto-2); font-size: .9rem; margin: .2rem 0 1.25rem; }
-.lista-encomiendas { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; }
-.item-encomienda {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  padding: 1rem 1.25rem;
-  background: var(--tarjeta-sub);
-  border: 1px solid var(--borde);
-  border-radius: 10px;
-  transition: all .15s;
-}
-.item-encomienda.retirado { opacity: .65; }
-.encomienda-icono { font-size: 1.8rem; }
-.encomienda-info { flex: 1; display: grid; gap: .15rem; }
-.encomienda-info b { font-size: 1rem; color: var(--primario); }
-.encomienda-info span { font-size: .88rem; color: var(--texto-2); }
-.encomienda-info small { font-size: .78rem; color: #64748b; }
-.btn-retirar {
-  background: var(--azul-accent);
-  color: #fff;
-  border: 0;
-  border-radius: 6px;
-  padding: .45rem .85rem;
-  font-size: .85rem;
-  font-weight: 600;
-}
-.btn-retirar:hover { background: var(--azul-accent-hover); }
-.estado-entregado { font-size: .85rem; font-weight: 600; color: var(--verde); }
-
-/* Visita y QR */
-.form-grid-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.tarjeta-qr-generada {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  background: var(--tarjeta-sub);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-.qr-simulado {
-  background: #ffffff;
-  padding: 1rem;
-  border-radius: 10px;
-  border: 2px solid #0f172a;
-}
-.qr-box {
-  width: 100px;
-  height: 100px;
-  background: repeating-linear-gradient(45deg, #0f172a 0 10px, #ffffff 10px 20px);
-  display: grid;
-  place-items: center;
-}
-.qr-text {
-  background: #ffffff;
-  padding: 4px 6px;
-  font-weight: 800;
-  font-size: .75rem;
-  letter-spacing: .08em;
-}
-.qr-datos h4 { margin: 0 0 .25rem; font-size: 1.2rem; }
-.qr-datos p { margin: 0 0 .75rem; color: var(--texto-2); font-size: .9rem; }
-.btn-whatsapp {
-  background: #25d366;
-  color: #ffffff;
-  border: 0;
-  border-radius: 8px;
-  padding: .55rem 1rem;
-  font-weight: 700;
-  font-size: .9rem;
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-}
-.btn-whatsapp:hover { background: #1ebe57; }
-
-/* Comunicados */
-.lista-comunicados { display: grid; gap: 1rem; }
-.item-comunicado {
-  background: var(--tarjeta-sub);
-  padding: 1.25rem 1.4rem;
-  border-radius: 12px;
-  border: 1px solid var(--borde);
-  border-left: 4px solid var(--azul-accent);
-}
-.item-comunicado.urgente { border-left-color: #ef4444; }
-.comunicado-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
-.categoria-tag { font-size: .75rem; font-weight: 700; text-transform: uppercase; color: var(--azul-accent); }
-.item-comunicado time { font-size: .8rem; color: var(--texto-2); }
-.item-comunicado h4 { margin: 0 0 .4rem; font-size: 1.1rem; font-weight: 700; color: var(--primario); }
-.item-comunicado p { margin: 0; color: var(--texto-2); line-height: 1.5; font-size: .92rem; }
-
-/* Vehículos Propietario */
-.grid-autos-propietario { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
-.tarjeta-auto {
-  background: var(--tarjeta-sub);
-  padding: 1.25rem;
-  border-radius: 12px;
-  border: 1px solid var(--borde);
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-.auto-detalles b { display: block; font-size: 1rem; color: var(--primario); margin-bottom: .2rem; }
-.auto-tag-status { font-size: .82rem; color: var(--verde); font-weight: 600; }
-
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .entrada { grid-template-columns: 1fr; }
   .entrada-fachada { display: none; }
-  .portal-grid-gastos { grid-template-columns: 1fr; }
-  .form-grid-dos { grid-template-columns: 1fr; }
   .vista.con-drawer { grid-template-columns: 1fr; }
   .drawer {
     position: fixed;
@@ -1059,121 +752,122 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   Superficies de trabajo (conserjería, finanzas, Mi depto)
-   Una sola familia tipográfica en etiquetas, tablas y botones; el display queda para los títulos de vista.
-   Escala fija: 0.85 / 1 / 1.15 / 1.35 rem. Sin bordes laterales de color ni emojis: el estado va en texto e icono.
+   Conserjería, Mi depto y mora: se apoyan en las variables del panel (--azul-accent, --borde, --texto-*)
+   para no abrir un segundo sistema visual. Listas separadas por línea (sin tarjetas anidadas), estado en
+   texto + icono (nunca sólo color), sin franjas laterales y sin emojis.
    ========================================================================== */
-:root { --ladrillo-texto: #8a2f1c; --verde-texto: #1d5a47; --papel-2: #e0dfd6; --linea: #b4b3a9; }
+:root { --ladrillo-texto: #991b1b; --verde-texto: #065f46; }
 
 /* Superficies del navegador que también llevan el diseño */
-::selection { background: var(--luz); color: var(--tinta); }
-input, select, textarea { caret-color: var(--tinta); accent-color: var(--tinta); }
+::selection { background: #bfdbfe; color: var(--texto-1); }
+input, select, textarea { caret-color: var(--azul-accent); accent-color: var(--azul-accent); }
 .tabla, .datos, .lista time, .etq { font-variant-numeric: tabular-nums; }
-a { text-underline-offset: .2em; }
 
-/* Controles: mismo vocabulario en todos los formularios */
-input[type=number], input[type=date], input[type=month], input[type=time], input[type=datetime-local], input[type=tel],
-input[type=file], select, textarea {
-  background: var(--papel); border: 2px solid var(--tinta); padding: .55rem .65rem; width: 100%;
-  font: 400 1rem/1.4 var(--texto); color: var(--tinta); border-radius: 0; min-height: 2.75rem;
+/* Controles que el panel aún no estilaba */
+input[type=month], input[type=time], input[type=tel], input[type=file] {
+  background: #fff; border: 1.5px solid var(--borde); border-radius: 8px; padding: .6rem .8rem; width: 100%;
+  font-weight: 400; color: var(--texto-1); transition: border-color .15s, box-shadow .15s;
 }
-input[type=file] { padding: .45rem; cursor: pointer; }
-textarea { resize: vertical; min-height: 5.5rem; }
-input:disabled, select:disabled { opacity: .55; cursor: not-allowed; }
+input[type=month]:focus, input[type=time]:focus, input[type=tel]:focus, input[type=file]:focus { border-color: var(--azul-accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); outline: none; }
+input[type=file] { cursor: pointer; padding: .45rem .6rem; }
+textarea { resize: vertical; min-height: 5.5rem; line-height: 1.45; }
+input:disabled, select:disabled { background: var(--tarjeta-sub); color: var(--texto-2); cursor: not-allowed; }
 input[type=checkbox] { width: 1.1rem; height: 1.1rem; flex: none; }
-::placeholder { color: #5d6479; opacity: 1; }
-.btn, .mini { transition: background-color .15s ease-out, color .15s ease-out; }
+::placeholder { color: #64748b; opacity: 1; }
 .btn { min-height: 2.75rem; }
-.btn.peligro { background: var(--ladrillo-texto); }
-.btn.peligro:hover:not(:disabled) { background: #6e2415; }
-.mini { color: var(--ladrillo-texto); min-height: 2rem; padding: .25rem .4rem; font-size: .9rem; }
-.mini:hover { color: var(--tinta); }
+.btn.peligro { background: var(--ladrillo); }
+.btn.peligro:hover:not(:disabled) { background: #7f1d1d; }
+.mini { min-height: 2rem; }
 
-/* Mensajes de resultado: icono + texto sobre fondo teñido; sin franja lateral */
-.aviso { display: flex; gap: .55rem; align-items: flex-start; border: 0; border-radius: 2px; margin: .9rem 0 0; padding: .65rem .85rem; max-width: 56rem; }
-.aviso.ok { background: #d3e3da; color: #12372c; }
-.aviso.err { background: #efd5ce; color: #5c1f11; }
-.aviso .icono { flex: none; margin-top: .2rem; }
-div.aviso { display: block; }
+/* Mensajes: tinte + icono, sin franja lateral */
+.aviso { border: 1px solid transparent; border-left-width: 1px; }
+.aviso.ok { border-color: var(--verde-borde); }
+.aviso.err { border-color: #fecaca; }
+.aviso:has(.icono) { display: flex; gap: .55rem; align-items: flex-start; }
+.aviso .icono { flex: none; margin-top: .15rem; }
 div.aviso p { margin: 0 0 .35rem; }
 
-/* Estructura de vista */
+/* Estructura */
 .seccion-vista { max-width: 62rem; }
-.seccion-vista section { margin: 2.75rem 0 0; }
-.seccion-vista section:first-of-type { margin-top: 1.5rem; }
-.seccion-vista h3 { font: 650 1.35rem/1.2 var(--texto); margin: 0 0 .85rem; letter-spacing: -.01em; text-wrap: balance;
-  padding-top: 1rem; border-top: 1px solid var(--linea); display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
-.seccion-vista h3 .cuenta { font-size: .9rem; font-weight: 400; color: var(--tinta-2); }
-.seccion-vista .vista-cab p { text-wrap: pretty; }
-.seccion-vista .nota { max-width: 62ch; margin: .7rem 0 0; }
-.seccion-vista .vacio { max-width: 62ch; margin: .6rem 0 0; }
+.seccion-vista section { margin: 2.5rem 0 0; }
+.seccion-vista section:first-of-type { margin-top: 1.25rem; }
+.seccion-vista h3 {
+  font-size: 1.2rem; font-weight: 700; line-height: 1.25; letter-spacing: -.01em; color: var(--primario);
+  margin: 0 0 .8rem; padding-top: 1.1rem; border-top: 1px solid var(--borde);
+  display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; text-wrap: balance;
+}
+.seccion-vista section:first-of-type h3 { border-top: 0; padding-top: 0; }
+.seccion-vista h3 .cuenta { font-size: .88rem; font-weight: 500; color: var(--texto-2); }
+.seccion-vista .nota { max-width: 62ch; margin: .7rem 0 0; color: var(--texto-2); font-size: .9rem; }
+.seccion-vista .vacio { max-width: 62ch; margin: .6rem 0 0; color: var(--texto-2); }
+.seccion-vista .tabla { max-width: none; margin-top: .5rem; }
 
 /* Formularios en línea */
-.fila-form { display: flex; flex-wrap: wrap; gap: .9rem 1rem; align-items: flex-end; margin: 0 0 .5rem; }
+.fila-form { display: flex; flex-wrap: wrap; gap: .9rem 1rem; align-items: flex-end; margin: 0 0 .6rem; }
 .fila-form label { flex: 1 1 11rem; min-width: 0; }
 .fila-form label.ancho { flex: 2 1 18rem; }
-.fila-form label.chk { flex: 1 1 100%; font-weight: 400; }
+.fila-form label.completo { flex: 1 1 100%; }
+.fila-form label.chk { flex: 1 1 100%; font-weight: 500; }
 .fila-form .btn { flex: 0 0 auto; }
-.fila-titulo { flex: 1 1 100%; font-weight: 650; }
+.fila-titulo { flex: 1 1 100%; font-weight: 700; color: var(--primario); }
 .formulario .fila-form { margin-bottom: 1rem; }
-.acciones { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
-.confirmar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; background: var(--papel-2); padding: .75rem .9rem; margin: .9rem 0 0; max-width: 56rem; }
+.confirmar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; background: var(--tarjeta-sub); border: 1px solid var(--borde); border-radius: 8px; padding: .75rem .9rem; margin: .9rem 0 0; max-width: 56rem; }
 .confirmar > span { font-weight: 600; }
 .confirmar input { flex: 1 1 14rem; width: auto; }
 
 /* Tablas de datos */
-.seccion-vista .tabla { max-width: none; margin-top: .5rem; }
-.tabla small { display: block; color: var(--tinta-2); font-size: .85rem; }
-.tabla .num { font-weight: 650; font-size: 1.05rem; white-space: nowrap; }
-.tabla tr.hecho td { color: var(--tinta-2); }
-.tabla tfoot th, .tabla tfoot td { border-bottom: 0; border-top: 2px solid var(--tinta); font-size: 1rem; }
+.tabla small { display: block; color: var(--texto-2); font-size: .82rem; font-weight: 400; }
+.tabla .num { font-weight: 700; color: var(--primario); white-space: nowrap; }
+.tabla tr.hecho td { color: var(--texto-2); }
+.tabla tfoot th, .tabla tfoot td { border-bottom: 0; border-top: 2px solid var(--borde); font-size: .95rem; text-transform: none; letter-spacing: 0; }
 .tabla .acc { text-align: right; white-space: nowrap; }
-.tabla.editable td { padding: .35rem .4rem; vertical-align: middle; }
+.tabla.editable td { padding: .4rem .5rem; vertical-align: middle; }
 .tabla.editable input.der { text-align: right; }
-.tabla.editable td:first-child { min-width: 13rem; }
 .con-icono { display: inline-flex; align-items: center; gap: .4rem; }
 .icono { flex: none; vertical-align: -.2em; }
 .solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* Resumen: lista de datos, no tarjetas */
-.datos { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin: 1.25rem 0 0; padding: 0; }
+/* Resumen de morosidad: lista de datos, no tarjetas */
+.datos { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin: 1rem 0 0; padding: 0; }
 .datos div { min-width: 9rem; }
-.datos dt { font-size: .85rem; color: var(--tinta-2); }
-.datos dd { margin: .1rem 0 0; font-size: 1.35rem; font-weight: 650; }
+.datos dt { font-size: .82rem; color: var(--texto-2); }
+.datos dd { margin: .1rem 0 0; font-size: 1.3rem; font-weight: 700; color: var(--primario); }
 
-/* Listas (muro, visitas, avisos) separadas por línea, sin tarjetas */
-.lista { list-style: none; margin: .5rem 0 0; padding: 0; }
-.lista li { padding: .85rem 0; border-top: 1px solid var(--linea); }
-.lista li:first-child { border-top: 0; }
-.lista p { margin: .3rem 0 .2rem; max-width: 66ch; text-wrap: pretty; }
-.lista-cab { display: flex; flex-wrap: wrap; gap: .3rem .9rem; align-items: baseline; }
-.lista-cab time { margin-left: auto; font-size: .85rem; color: var(--tinta-2); }
-.lista .acc { display: flex; gap: .5rem; flex-wrap: wrap; }
-.lista.compacta li { padding: .55rem 0; }
-.qr { display: block; margin: .6rem 0 .2rem; background: #fff; padding: .5rem; image-rendering: pixelated; }
+/* Listas (muro, visitas, avisos) */
+.items { list-style: none; margin: .5rem 0 0; padding: 0; }
+.items li { padding: .85rem 0; border-top: 1px solid var(--borde); }
+.items li:first-child { border-top: 0; }
+.items p { margin: .3rem 0 .2rem; max-width: 66ch; text-wrap: pretty; }
+.items-cab { display: flex; flex-wrap: wrap; gap: .3rem .9rem; align-items: baseline; }
+.items-cab time { margin-left: auto; font-size: .82rem; color: var(--texto-2); }
+.items .acc { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .2rem; }
+.items.compacta li { padding: .55rem 0; }
+.qr { display: block; margin: .6rem 0 .2rem; background: #fff; padding: .5rem; border: 1px solid var(--borde); border-radius: 8px; image-rendering: pixelated; }
 .franjas { list-style: none; margin: .2rem 0 0; padding: 0; }
 
 /* Etiquetas de estado: punto + texto */
-.etq { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; font-weight: 600; background: var(--papel-2); padding: .1rem .5rem; color: var(--tinta); }
-.etq::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: var(--losa); }
+.etq { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; font-weight: 600; background: var(--tarjeta-sub); border-radius: 99px; padding: .1rem .6rem; color: var(--texto-1); }
+.etq::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: var(--vidrio); }
 .etq-urgente::before, .etq-rechazado::before { background: var(--ladrillo); }
 .etq-mantencion::before, .etq-pendiente::before { background: var(--luz); }
 .etq-asamblea::before, .etq-aprobado::before { background: var(--verde); }
-
-.estado-ok { color: var(--verde-texto); font-weight: 650; } .estado-mora { color: var(--ladrillo-texto); font-weight: 650; }
+.estado-ok { color: var(--verde-texto); font-weight: 600; } .estado-mora { color: var(--ladrillo-texto); font-weight: 600; }
 
 /* Carga: esqueleto con la forma del contenido */
 .esqueleto { display: grid; gap: .6rem; margin-top: .75rem; }
-.esqueleto span { height: 2.4rem; background: var(--papel-2); animation: latido 1.4s ease-in-out infinite; }
-@keyframes latido { 50% { opacity: .45; } }
+.esqueleto span { height: 2.4rem; border-radius: 8px; background: var(--tarjeta-sub); animation: latido 1.4s ease-in-out infinite; }
+@keyframes latido { 50% { opacity: .5; } }
 
 .ventana { position: relative; }
 .ventana .paq { position: absolute; top: 3px; right: 3px; display: grid; color: inherit; opacity: .85; }
 
+/* Sub-pestañas: envuelven en pantallas angostas */
+.subtabs { flex-wrap: wrap; }
+
 @media (max-width: 40rem) {
   .fila-form label, .fila-form label.ancho { flex-basis: 100%; }
   .fila-form .btn, .acciones .btn { width: 100%; }
-  .tabla { display: block; overflow-x: auto; }
+  .seccion-vista .tabla { display: block; overflow-x: auto; }
   .datos div { min-width: 40%; }
 }
-@media (prefers-reduced-motion: reduce) { .esqueleto span { animation: none; } .btn, .mini { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .esqueleto span { animation: none; } }

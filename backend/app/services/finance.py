@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import events
+from ..config import hoy_local
 from ..models import Cargo, LecturaMedidor, Unidad
 
 
@@ -107,7 +108,7 @@ def categoria_cargo(concepto: str, categoria: str = "") -> str:
 
 def estado_cuenta(db: Session, unidad_id: int) -> dict:
     """Estado de cuenta en tiempo real: al día o moroso, monto exacto y desglose por categoría."""
-    hoy = date.today()
+    hoy = hoy_local()
     cargos = db.scalars(select(Cargo).where(Cargo.unidad_id == unidad_id, Cargo.saldo > 0)
                         .order_by(Cargo.periodo, Cargo.id)).all()
     desglose = {k: 0.0 for k in ("cuota_base", "agua", "fondo_reserva", "intereses_multas", "otros")}
@@ -127,7 +128,7 @@ def aplicar_intereses(db: Session, edificio_id: str, periodo: str, tasa_mensual_
                       hoy: date | None = None) -> dict:
     """Interés simple mensual sobre el capital vencido (excluye intereses y multas previos).
     Idempotente: una unidad recibe como máximo un cargo ``Interés mora <periodo>``."""
-    hoy = hoy or date.today()
+    hoy = hoy or hoy_local()
     concepto = f"{PREFIJO_INTERES} {periodo}"
     filas = db.execute(
         select(Cargo.unidad_id, func.sum(Cargo.saldo)).where(

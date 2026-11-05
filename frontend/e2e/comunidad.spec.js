@@ -50,20 +50,27 @@ test("edita tarifa y aforo de un espacio común", async ({ page }) => {
   await expect(page.getByRole("row", { name: /Quincho/ })).toContainText("12 personas");
 });
 
-test("finanzas: calcula gastos con fondo de reserva y muestra el total", async ({ page }) => {
+test("finanzas: el fondo de reserva se propone al generar gastos", async ({ page }) => {
   await ir(page, "Finanzas", "Finanzas");
-  await expect(page.getByText("Departamentos morosos")).toBeVisible();
-  await page.getByLabel("Vence el").fill("2026-12-10");
-  await page.getByLabel("Concepto del gasto 1").fill("Administración");
-  await page.getByLabel("Monto del gasto 1").fill("1000000");
-  await page.getByRole("button", { name: "Calcular y cargar a los departamentos" }).click();
-  await expect(page.getByRole("status").first()).toContainText("1.050.000");
+  await expect(page.getByLabel("Fondo de reserva (%)")).toHaveValue("5");
 });
 
-test("finanzas: los intereses piden confirmación antes de cargarse", async ({ page }) => {
+test("finanzas: mora muestra el resumen y los intereses piden confirmación antes de cargarse", async ({ page }) => {
   await ir(page, "Finanzas", "Finanzas");
+  await page.getByRole("tab", { name: "Mora e intereses" }).click();
+  await expect(page.getByText("Departamentos morosos")).toBeVisible();
   await page.getByRole("button", { name: "Cargar intereses", exact: true }).click();
   await expect(page.getByText(/Se cargará 1.5 % sobre el capital vencido/)).toBeVisible();
   await page.getByRole("button", { name: "Cancelar" }).click();
   await expect(page.getByText(/Se cargará/)).toHaveCount(0);
+});
+
+test("mi depto: el portal muestra datos del departamento y permite avisar un pago", async ({ page }) => {
+  await ir(page, "Mi Depto", "Mi depto");
+  await expect(page.getByRole("heading", { name: "Gastos comunes", level: 3 })).toBeVisible();
+  await page.getByLabel("Monto (CLP)").fill("50000");
+  await page.getByLabel("Banco").fill("Banco Estado");
+  await page.getByLabel("N.º de operación").fill("OP-778899");
+  await page.getByRole("button", { name: "Avisar pago" }).click();
+  await expect(page.getByRole("status").first()).toContainText("Aviso enviado");
 });

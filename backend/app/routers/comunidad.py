@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import events
-from ..config import utcnow
+from ..config import ahora_local, hoy_local, utcnow
 from ..db import get_db
 from ..models import (AvisoPago, Cargo, Comunicado, Edificio, Encomienda, EspacioComun, EstadoVisita, Pago,
                       Regla, ReservaEspacio, Residente, Rol, Tag, Unidad, Vehiculo, Visita)
@@ -56,13 +56,19 @@ def _unidad(db: Session, user: Principal, ed: Edificio, unidad_id: int | None) -
 
 
 def _z(d: datetime | None) -> str | None:
+    """Instante técnico (UTC): lleva Z."""
     return d.isoformat() + "Z" if d else None
+
+
+def _l(d: datetime | None) -> str | None:
+    """Hora de pared del negocio (la que escribe una persona): sin zona, como en el resto de la API."""
+    return d.isoformat() if d else None
 
 
 # ---------------------------------------------------------------- comunicados (muro)
 def _com(c: Comunicado) -> dict:
     return {"id": c.id, "titulo": c.titulo, "cuerpo": c.cuerpo, "categoria": c.categoria, "fijado": c.fijado,
-            "publicado_at": _z(c.publicado_at), "vigente_hasta": _z(c.vigente_hasta)}
+            "publicado_at": _z(c.publicado_at), "vigente_hasta": _l(c.vigente_hasta)}
 
 
 @router.get("/comunicados")
@@ -71,7 +77,7 @@ def listar_comunicados(edificio_id: str, user: User, todos: bool = False, db: Se
     ed = _ed(db, user, edificio_id)
     q = select(Comunicado).where(Comunicado.edificio_id == ed.id)
     if not (todos and user.rol in (Rol.admin, Rol.superadmin)):
-        q = q.where(or_(Comunicado.vigente_hasta.is_(None), Comunicado.vigente_hasta >= utcnow()))
+        q = q.where(or_(Comunicado.vigente_hasta.is_(None), Comunicado.vigente_hasta >= ahora_local()))
     return [_com(c) for c in db.scalars(q.order_by(Comunicado.fijado.desc(), Comunicado.publicado_at.desc(),
                                                    Comunicado.id.desc()).limit(100))]
 
@@ -183,7 +189,7 @@ def avisar_pago(edificio_id: str, body: AvisoPagoIn, user: User, db: Session = D
     """El residente informa banco y número de operación; el administrador lo concilia."""
     ed = _ed(db, user, edificio_id)
     u = _unidad(db, user, ed, body.unidad_id)
-    if body.fecha_transferencia > date.today():
+    if body.fecha_transferencia > hoy_local():
         raise HTTPException(422, "La fecha de la transferencia no puede ser futura")
     a = AvisoPago(edificio_id=ed.id, unidad_id=u.id, residente_id=user.residente_id, monto=body.monto,
                   banco=body.banco.strip(), nro_operacion=body.nro_operacion.strip(),
@@ -250,7 +256,7 @@ def mi_depto(edificio_id: str, user: User, unidad_id: int | None = None, db: Ses
     """Todo lo que el residente consulta en una pantalla: cuenta, vehículos y tags, paquetes y avisos."""
     ed = _ed(db, user, edificio_id)
     u = _unidad(db, user, ed, unidad_id)
-    ahora = utcnow()
+    ahora = ahora_local()
     veh = db.scalars(select(Vehiculo).where(Vehiculo.unidad_id == u.id, Vehiculo.activo.is_(True))).all()
     tags_unidad = db.scalars(select(Tag).where(Tag.unidad_id == u.id)).all()
     patente_de_tag = {v.tag_id: v.patente for v in veh if v.tag_id}
@@ -271,7 +277,7 @@ def mi_depto(edificio_id: str, user: User, unidad_id: int | None = None, db: Ses
                   "patente": patente_de_tag.get(t.id, "")} for t in tags_unidad],
         "encomiendas_pendientes": [_enc(e, u.numero) for e in pend],
         "visitas_activas": [{"id": v.id, "nombre": v.nombre_visita, "patente": v.patente,
-                             "desde": _z(v.desde), "hasta": _z(v.hasta), "estado": v.estado.value} for v in visitas],
+                             "desde": _l(v.desde), "hasta": _l(v.hasta), "estado": v.estado.value} for v in visitas],
         "avisos_pago": [_aviso(a, u.numero) for a in avisos],
         "comunicados": listar_comunicados(edificio_id, user, False, db)[:5],
     }
@@ -329,7 +335,7 @@ def disponibilidad(edificio_id: str, espacio_id: int, fecha: date, user: User, d
     return {"espacio": e.nombre, "fecha": fecha.isoformat(), "aforo": e.aforo, "tarifa": float(e.tarifa),
             "horario": {"desde": regla.params["desde"], "hasta": regla.params["hasta"]} if regla else None,
             "abierto": dias is None or fecha.weekday() in dias,
-            "ocupadas": [{"desde": _z(r.desde), "hasta": _z(r.hasta)} for r in ocupadas]}
+            "ocupadas": [{"desde": _l(r.desde), "hasta": _l(r.hasta)} for r in ocupadas]}
 
 
 @router.patch("/espacios/{espacio_id}")
@@ -361,7 +367,7 @@ def cobrar_intereses(edificio_id: str, body: InteresesIn, user: Admin, db: Sessi
 def resumen_finanzas(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
     """Indicadores para el administrador y el comité: deuda total, vencida, morosidad y pagos pendientes."""
     ed = _ed(db, user, edificio_id)
-    hoy = date.today()
+    hoy = hoy_local()
     unidades = db.scalar(select(func.count(Unidad.id)).where(Unidad.edificio_id == ed.id)) or 0
     deuda = float(db.scalar(select(func.coalesce(func.sum(Cargo.saldo), 0)).where(
         Cargo.edificio_id == ed.id, Cargo.saldo > 0)) or 0)

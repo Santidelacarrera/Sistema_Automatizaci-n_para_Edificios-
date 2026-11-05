@@ -5,9 +5,8 @@ import { Confirmar, Estado, fh, hoyISO } from "./ui";
 import Icono from "./Icono";
 
 const DESGLOSE = [["cuota_base", "Cuota base, según su alícuota"], ["agua", "Agua caliente y calefacción"], ["fondo_reserva", "Aporte al fondo de reserva"], ["intereses_multas", "Intereses y multas"], ["otros", "Otros cargos (reservas)"]];
-const aUTC = (local) => new Date(local).toISOString().slice(0, 19); // el backend guarda UTC sin zona
 
-function Visitas({ api, d, recargar }) {
+function Visitas({ api, d, recargar, unidadId }) {
   const vacio = { nombre_visita: "", desde: "", hasta: "", patente: "", usa_estacionamiento: true };
   const [f, setF] = useState(vacio);
   const [cupos, setCupos] = useState(null);
@@ -20,7 +19,7 @@ function Visitas({ api, d, recargar }) {
 
   const crear = async (e) => {
     e.preventDefault(); setMsg(null);
-    try { await api.reservarVisita({ ...f, desde: aUTC(f.desde), hasta: aUTC(f.hasta) }); setF(vacio); setMsg({ ok: true, t: "Pase creado. Envíelo a su visita por WhatsApp." }); await recargar(); }
+    try { await api.reservarVisita({ ...f, unidad_id: unidadId, desde: f.desde, hasta: f.hasta }); setF(vacio); setMsg({ ok: true, t: "Pase creado. Envíelo a su visita por WhatsApp." }); await recargar(); }
     catch (x) { setMsg({ ok: false, t: typeof x.detail === "string" ? x.detail : x.message }); }
   };
   const verQr = async (id) => {
@@ -45,9 +44,9 @@ function Visitas({ api, d, recargar }) {
       </form>
       <Estado msg={msg} />
       {d.visitas_activas.length === 0 ? <p className="vacio">No tiene pases vigentes. Cree uno arriba y envíelo por WhatsApp.</p> : (
-        <ul className="lista">{d.visitas_activas.map((v) => (
+        <ul className="items">{d.visitas_activas.map((v) => (
           <li key={v.id}>
-            <div className="lista-cab"><b>{v.nombre}</b><span>{v.patente && <code>{v.patente}</code>}</span><time>{fh(v.desde)} a {fh(v.hasta)}</time></div>
+            <div className="items-cab"><b>{v.nombre}</b><span>{v.patente && <code>{v.patente}</code>}</span><time>{fh(v.desde)} a {fh(v.hasta)}</time></div>
             <div className="acc">
               <button className="mini con-icono" onClick={() => { setWa(v); setTel(""); }}><Icono n="whatsapp" />Enviar por WhatsApp</button>
               <button className="mini" onClick={() => verQr(v.id)}>{qr[v.id] !== undefined ? "Ocultar código QR" : "Ver código QR"}</button>
@@ -62,7 +61,7 @@ function Visitas({ api, d, recargar }) {
   );
 }
 
-function Reservar({ api, recargar }) {
+function Reservar({ api, recargar, unidadId }) {
   const [espacios, setEspacios] = useState([]);
   const [f, setF] = useState({ espacio_id: "", fecha: hoyISO(), desde: "", hasta: "", asistentes: "" });
   const [dia, setDia] = useState(null);
@@ -78,7 +77,7 @@ function Reservar({ api, recargar }) {
   const reservar = async (e) => {
     e.preventDefault(); setMsg(null);
     try {
-      const r = await api.reservarEspacio({ espacio_id: Number(f.espacio_id), desde: aUTC(`${f.fecha}T${f.desde}`), hasta: aUTC(`${f.fecha}T${f.hasta}`), asistentes: Number(f.asistentes) || 0 });
+      const r = await api.reservarEspacio({ espacio_id: Number(f.espacio_id), unidad_id: unidadId, desde: `${f.fecha}T${f.desde}`, hasta: `${f.fecha}T${f.hasta}`, asistentes: Number(f.asistentes) || 0 });
       setMsg({ ok: true, t: r.tarifa > 0 ? `Reserva confirmada. Se cargaron ${clp(r.tarifa)} a su gasto común.` : "Reserva confirmada." });
       await Promise.all([cargarDia(), recargar()]);
     } catch (x) { setMsg({ ok: false, t: x.detail?.motivos ? x.detail.motivos.join(" ") : x.message }); }
@@ -106,31 +105,26 @@ function Reservar({ api, recargar }) {
 }
 
 // Portal del residente: todo viene de /mi-depto, limitado a su unidad.
-export default function MiDepto({ api, nombre, onSalir }) {
+export default function MiDepto({ api, nombre, onSalir, unidadId, embebido = false }) {
   const [d, setD] = useState(null);
   const [err, setErr] = useState("");
   const [f, setF] = useState({ monto: "", banco: "", nro_operacion: "", fecha_transferencia: hoyISO() });
   const [msg, setMsg] = useState(null);
   const cargar = useCallback(async () => {
-    try { setD(await api.miDepto()); setErr(""); } catch (e) { if (e.status === 401) onSalir(); else setErr(e.message); }
-  }, [api.miDepto]); // eslint-disable-line react-hooks/exhaustive-deps
+    try { setD(await api.miDepto(unidadId)); setErr(""); } catch (e) { if (e.status === 401) onSalir(); else setErr(e.message); }
+  }, [api.miDepto, unidadId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { cargar(); const t = setInterval(cargar, 20000); return () => clearInterval(t); }, [cargar]);
 
   const avisar = async (e) => {
     e.preventDefault(); setMsg(null);
-    try { await api.avisarPago({ ...f, monto: Number(f.monto) }); setF({ ...f, monto: "", nro_operacion: "" }); setMsg({ ok: true, t: "Aviso enviado. El administrador lo revisa y abona el pago." }); await cargar(); }
+    try { await api.avisarPago({ ...f, unidad_id: unidadId, monto: Number(f.monto) }); setF({ ...f, monto: "", nro_operacion: "" }); setMsg({ ok: true, t: "Aviso enviado. El administrador lo revisa y abona el pago." }); await cargar(); }
     catch (x) { setMsg({ ok: false, t: x.message }); }
   };
 
   if (!d) return <main className="cargando">{err || "Abriendo su departamento…"}</main>;
   const c = d.cuenta;
-  return (
-    <div className="shell">
-      <header className="cab">
-        <div className="marca"><b>Depto {d.unidad.numero}</b><span>{nombre || "Residente"}</span></div>
-        <button className="salir" onClick={onSalir}>Salir</button>
-      </header>
-      <main className="vista seccion-vista mi-depto">
+  const contenido = (
+    <>
         {err && <p role="alert" className="banda">{err}</p>}
         <header className="vista-cab"><h2>Mi depto</h2>
           <p className={c.estado === "al_dia" ? "estado-ok" : "estado-mora"}>
@@ -156,22 +150,22 @@ export default function MiDepto({ api, nombre, onSalir }) {
             <button className="btn">Avisar pago</button>
           </form>
           <Estado msg={msg} />
-          {d.avisos_pago.length > 0 && <ul className="lista compacta">{d.avisos_pago.map((a) => <li key={a.id}>{clp(a.monto)} · {a.banco} · operación {a.nro_operacion} <span className={`etq etq-${a.estado}`}>{{ pendiente: "Por revisar", aprobado: "Abonado", rechazado: "Rechazado" }[a.estado]}</span>{a.motivo ? ` — ${a.motivo}` : ""}</li>)}</ul>}
+          {d.avisos_pago.length > 0 && <ul className="items compacta">{d.avisos_pago.map((a) => <li key={a.id}>{clp(a.monto)} · {a.banco} · operación {a.nro_operacion} <span className={`etq etq-${a.estado}`}>{{ pendiente: "Por revisar", aprobado: "Abonado", rechazado: "Rechazado" }[a.estado]}</span>{a.motivo ? ` — ${a.motivo}` : ""}</li>)}</ul>}
         </section>
 
         <section aria-labelledby="h-paq">
           <h3 id="h-paq">Encomiendas en recepción</h3>
           {d.encomiendas_pendientes.length === 0 ? <p className="vacio">No tiene paquetes por retirar.</p> :
-            <ul className="lista compacta">{d.encomiendas_pendientes.map((e) => <li key={e.id}><span className="con-icono"><Icono n="paquete" />{e.transportista || "Encomienda"}</span> llegó el {fh(e.recibida_at)}{e.descripcion ? ` · ${e.descripcion}` : ""}</li>)}</ul>}
+            <ul className="items compacta">{d.encomiendas_pendientes.map((e) => <li key={e.id}><span className="con-icono"><Icono n="paquete" />{e.transportista || "Encomienda"}</span> llegó el {fh(e.recibida_at)}{e.descripcion ? ` · ${e.descripcion}` : ""}</li>)}</ul>}
         </section>
 
-        <Visitas api={api} d={d} recargar={cargar} />
-        <Reservar api={api} recargar={cargar} />
+        <Visitas api={api} d={d} recargar={cargar} unidadId={unidadId} />
+        <Reservar api={api} recargar={cargar} unidadId={unidadId} />
 
         <section aria-labelledby="h-veh">
           <h3 id="h-veh">Mis vehículos y tags</h3>
           {d.vehiculos.length === 0 && d.tags.length === 0 ? <p className="vacio">No tiene vehículos ni tags autorizados. Pídale al administrador que los registre.</p> : (
-            <ul className="lista compacta">
+            <ul className="items compacta">
               {d.vehiculos.map((v) => <li key={v.id}><code>{v.patente}</code> {v.descripcion}{v.sticker ? " · con sticker" : ""}</li>)}
               {d.tags.map((t) => <li key={t.id}>Tag <code>{t.uid}</code> ({t.tipo}): {t.estado}{t.patente ? ` · ${t.patente}` : ""}</li>)}
             </ul>)}
@@ -180,10 +174,19 @@ export default function MiDepto({ api, nombre, onSalir }) {
         <section aria-labelledby="h-muro">
           <h3 id="h-muro">Comunicados de la comunidad</h3>
           {d.comunicados.length === 0 ? <p className="vacio">No hay avisos vigentes.</p> : (
-            <ul className="lista">{d.comunicados.map((m) => (
-              <li key={m.id}><div className="lista-cab"><b>{m.fijado ? <Icono n="fijar" titulo="Fijado" /> : null} {m.titulo}</b><time>{fh(m.publicado_at)}</time></div><p>{m.cuerpo}</p></li>))}</ul>)}
+            <ul className="items">{d.comunicados.map((m) => (
+              <li key={m.id}><div className="items-cab"><b>{m.fijado ? <Icono n="fijar" titulo="Fijado" /> : null} {m.titulo}</b><time>{fh(m.publicado_at)}</time></div><p>{m.cuerpo}</p></li>))}</ul>)}
         </section>
-      </main>
+    </>
+  );
+  if (embebido) return <div className="seccion-vista mi-depto">{contenido}</div>;
+  return (
+    <div className="shell">
+      <header className="cab">
+        <div className="marca"><b>Depto {d.unidad.numero}</b><span>{nombre || "Residente"}</span></div>
+        <button className="salir" onClick={onSalir}>Salir</button>
+      </header>
+      <main className="vista seccion-vista mi-depto">{contenido}</main>
     </div>
   );
 }

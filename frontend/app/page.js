@@ -5,7 +5,6 @@ import Administracion from "./components/Administracion";
 import Edificios from "./components/Edificios";
 import Cobranza from "./components/Cobranza";
 import Comunidad from "./components/Comunidad";
-import Finanzas from "./components/Finanzas";
 import MiDepto from "./components/MiDepto";
 import Drawer from "./components/Drawer";
 import Fachada from "./components/Fachada";

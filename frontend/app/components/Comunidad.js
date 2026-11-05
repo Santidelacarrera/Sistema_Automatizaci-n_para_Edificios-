@@ -93,7 +93,7 @@ export function Comunicados({ api }) {
         <label>Tipo
           <select value={f.categoria} onChange={(e) => setF({ ...f, categoria: e.target.value })}>
             {Object.entries(CAT).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></label>
-        <label className="ancho">Mensaje<textarea value={f.cuerpo} onChange={(e) => setF({ ...f, cuerpo: e.target.value })} maxLength={4000} rows={3} required /></label>
+        <label className="completo">Mensaje<textarea value={f.cuerpo} onChange={(e) => setF({ ...f, cuerpo: e.target.value })} maxLength={4000} rows={3} required /></label>
         <label className="chk"><input type="checkbox" checked={f.fijado} onChange={(e) => setF({ ...f, fijado: e.target.checked })} />Mantener arriba del muro</label>
         <button className="btn">Publicar comunicado</button>
       </form>
@@ -101,9 +101,9 @@ export function Comunicados({ api }) {
       {!lista ? <Cargando /> : lista.length === 0 ? (
         <p className="vacio">El muro está vacío. Publica cortes de agua, mantenciones o citaciones a asamblea y los residentes los leen en Mi depto.</p>
       ) : (
-        <ul className="lista">{lista.map((c) => (
+        <ul className="items">{lista.map((c) => (
           <li key={c.id}>
-            <div className="lista-cab">
+            <div className="items-cab">
               <b>{c.fijado ? <Icono n="fijar" titulo="Fijado" /> : null} {c.titulo}</b>
               <span className={`etq etq-${c.categoria}`}>{CAT[c.categoria]}</span>
               <time dateTime={c.publicado_at}>{fh(c.publicado_at)}</time>
