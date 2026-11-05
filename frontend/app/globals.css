@@ -1057,3 +1057,15 @@ input:focus, select:focus, textarea:focus {
   .pasadas .res, .pasadas .det { grid-column: 2; }
   .piso { gap: 6px; grid-template-columns: 1.2rem repeat(var(--cols), minmax(0, 1fr)); }
 }
+
+/* ---------- comunidad: conserjería, muro y Mi Depto ---------- */
+.comunidad-vista section, .mi-depto section { margin: 0 0 2.2rem; max-width: 56rem; }
+.comunidad-vista h3, .mi-depto h3 { font: 800 1.6rem/1 var(--display); margin: 0 0 .8rem; }
+.muro { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .6rem; max-width: 56rem; }
+.muro li { background: var(--papel); padding: .65rem .9rem; border-left: 5px solid var(--losa); }
+.muro li p { margin: .25rem 0 .1rem; } .muro small { color: var(--tinta-2); }
+.muro .com-urgente { border-color: var(--ladrillo); } .muro .com-mantencion { border-color: var(--luz); }
+.muro .com-asamblea { border-color: var(--verde); }
+.estado-ok { color: var(--verde); font-weight: 700; } .estado-mora { color: var(--ladrillo); font-weight: 700; }
+.ventana .paq { position: absolute; top: 2px; right: 3px; font-size: .7rem; line-height: 1; }
+.ventana { position: relative; }

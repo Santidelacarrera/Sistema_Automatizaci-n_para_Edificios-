@@ -79,7 +79,7 @@ def generar_gastos(edificio_id: str, body: GenerarGastosIn, user: Admin, db: Ses
     ed = _ed(db, user, edificio_id)
     try:
         res = finance.generar_cargos(db, ed.id, body.periodo, body.vencimiento,
-                                     [g.model_dump() for g in body.gastos])
+                                     [g.model_dump() for g in body.gastos], body.fondo_reserva_pct)
     except ValueError as e:
         db.rollback()
         raise HTTPException(422, str(e))
@@ -150,6 +150,8 @@ def reservar_espacio(edificio_id: str, body: ReservaEspacioIn, user: User, db: S
         raise HTTPException(404, "Espacio no existe")
     if body.hasta <= body.desde:
         raise HTTPException(422, "Rango horario inválido")
+    if esp.aforo and body.asistentes > esp.aforo:
+        raise HTTPException(422, {"motivos": [f"Aforo máximo de {esp.nombre}: {esp.aforo} personas"]})
     choque = db.scalar(select(func.count(ReservaEspacio.id)).where(
         ReservaEspacio.espacio_id == esp.id, ReservaEspacio.estado == "confirmada",
         ReservaEspacio.desde < body.hasta, ReservaEspacio.hasta > body.desde))
@@ -164,7 +166,8 @@ def reservar_espacio(edificio_id: str, body: ReservaEspacioIn, user: User, db: S
                                               "usos_mes": usos_mes, "deuda": finance.deuda_unidad(db, u.id)})
     if not d.permitido:
         raise HTTPException(422, {"motivos": d.motivos})
-    r = ReservaEspacio(edificio_id=ed.id, espacio_id=esp.id, unidad_id=u.id, desde=body.desde, hasta=body.hasta)
+    r = ReservaEspacio(edificio_id=ed.id, espacio_id=esp.id, unidad_id=u.id, desde=body.desde, hasta=body.hasta,
+                       asistentes=body.asistentes)
     db.add(r)
     if float(esp.tarifa) > 0:  # la reserva actualiza automáticamente la cuenta
         db.add(Cargo(edificio_id=ed.id, unidad_id=u.id, periodo=body.desde.strftime("%Y-%m"),

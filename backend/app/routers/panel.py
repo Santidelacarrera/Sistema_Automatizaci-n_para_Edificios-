@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from .. import events
 from ..config import ahora_local, hoy_local
 from ..db import get_db
-from ..models import (AccesoLog, Cargo, Edificio, EspacioComun, EstadoVisita, Pago, Residente, ReservaEspacio, Rol,
-                      Unidad, Vehiculo, Visita)
+from ..models import (AccesoLog, Cargo, Edificio, Encomienda, EspacioComun, EstadoVisita, Pago, Residente,
+                      ReservaEspacio, Rol, Unidad, Vehiculo, Visita)
 from ..schemas import PagoIn, RecordatorioIn, VehiculoIn
 from ..security import Principal, require_roles, tenant_of
 from ..services import access, cobranza, diagnostico as diag, finance
@@ -49,6 +49,8 @@ def panel(edificio_id: str, user: Staff, db: Session = Depends(get_db)):
             Visita.edificio_id == ed.id, Visita.hasta >= ahora,
             Visita.estado.in_([EstadoVisita.reservada, EstadoVisita.llego]))):
         vis[v.unidad_id] += 1
+    paquetes = dict(db.execute(select(Encomienda.unidad_id, func.count(Encomienda.id)).where(
+        Encomienda.edificio_id == ed.id, Encomienda.estado == "pendiente").group_by(Encomienda.unidad_id)).all())
     unidades = db.scalars(select(Unidad).where(Unidad.edificio_id == ed.id)).all()
     ocupados = access.cupos_ocupados(db, ed.id, ahora, ahora)
     return {
@@ -57,7 +59,8 @@ def panel(edificio_id: str, user: Staff, db: Session = Depends(get_db)):
         "unidades": [{"id": u.id, "numero": u.numero, "estacionamientos": u.estacionamientos,
                       "codigo_cobro": u.codigo_cobro, "deuda": float(deuda.get(u.id, 0)),
                       "vencida": float(vencida.get(u.id, 0)), "residentes": res[u.id],
-                      "vehiculos": veh[u.id], "visitas_activas": vis[u.id]} for u in unidades],
+                      "vehiculos": veh[u.id], "visitas_activas": vis[u.id],
+                      "encomiendas": paquetes.get(u.id, 0)} for u in unidades],
     }
 
 

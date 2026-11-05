@@ -148,6 +148,7 @@ class EspacioComun(Base):
     nombre: Mapped[str] = mapped_column(String(60))  # "quincho"
     accion: Mapped[str] = mapped_column(String(60))  # clave de reglas
     tarifa: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    aforo: Mapped[int] = mapped_column(Integer, default=0)  # personas máximas; 0 = sin límite
 
 
 class ReservaEspacio(Base):
@@ -159,6 +160,7 @@ class ReservaEspacio(Base):
     desde: Mapped[datetime] = mapped_column(DateTime)
     hasta: Mapped[datetime] = mapped_column(DateTime)
     estado: Mapped[str] = mapped_column(String(20), default="confirmada")
+    asistentes: Mapped[int] = mapped_column(Integer, default=0)  # personas previstas; se compara con el aforo
 
 
 class Cargo(Base):
@@ -272,3 +274,52 @@ class MensajeWA(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     msg_id: Mapped[str] = mapped_column(String(120), unique=True)
     creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
+class Comunicado(Base):
+    """Aviso oficial de la comunidad: muro digital que ven todos los residentes del edificio."""
+    __tablename__ = "comunicados"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    titulo: Mapped[str] = mapped_column(String(160))
+    cuerpo: Mapped[str] = mapped_column(String(4000))
+    categoria: Mapped[str] = mapped_column(String(20), default="aviso")  # aviso | mantencion | asamblea | urgente
+    fijado: Mapped[bool] = mapped_column(Boolean, default=False)
+    publicado_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    vigente_hasta: Mapped[datetime | None] = mapped_column(DateTime)
+    autor_id: Mapped[int | None] = mapped_column(ForeignKey("residentes.id"))
+
+
+class Encomienda(Base):
+    """Paquete recibido en conserjería, asignado a una unidad hasta que el residente lo retira."""
+    __tablename__ = "encomiendas"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    unidad_id: Mapped[int] = mapped_column(ForeignKey("unidades.id"), index=True)
+    transportista: Mapped[str] = mapped_column(String(60), default="")  # Chilexpress, Mercado Libre, Correos…
+    remitente: Mapped[str] = mapped_column(String(120), default="")
+    descripcion: Mapped[str] = mapped_column(String(200), default="")
+    estado: Mapped[str] = mapped_column(String(12), default="pendiente", index=True)  # pendiente | entregada
+    recibida_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    recibida_por_id: Mapped[int | None] = mapped_column(ForeignKey("residentes.id"))
+    entregada_at: Mapped[datetime | None] = mapped_column(DateTime)
+    entregada_por_id: Mapped[int | None] = mapped_column(ForeignKey("residentes.id"))
+    retirada_por: Mapped[str] = mapped_column(String(120), default="")  # nombre de quien firma el retiro
+
+
+class AvisoPago(Base):
+    """Aviso de transferencia del residente: el administrador lo concilia contra la cartola."""
+    __tablename__ = "avisos_pago"
+    __table_args__ = (UniqueConstraint("edificio_id", "banco", "nro_operacion"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    unidad_id: Mapped[int] = mapped_column(ForeignKey("unidades.id"), index=True)
+    residente_id: Mapped[int | None] = mapped_column(ForeignKey("residentes.id"))
+    monto: Mapped[float] = mapped_column(Numeric(14, 2))
+    banco: Mapped[str] = mapped_column(String(60))
+    nro_operacion: Mapped[str] = mapped_column(String(40))
+    fecha_transferencia: Mapped[date] = mapped_column(Date)
+    estado: Mapped[str] = mapped_column(String(12), default="pendiente", index=True)  # pendiente | aprobado | rechazado
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    resuelto_at: Mapped[datetime | None] = mapped_column(DateTime)
+    motivo: Mapped[str] = mapped_column(String(200), default="")

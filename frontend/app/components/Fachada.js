@@ -40,6 +40,7 @@ export default function Fachada({ data, filtro, seleccionada, onSelect }) {
                   onClick={() => onSelect(u.id)}
                   aria-label={`Departamento ${u.numero}: ${est === "persiana" ? "deuda vencida " + clp(u.vencida) : est === "encendida" ? "visita en el edificio" : est === "vacia" ? "sin residentes" : "al día"}`}>
                   <span className="num">{u.numero}</span>
+                  {u.encomiendas > 0 && <span className="paq" title={`${u.encomiendas} encomienda(s) por retirar`} aria-hidden="true">📦</span>}
                   {u.vehiculos.length > 0 && <span className="autos" aria-hidden="true">{"▪".repeat(u.vehiculos.length)}</span>}
                 </button>
               );

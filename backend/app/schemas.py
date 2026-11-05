@@ -66,6 +66,7 @@ class ReservaEspacioIn(BaseModel):
     unidad_id: int | None = None
     desde: datetime
     hasta: datetime
+    asistentes: int = Field(0, ge=0, le=1000)
 
 
 class GastoIn(BaseModel):
@@ -80,6 +81,7 @@ class GenerarGastosIn(BaseModel):
     periodo: str = Field(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")
     vencimiento: date
     gastos: list[GastoIn]
+    fondo_reserva_pct: float = Field(0, ge=0, le=100)  # % sobre los gastos ordinarios
 
 
 class ResidentePatch(BaseModel):
@@ -166,3 +168,53 @@ class RecordatorioIn(BaseModel):
     unidad_ids: list[int] | None = None  # None = todas las unidades con deuda
     canales: list[str] = ["whatsapp", "email"]
     mensaje_extra: str = ""
+
+
+class ComunicadoIn(BaseModel):
+    titulo: str = Field(min_length=3, max_length=160)
+    cuerpo: str = Field(min_length=1, max_length=4000)
+    categoria: Literal["aviso", "mantencion", "asamblea", "urgente"] = "aviso"
+    fijado: bool = False
+    vigente_hasta: datetime | None = None
+
+
+class ComunicadoPatch(BaseModel):
+    titulo: str | None = Field(None, min_length=3, max_length=160)
+    cuerpo: str | None = Field(None, min_length=1, max_length=4000)
+    categoria: Literal["aviso", "mantencion", "asamblea", "urgente"] | None = None
+    fijado: bool | None = None
+    vigente_hasta: datetime | None = None
+
+
+class EncomiendaIn(BaseModel):
+    unidad_id: int
+    transportista: str = Field("", max_length=60)
+    remitente: str = Field("", max_length=120)
+    descripcion: str = Field("", max_length=200)
+
+
+class EntregaIn(BaseModel):
+    retirada_por: str = Field(min_length=2, max_length=120)  # quien firma el retiro
+
+
+class AvisoPagoIn(BaseModel):
+    unidad_id: int | None = None
+    monto: float = Field(gt=0)
+    banco: str = Field(min_length=2, max_length=60)
+    nro_operacion: str = Field(min_length=3, max_length=40, pattern=r"^[A-Za-z0-9\-]+$")
+    fecha_transferencia: date
+
+
+class ResolverAvisoIn(BaseModel):
+    aprobar: bool
+    motivo: str = Field("", max_length=200)
+
+
+class InteresesIn(BaseModel):
+    tasa_mensual_pct: float = Field(gt=0, le=10)
+    periodo: str = Field(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")  # mes al que se imputa el interés
+
+
+class EspacioPatch(BaseModel):
+    tarifa: float | None = Field(None, ge=0)
+    aforo: int | None = Field(None, ge=0, le=1000)
