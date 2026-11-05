@@ -61,9 +61,12 @@ def generar_cargos(db: Session, edificio_id: str, periodo: str, vencimiento: dat
                 LecturaMedidor.servicio == g.get("servicio", "agua"))).all()
             consumos = pd.Series({r[0]: float(r[1]) for r in rows})
         cuotas = prorratear(df, float(g["monto"]), g.get("base", "coeficiente"), consumos)
+        categoria = g.get("categoria") or (
+            "agua" if g.get("base") == "consumo" and g.get("servicio", "agua") in ("agua", "calefaccion")
+            else "cuota_base")
         for uid, c in cuotas.items():
             if c:
-                db.add(Cargo(edificio_id=edificio_id, unidad_id=int(uid), periodo=periodo,
+                db.add(Cargo(edificio_id=edificio_id, unidad_id=int(uid), periodo=periodo, categoria=categoria,
                              concepto=f"GC:{g['tipo']}:{g['concepto']}", monto=c, saldo=c, vencimiento=vencimiento))
         total_unidad += cuotas
     if fondo_reserva_pct > 0:  # aporte al fondo de reserva: % de los gastos ordinarios, por coeficiente
@@ -73,7 +76,7 @@ def generar_cargos(db: Session, edificio_id: str, periodo: str, vencimiento: dat
             for uid, c in fondo.items():
                 if c:
                     db.add(Cargo(edificio_id=edificio_id, unidad_id=int(uid), periodo=periodo,
-                                 concepto=CONCEPTO_FONDO, monto=c, saldo=c, vencimiento=vencimiento))
+                                 concepto=CONCEPTO_FONDO, categoria="fondo_reserva", monto=c, saldo=c, vencimiento=vencimiento))
             total_unidad += fondo
     db.flush()
     events.publish(db, edificio_id, "gastos.generados", {"periodo": periodo})
@@ -84,8 +87,14 @@ def deuda_unidad(db: Session, unidad_id: int) -> float:
     return float(db.scalar(select(func.coalesce(func.sum(Cargo.saldo), 0)).where(Cargo.unidad_id == unidad_id)))
 
 
-def categoria_cargo(concepto: str) -> str:
-    """Agrupa un cargo para el desglose del estado de cuenta."""
+CATEGORIAS = ("cuota_base", "agua", "fondo_reserva", "intereses_multas", "otros")
+
+
+def categoria_cargo(concepto: str, categoria: str = "") -> str:
+    """Agrupa un cargo para el desglose. Manda la categoría guardada; sólo los cargos anteriores a ella
+    (sin categoría) se deducen del nombre del concepto."""
+    if categoria in CATEGORIAS:
+        return categoria
     c = concepto.lower()
     if concepto == CONCEPTO_FONDO:
         return "fondo_reserva"
@@ -104,7 +113,7 @@ def estado_cuenta(db: Session, unidad_id: int) -> dict:
     desglose = {k: 0.0 for k in ("cuota_base", "agua", "fondo_reserva", "intereses_multas", "otros")}
     vencida = 0.0
     for c in cargos:
-        desglose[categoria_cargo(c.concepto)] += float(c.saldo)
+        desglose[categoria_cargo(c.concepto, c.categoria)] += float(c.saldo)
         if c.vencimiento and c.vencimiento < hoy:
             vencida += float(c.saldo)
     return {"estado": "moroso" if vencida > 0 else "al_dia", "deuda": round(sum(desglose.values()), 2),
@@ -134,7 +143,7 @@ def aplicar_intereses(db: Session, edificio_id: str, periodo: str, tasa_mensual_
         if interes <= 0:
             continue
         db.add(Cargo(edificio_id=edificio_id, unidad_id=uid, periodo=periodo, concepto=concepto,
-                     monto=interes, saldo=interes, vencimiento=hoy + timedelta(days=30)))
+                     categoria="intereses_multas", monto=interes, saldo=interes, vencimiento=hoy + timedelta(days=30)))
         generados += 1
         total += interes
     db.flush()

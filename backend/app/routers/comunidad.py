@@ -22,7 +22,7 @@ from ..schemas import (AvisoPagoIn, ComunicadoIn, ComunicadoPatch, EncomiendaIn,
                        InteresesIn, ResolverAvisoIn)
 from ..security import Principal, current_user, require_roles, tenant_of
 from ..services import finance
-from ..services.reconciliation import _aplicar
+from ..services.reconciliation import _aplicar, pago_de_cartola_para
 
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["comunidad"])
 User = Annotated[Principal, Depends(current_user)]
@@ -224,10 +224,12 @@ def resolver_aviso(edificio_id: str, aviso_id: int, body: ResolverAvisoIn, user:
     if not body.aprobar and not body.motivo.strip():
         raise HTTPException(422, "Indica el motivo del rechazo")
     a.resuelto_at, a.motivo = utcnow(), body.motivo.strip()
-    excedente = 0.0
+    excedente, ya_conciliado = 0.0, False
     if body.aprobar:
         ref = f"aviso:{a.id}"
-        if not db.scalar(select(Pago.id).where(Pago.edificio_id == ed.id, Pago.ref_banco == ref)):
+        if pago_de_cartola_para(db, ed.id, a.unidad_id, a.nro_operacion, float(a.monto)):
+            ya_conciliado = True  # la cartola ya abonó este pago: aprobar el aviso no vuelve a abonar
+        elif not db.scalar(select(Pago.id).where(Pago.edificio_id == ed.id, Pago.ref_banco == ref)):
             excedente = _aplicar(db, a.unidad_id, float(a.monto))
             db.add(Pago(edificio_id=ed.id, unidad_id=a.unidad_id, monto=a.monto, fecha=a.fecha_transferencia,
                         referencia=f"Transferencia {a.banco} op. {a.nro_operacion}"[:200], ref_banco=ref,
@@ -239,7 +241,7 @@ def resolver_aviso(edificio_id: str, aviso_id: int, body: ResolverAvisoIn, user:
     else:
         a.estado = "rechazado"
     db.commit()
-    return {"id": a.id, "estado": a.estado, "excedente": excedente}
+    return {"id": a.id, "estado": a.estado, "excedente": excedente, "ya_conciliado": ya_conciliado}
 
 
 # ---------------------------------------------------------------- portal "Mi Depto"

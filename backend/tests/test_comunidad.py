@@ -283,3 +283,65 @@ def test_enlace_whatsapp_de_visita(client, seed, db):
     # otra unidad (Ana es admin y puede; un residente de otra unidad no)
     assert client.get(f"{A}/visitas/{v.id}/whatsapp", headers=ana).status_code == 200
     assert client.get(f"{A}/visitas/9999/whatsapp", headers=beto).status_code == 404
+
+
+# ---------------- sin doble abono entre aviso y cartola
+def _aviso(client, h, monto, op):
+    return client.post(f"{A}/avisos-pago", headers=h, json={
+        "monto": monto, "banco": "Banco Estado", "nro_operacion": op,
+        "fecha_transferencia": date.today().isoformat()}).json()["id"]
+
+
+def _cartola(client, h, descripcion, monto, ident="m1"):
+    csv = f"fecha,descripcion,monto,id\n{date.today().strftime('%d-%m-%Y')},{descripcion},{monto},{ident}\n"
+    return client.post(f"{A}/conciliacion", headers=h, files={"cartola": ("c.csv", csv.encode())})
+
+
+def test_cartola_despues_de_aprobar_aviso_no_abona_dos_veces(client, seed, db):
+    uid = _cargo(db, seed, "102", 50000, date.today() - timedelta(days=2))
+    ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
+    aid = _aviso(client, beto, 30000, "OP-998877")
+    client.post(f"{A}/avisos-pago/{aid}/resolver", headers=ana, json={"aprobar": True})
+    assert finance.deuda_unidad(db, uid) == 20000
+    r = _cartola(client, ana, "TRANSF OP-998877 CC-A-102", 30000)
+    assert r.json()["ya_abonados_por_aviso"] == 1 and r.json()["conciliados"] == []
+    db.expire_all()
+    assert finance.deuda_unidad(db, uid) == 20000
+
+
+def test_aprobar_aviso_despues_de_la_cartola_no_abona_dos_veces(client, seed, db):
+    uid = _cargo(db, seed, "102", 50000, date.today() - timedelta(days=2))
+    ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
+    r = _cartola(client, ana, "TRANSF OP-554433 CC-A-102", 30000)
+    assert len(r.json()["conciliados"]) == 1
+    aid = _aviso(client, beto, 30000, "OP-554433")
+    ok = client.post(f"{A}/avisos-pago/{aid}/resolver", headers=ana, json={"aprobar": True}).json()
+    assert ok["estado"] == "aprobado" and ok["ya_conciliado"] is True
+    db.expire_all()
+    assert finance.deuda_unidad(db, uid) == 20000
+
+
+def test_numero_de_operacion_debe_coincidir_completo_y_con_el_mismo_monto(client, seed, db):
+    uid = _cargo(db, seed, "102", 90000, date.today() - timedelta(days=2))
+    ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
+    aid = _aviso(client, beto, 30000, "123")
+    client.post(f"{A}/avisos-pago/{aid}/resolver", headers=ana, json={"aprobar": True})  # deuda 60.000
+    # "OP-1234" contiene 123 pero es otra operación; y mismo n.º con otro monto tampoco es el mismo pago
+    _cartola(client, ana, "TRANSF OP-1234 CC-A-102", 30000, "m1")
+    _cartola(client, ana, "TRANSF 123 CC-A-102", 10000, "m2")
+    db.expire_all()
+    assert finance.deuda_unidad(db, uid) == 20000
+
+
+# ---------------- categoría explícita del cargo
+def test_desglose_usa_la_categoria_guardada_no_el_nombre(client, seed, db):
+    ana = login(client, "edificio_a", "ana@x.cl")
+    client.post(f"{A}/lecturas", headers=ana, json={"unidad_id": seed["edificio_a", "101"].id, "periodo": "2026-10", "servicio": "agua", "consumo": 10})
+    client.post(f"{A}/lecturas", headers=ana, json={"unidad_id": seed["edificio_a", "102"].id, "periodo": "2026-10", "servicio": "agua", "consumo": 10})
+    r = client.post(f"{A}/gastos-comunes/generar", headers=ana, json={
+        "periodo": "2026-10", "vencimiento": "2026-11-10",
+        "gastos": [{"concepto": "Consumo por medidor", "monto": 20000, "base": "consumo", "servicio": "agua"},
+                   {"concepto": "Mantención agua potable", "monto": 10000, "categoria": "cuota_base"}]})
+    assert r.status_code == 200, r.text
+    d = finance.estado_cuenta(db, seed["edificio_a", "101"].id)["desglose"]
+    assert d["agua"] == 10000 and d["cuota_base"] == 5000  # "agua" en el nombre no cambia la categoría

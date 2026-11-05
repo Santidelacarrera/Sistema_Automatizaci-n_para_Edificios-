@@ -1,151 +1,211 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { clp } from "../../lib/api";
+import { Cargando, Confirmar, Estado, fh, useLista } from "./ui";
+import Icono from "./Icono";
 
-const fh = (iso) => (iso ? new Date(iso).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
 const CAT = { aviso: "Aviso", mantencion: "Mantención", asamblea: "Asamblea", urgente: "Urgente" };
-
-function useLista(cargarFn, dep) {
-  const [lista, setLista] = useState([]);
-  const [err, setErr] = useState("");
-  const recargar = useCallback(async () => {
-    try { setLista(await cargarFn()); setErr(""); } catch (e) { setErr(e.message); }
-  }, dep); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { recargar(); }, [recargar]);
-  return [lista, recargar, err];
-}
-
-function Estado({ msg }) {
-  return msg ? <p role="status" className={`aviso ${msg.ok ? "ok" : "err"}`}>{msg.t}</p> : null;
-}
+const TRANSPORTISTAS = ["Chilexpress", "Mercado Libre", "Correos de Chile", "Starken", "Blue Express"];
 
 export function Encomiendas({ api, data }) {
   const [lista, recargar, err] = useLista(() => api.encomiendas(), [api.encomiendas]);
   const [f, setF] = useState({ unidad_id: "", transportista: "", descripcion: "" });
   const [msg, setMsg] = useState(null);
+  const [entregando, setEntregando] = useState(null);
+  const [quien, setQuien] = useState("");
+
   const registrar = async (e) => {
     e.preventDefault(); setMsg(null);
-    try { await api.recibirEncomienda({ ...f, unidad_id: Number(f.unidad_id) }); setF({ unidad_id: "", transportista: "", descripcion: "" }); setMsg({ ok: true, t: "Encomienda registrada; el residente fue avisado." }); await recargar(); }
-    catch (x) { setMsg({ ok: false, t: x.message }); }
+    try {
+      await api.recibirEncomienda({ ...f, unidad_id: Number(f.unidad_id) });
+      setF({ unidad_id: "", transportista: "", descripcion: "" });
+      setMsg({ ok: true, t: "Encomienda registrada. El residente recibe el aviso." }); await recargar();
+    } catch (x) { setMsg({ ok: false, t: x.message }); }
   };
-  const entregar = async (id) => {
-    const quien = window.prompt("Nombre de quien retira el paquete");
-    if (!quien || quien.trim().length < 2) return;
-    try { await api.entregarEncomienda(id, quien.trim()); setMsg({ ok: true, t: "Entrega registrada con fecha y hora." }); await recargar(); }
-    catch (x) { setMsg({ ok: false, t: x.message }); }
+  const entregar = async () => {
+    try {
+      await api.entregarEncomienda(entregando, quien.trim());
+      setMsg({ ok: true, t: "Entrega registrada con fecha y hora." }); setEntregando(null); setQuien(""); await recargar();
+    } catch (x) { setMsg({ ok: false, t: x.message }); }
   };
-  const pendientes = lista.filter((x) => x.estado === "pendiente");
+  const pendientes = (lista || []).filter((x) => x.estado === "pendiente").length;
+
   return (
     <section aria-labelledby="h-enc">
-      <h3 id="h-enc">Encomiendas en conserjería ({pendientes.length} por retirar)</h3>
-      <form className="envio" onSubmit={registrar}>
+      <h3 id="h-enc">Encomiendas{lista ? <span className="cuenta">{pendientes} por retirar</span> : null}</h3>
+      <form className="fila-form" onSubmit={registrar}>
         <label>Departamento
           <select value={f.unidad_id} onChange={(e) => setF({ ...f, unidad_id: e.target.value })} required>
-            <option value="">Elegir…</option>
+            <option value="">Elegir</option>
             {data.unidades.map((u) => <option key={u.id} value={u.id}>{u.numero}</option>)}
           </select></label>
         <label>Transportista
-          <input list="transportistas" value={f.transportista} onChange={(e) => setF({ ...f, transportista: e.target.value })} maxLength={60} placeholder="Chilexpress" />
-          <datalist id="transportistas">{["Chilexpress", "Mercado Libre", "Correos de Chile", "Starken", "Blue Express"].map((t) => <option key={t} value={t} />)}</datalist></label>
-        <label className="grande">Detalle (opcional)
-          <input value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} maxLength={200} placeholder="Caja mediana" /></label>
-        <button className="btn" disabled={!f.unidad_id}>Registrar</button>
+          <input list="transportistas" value={f.transportista} onChange={(e) => setF({ ...f, transportista: e.target.value })} maxLength={60} autoComplete="off" />
+          <datalist id="transportistas">{TRANSPORTISTAS.map((t) => <option key={t} value={t} />)}</datalist></label>
+        <label className="ancho">Detalle
+          <input value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} maxLength={200} placeholder="Caja mediana, sobre, bulto grande…" /></label>
+        <button className="btn" disabled={!f.unidad_id}>Registrar encomienda</button>
       </form>
-      <Estado msg={msg} />{err && <p role="alert" className="aviso err">{err}</p>}
-      {lista.length === 0 ? <p className="vacio">No hay encomiendas registradas.</p> : (
+      <Estado msg={msg} />{err && <Estado msg={{ ok: false, t: err }} />}
+      {!lista ? <Cargando /> : lista.length === 0 ? (
+        <p className="vacio">Aún no hay encomiendas. Al registrar la primera, el residente la ve en su portal y recibe un WhatsApp.</p>
+      ) : (
         <table className="tabla">
-          <thead><tr><th>Depto</th><th>Transportista</th><th>Llegó</th><th>Estado</th><th /></tr></thead>
+          <thead><tr><th>Depto</th><th>Paquete</th><th>Llegó</th><th>Estado</th><th><span className="solo-lector">Acciones</span></th></tr></thead>
           <tbody>{lista.map((e) => (
-            <tr key={e.id} className={e.estado === "entregada" ? "inactivo" : ""}>
-              <td className="n">{e.unidad}</td><td>{e.transportista || "—"}{e.descripcion ? ` · ${e.descripcion}` : ""}</td>
+            <tr key={e.id} className={e.estado === "entregada" ? "hecho" : ""}>
+              <td className="num">{e.unidad}</td>
+              <td><span className="con-icono"><Icono n="paquete" />{e.transportista || "Sin transportista"}</span>{e.descripcion ? <small>{e.descripcion}</small> : null}</td>
               <td>{fh(e.recibida_at)}</td>
-              <td>{e.estado === "entregada" ? `Retiró ${e.retirada_por} (${fh(e.entregada_at)})` : "Por retirar"}</td>
-              <td className="acc">{e.estado === "pendiente" && <button className="mini" onClick={() => entregar(e.id)}>Entregar</button>}</td>
+              <td>{e.estado === "entregada" ? <>Retiró {e.retirada_por}<small>{fh(e.entregada_at)}</small></> : "Por retirar"}</td>
+              <td className="acc">{e.estado === "pendiente" && entregando !== e.id && <button className="mini" onClick={() => { setEntregando(e.id); setQuien(""); setMsg(null); }}>Entregar</button>}</td>
             </tr>))}</tbody>
         </table>)}
+      {entregando && (
+        <Confirmar pregunta="Quien firma el retiro:" etiqueta="Confirmar entrega" deshabilitado={quien.trim().length < 2}
+          onConfirmar={entregar} onCancelar={() => setEntregando(null)}>
+          <input aria-label="Nombre de quien retira" value={quien} onChange={(e) => setQuien(e.target.value)} maxLength={120} autoFocus />
+        </Confirmar>)}
     </section>
   );
 }
 
 export function Comunicados({ api }) {
   const [lista, recargar, err] = useLista(() => api.comunicados(), [api.comunicados]);
-  const [f, setF] = useState({ titulo: "", cuerpo: "", categoria: "aviso", fijado: false });
+  const vacio = { titulo: "", cuerpo: "", categoria: "aviso", fijado: false };
+  const [f, setF] = useState(vacio);
   const [msg, setMsg] = useState(null);
+  const [retirando, setRetirando] = useState(null);
+
   const publicar = async (e) => {
     e.preventDefault(); setMsg(null);
-    try { await api.publicarComunicado(f); setF({ titulo: "", cuerpo: "", categoria: "aviso", fijado: false }); setMsg({ ok: true, t: "Comunicado publicado en el muro." }); await recargar(); }
+    try { await api.publicarComunicado(f); setF(vacio); setMsg({ ok: true, t: "Comunicado publicado en el muro." }); await recargar(); }
     catch (x) { setMsg({ ok: false, t: x.message }); }
   };
-  const retirar = async (id) => { try { await api.retirarComunicado(id); await recargar(); } catch (x) { setMsg({ ok: false, t: x.message }); } };
+  const fijar = async (c) => { try { await api.editarComunicado(c.id, { fijado: !c.fijado }); await recargar(); } catch (x) { setMsg({ ok: false, t: x.message }); } };
+  const retirar = async () => { try { await api.retirarComunicado(retirando.id); setRetirando(null); await recargar(); } catch (x) { setMsg({ ok: false, t: x.message }); } };
+
   return (
     <section aria-labelledby="h-com">
-      <h3 id="h-com">Muro de comunicados</h3>
-      <form className="envio" onSubmit={publicar}>
-        <label className="grande">Título<input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} minLength={3} maxLength={160} required /></label>
-        <label className="grande">Mensaje<input value={f.cuerpo} onChange={(e) => setF({ ...f, cuerpo: e.target.value })} maxLength={4000} required /></label>
+      <h3 id="h-com">Comunicados</h3>
+      <form className="fila-form" onSubmit={publicar}>
+        <label className="ancho">Título<input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} minLength={3} maxLength={160} required /></label>
         <label>Tipo
           <select value={f.categoria} onChange={(e) => setF({ ...f, categoria: e.target.value })}>
             {Object.entries(CAT).map(([k, t]) => <option key={k} value={k}>{t}</option>)}</select></label>
-        <label className="chk"><input type="checkbox" checked={f.fijado} onChange={(e) => setF({ ...f, fijado: e.target.checked })} />Fijar arriba</label>
-        <button className="btn">Publicar</button>
+        <label className="ancho">Mensaje<textarea value={f.cuerpo} onChange={(e) => setF({ ...f, cuerpo: e.target.value })} maxLength={4000} rows={3} required /></label>
+        <label className="chk"><input type="checkbox" checked={f.fijado} onChange={(e) => setF({ ...f, fijado: e.target.checked })} />Mantener arriba del muro</label>
+        <button className="btn">Publicar comunicado</button>
       </form>
-      <Estado msg={msg} />{err && <p role="alert" className="aviso err">{err}</p>}
-      {lista.length === 0 ? <p className="vacio">El muro está vacío.</p> : (
-        <ul className="muro">{lista.map((c) => (
-          <li key={c.id} className={`com-${c.categoria}`}>
-            <b>{c.fijado ? "📌 " : ""}{c.titulo}</b> <small>{CAT[c.categoria]} · {fh(c.publicado_at)}</small>
-            <p>{c.cuerpo}</p><button className="mini" onClick={() => retirar(c.id)}>Retirar</button>
+      <Estado msg={msg} />{err && <Estado msg={{ ok: false, t: err }} />}
+      {!lista ? <Cargando /> : lista.length === 0 ? (
+        <p className="vacio">El muro está vacío. Publica cortes de agua, mantenciones o citaciones a asamblea y los residentes los leen en Mi depto.</p>
+      ) : (
+        <ul className="lista">{lista.map((c) => (
+          <li key={c.id}>
+            <div className="lista-cab">
+              <b>{c.fijado ? <Icono n="fijar" titulo="Fijado" /> : null} {c.titulo}</b>
+              <span className={`etq etq-${c.categoria}`}>{CAT[c.categoria]}</span>
+              <time dateTime={c.publicado_at}>{fh(c.publicado_at)}</time>
+            </div>
+            <p>{c.cuerpo}</p>
+            <div className="acc">
+              <button className="mini" onClick={() => fijar(c)}>{c.fijado ? "Quitar de arriba" : "Mantener arriba"}</button>
+              <button className="mini" onClick={() => setRetirando(c)}>Retirar</button>
+            </div>
           </li>))}</ul>)}
+      {retirando && <Confirmar pregunta={`¿Retirar «${retirando.titulo}» del muro?`} etiqueta="Retirar comunicado" peligro onConfirmar={retirar} onCancelar={() => setRetirando(null)} />}
     </section>
   );
 }
 
-export function AvisosPago({ api }) {
+export function AvisosPago({ api, onChange }) {
   const [lista, recargar, err] = useLista(() => api.avisosPago(), [api.avisosPago]);
   const [msg, setMsg] = useState(null);
-  const [tasa, setTasa] = useState("1.5");
+  const [rechazando, setRechazando] = useState(null);
+  const [motivo, setMotivo] = useState("");
+
   const resolver = async (a, aprobar) => {
-    let motivo = "";
-    if (!aprobar) { motivo = window.prompt("Motivo del rechazo") || ""; if (!motivo.trim()) return; }
-    try { await api.resolverAviso(a.id, aprobar, motivo); setMsg({ ok: true, t: aprobar ? `Pago de ${clp(a.monto)} abonado al depto ${a.unidad}.` : "Aviso rechazado." }); await recargar(); }
-    catch (x) { setMsg({ ok: false, t: x.message }); }
-  };
-  const intereses = async () => {
-    const periodo = new Date().toISOString().slice(0, 7);
-    if (!window.confirm(`Cargar ${tasa}% de interés mensual a las unidades con deuda vencida (${periodo})?`)) return;
-    try { const r = await api.cobrarIntereses({ tasa_mensual_pct: Number(tasa), periodo }); setMsg({ ok: true, t: `Intereses cargados a ${r.unidades} unidad(es), ${clp(r.total)} en total${r.ya_aplicados ? `; ${r.ya_aplicados} ya los tenían` : ""}.` }); }
-    catch (x) { setMsg({ ok: false, t: x.message }); }
+    try {
+      const r = await api.resolverAviso(a.id, aprobar, aprobar ? "" : motivo.trim());
+      setMsg({ ok: true, t: !aprobar ? "Aviso rechazado; el residente verá el motivo."
+        : r.ya_conciliado ? `La cartola ya había abonado ${clp(a.monto)} al depto ${a.unidad}; no se abonó de nuevo.` : `Se abonaron ${clp(a.monto)} al depto ${a.unidad}.` });
+      setRechazando(null); setMotivo(""); await recargar(); onChange?.();
+    } catch (x) { setMsg({ ok: false, t: x.message }); }
   };
   return (
     <section aria-labelledby="h-av">
-      <h3 id="h-av">Pagos avisados por transferencia</h3>
-      <Estado msg={msg} />{err && <p role="alert" className="aviso err">{err}</p>}
-      {lista.length === 0 ? <p className="vacio">Nadie ha avisado una transferencia.</p> : (
+      <h3 id="h-av">Transferencias avisadas por residentes</h3>
+      <Estado msg={msg} />{err && <Estado msg={{ ok: false, t: err }} />}
+      {!lista ? <Cargando /> : lista.length === 0 ? (
+        <p className="vacio">Ningún residente ha avisado una transferencia. Cuando lo hagan, aparecerá aquí para aprobarla.</p>
+      ) : (
         <table className="tabla">
-          <thead><tr><th>Depto</th><th className="der">Monto</th><th>Banco y operación</th><th>Estado</th><th /></tr></thead>
+          <thead><tr><th>Depto</th><th className="der">Monto</th><th>Banco y operación</th><th>Estado</th><th><span className="solo-lector">Acciones</span></th></tr></thead>
           <tbody>{lista.map((a) => (
-            <tr key={a.id}>
-              <td className="n">{a.unidad}</td><td className="der">{clp(a.monto)}</td>
-              <td>{a.banco} · <code>{a.nro_operacion}</code></td><td>{a.estado}{a.motivo ? `: ${a.motivo}` : ""}</td>
-              <td className="acc">{a.estado === "pendiente" && (<><button className="mini" onClick={() => resolver(a, true)}>Aprobar</button><button className="mini" onClick={() => resolver(a, false)}>Rechazar</button></>)}</td>
+            <tr key={a.id} className={a.estado !== "pendiente" ? "hecho" : ""}>
+              <td className="num">{a.unidad}</td><td className="der">{clp(a.monto)}</td>
+              <td>{a.banco}<small>Operación {a.nro_operacion}</small></td>
+              <td>{{ pendiente: "Por revisar", aprobado: "Aprobado", rechazado: "Rechazado" }[a.estado]}{a.motivo ? <small>{a.motivo}</small> : null}</td>
+              <td className="acc">{a.estado === "pendiente" && (<>
+                <button className="mini" onClick={() => resolver(a, true)}>Aprobar y abonar</button>
+                <button className="mini" onClick={() => { setRechazando(a); setMotivo(""); }}>Rechazar</button></>)}</td>
             </tr>))}</tbody>
         </table>)}
-      <div className="envio">
-        <label>Interés mensual por mora (%)<input type="number" min="0.1" max="10" step="0.1" value={tasa} onChange={(e) => setTasa(e.target.value)} /></label>
-        <button className="btn sec" onClick={intereses} disabled={!(Number(tasa) > 0)}>Cargar intereses del mes</button>
-      </div>
+      {rechazando && (
+        <Confirmar pregunta={`Rechazar el aviso del depto ${rechazando.unidad}. Motivo:`} etiqueta="Rechazar aviso" peligro
+          deshabilitado={!motivo.trim()} onConfirmar={() => resolver(rechazando, false)} onCancelar={() => setRechazando(null)}>
+          <input aria-label="Motivo del rechazo" value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={200} autoFocus />
+        </Confirmar>)}
     </section>
   );
 }
 
-export default function Comunidad({ api, data, esAdmin }) {
+export function Espacios({ api }) {
+  const [lista, recargar, err] = useLista(() => api.espacios(), [api.espacios]);
+  const [edit, setEdit] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const guardar = async (e) => {
+    e.preventDefault();
+    try {
+      await api.editarEspacio(edit.id, { tarifa: Number(edit.tarifa), aforo: Number(edit.aforo) });
+      setMsg({ ok: true, t: `${edit.nombre}: tarifa y aforo guardados.` }); setEdit(null); await recargar();
+    } catch (x) { setMsg({ ok: false, t: x.message }); }
+  };
   return (
-    <div className="comunidad-vista">
-      <header className="vista-cab"><h2>Conserjería y comunidad</h2>
-        <p>Paquetes que llegan a recepción{esAdmin ? ", muro de avisos oficiales y transferencias que los residentes informan." : "."}</p></header>
+    <section aria-labelledby="h-esp">
+      <h3 id="h-esp">Espacios comunes</h3>
+      <Estado msg={msg} />{err && <Estado msg={{ ok: false, t: err }} />}
+      {!lista ? <Cargando filas={2} /> : lista.length === 0 ? <p className="vacio">No hay espacios comunes configurados.</p> : (
+        <table className="tabla">
+          <thead><tr><th>Espacio</th><th className="der">Tarifa de uso</th><th className="der">Aforo</th><th><span className="solo-lector">Acciones</span></th></tr></thead>
+          <tbody>{lista.map((e) => (
+            <tr key={e.id}><td>{e.nombre}</td><td className="der">{e.tarifa ? clp(e.tarifa) : "Sin costo"}</td>
+              <td className="der">{e.aforo ? `${e.aforo} personas` : "Sin límite"}</td>
+              <td className="acc"><button className="mini" onClick={() => { setEdit({ ...e }); setMsg(null); }}>Editar</button></td></tr>))}</tbody>
+        </table>)}
+      {edit && (
+        <form className="fila-form" onSubmit={guardar}>
+          <b className="fila-titulo">{edit.nombre}</b>
+          <label>Tarifa de uso (CLP)<input type="number" min="0" step="500" value={edit.tarifa} onChange={(e) => setEdit({ ...edit, tarifa: e.target.value })} required /></label>
+          <label>Aforo (0 = sin límite)<input type="number" min="0" max="1000" value={edit.aforo} onChange={(e) => setEdit({ ...edit, aforo: e.target.value })} required /></label>
+          <button className="btn">Guardar</button>
+          <button type="button" className="btn sec" onClick={() => setEdit(null)}>Cancelar</button>
+        </form>)}
+      <p className="nota">La tarifa se carga sola al gasto común de quien reserva. El horario permitido se define en Administración, en Reglas.</p>
+    </section>
+  );
+}
+
+export default function Comunidad({ api, data, esAdmin, onChange }) {
+  return (
+    <div className="seccion-vista">
+      <header className="vista-cab"><h2>Conserjería</h2>
+        <p>{esAdmin ? "Paquetes de recepción, avisos oficiales, transferencias que informan los residentes y espacios comunes." : "Registro y entrega de paquetes."}</p></header>
       <Encomiendas api={api} data={data} />
       {esAdmin && <Comunicados api={api} />}
-      {esAdmin && <AvisosPago api={api} />}
+      {esAdmin && <AvisosPago api={api} onChange={onChange} />}
+      {esAdmin && <Espacios api={api} />}
     </div>
   );
 }

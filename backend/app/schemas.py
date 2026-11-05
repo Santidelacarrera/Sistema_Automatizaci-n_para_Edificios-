@@ -75,6 +75,7 @@ class GastoIn(BaseModel):
     tipo: str = "ordinario"
     base: str = "coeficiente"
     servicio: str = "agua"
+    categoria: Literal["cuota_base", "agua", "otros"] | None = None  # None: se deduce del tipo de base
 
 
 class GenerarGastosIn(BaseModel):

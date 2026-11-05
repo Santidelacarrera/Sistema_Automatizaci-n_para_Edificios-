@@ -1058,14 +1058,122 @@ input:focus, select:focus, textarea:focus {
   .piso { gap: 6px; grid-template-columns: 1.2rem repeat(var(--cols), minmax(0, 1fr)); }
 }
 
-/* ---------- comunidad: conserjería, muro y Mi Depto ---------- */
-.comunidad-vista section, .mi-depto section { margin: 0 0 2.2rem; max-width: 56rem; }
-.comunidad-vista h3, .mi-depto h3 { font: 800 1.6rem/1 var(--display); margin: 0 0 .8rem; }
-.muro { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .6rem; max-width: 56rem; }
-.muro li { background: var(--papel); padding: .65rem .9rem; border-left: 5px solid var(--losa); }
-.muro li p { margin: .25rem 0 .1rem; } .muro small { color: var(--tinta-2); }
-.muro .com-urgente { border-color: var(--ladrillo); } .muro .com-mantencion { border-color: var(--luz); }
-.muro .com-asamblea { border-color: var(--verde); }
-.estado-ok { color: var(--verde); font-weight: 700; } .estado-mora { color: var(--ladrillo); font-weight: 700; }
-.ventana .paq { position: absolute; top: 2px; right: 3px; font-size: .7rem; line-height: 1; }
+/* ==========================================================================
+   Superficies de trabajo (conserjería, finanzas, Mi depto)
+   Una sola familia tipográfica en etiquetas, tablas y botones; el display queda para los títulos de vista.
+   Escala fija: 0.85 / 1 / 1.15 / 1.35 rem. Sin bordes laterales de color ni emojis: el estado va en texto e icono.
+   ========================================================================== */
+:root { --ladrillo-texto: #8a2f1c; --verde-texto: #1d5a47; --papel-2: #e0dfd6; --linea: #b4b3a9; }
+
+/* Superficies del navegador que también llevan el diseño */
+::selection { background: var(--luz); color: var(--tinta); }
+input, select, textarea { caret-color: var(--tinta); accent-color: var(--tinta); }
+.tabla, .datos, .lista time, .etq { font-variant-numeric: tabular-nums; }
+a { text-underline-offset: .2em; }
+
+/* Controles: mismo vocabulario en todos los formularios */
+input[type=number], input[type=date], input[type=month], input[type=time], input[type=datetime-local], input[type=tel],
+input[type=file], select, textarea {
+  background: var(--papel); border: 2px solid var(--tinta); padding: .55rem .65rem; width: 100%;
+  font: 400 1rem/1.4 var(--texto); color: var(--tinta); border-radius: 0; min-height: 2.75rem;
+}
+input[type=file] { padding: .45rem; cursor: pointer; }
+textarea { resize: vertical; min-height: 5.5rem; }
+input:disabled, select:disabled { opacity: .55; cursor: not-allowed; }
+input[type=checkbox] { width: 1.1rem; height: 1.1rem; flex: none; }
+::placeholder { color: #5d6479; opacity: 1; }
+.btn, .mini { transition: background-color .15s ease-out, color .15s ease-out; }
+.btn { min-height: 2.75rem; }
+.btn.peligro { background: var(--ladrillo-texto); }
+.btn.peligro:hover:not(:disabled) { background: #6e2415; }
+.mini { color: var(--ladrillo-texto); min-height: 2rem; padding: .25rem .4rem; font-size: .9rem; }
+.mini:hover { color: var(--tinta); }
+
+/* Mensajes de resultado: icono + texto sobre fondo teñido; sin franja lateral */
+.aviso { display: flex; gap: .55rem; align-items: flex-start; border: 0; border-radius: 2px; margin: .9rem 0 0; padding: .65rem .85rem; max-width: 56rem; }
+.aviso.ok { background: #d3e3da; color: #12372c; }
+.aviso.err { background: #efd5ce; color: #5c1f11; }
+.aviso .icono { flex: none; margin-top: .2rem; }
+div.aviso { display: block; }
+div.aviso p { margin: 0 0 .35rem; }
+
+/* Estructura de vista */
+.seccion-vista { max-width: 62rem; }
+.seccion-vista section { margin: 2.75rem 0 0; }
+.seccion-vista section:first-of-type { margin-top: 1.5rem; }
+.seccion-vista h3 { font: 650 1.35rem/1.2 var(--texto); margin: 0 0 .85rem; letter-spacing: -.01em; text-wrap: balance;
+  padding-top: 1rem; border-top: 1px solid var(--linea); display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
+.seccion-vista h3 .cuenta { font-size: .9rem; font-weight: 400; color: var(--tinta-2); }
+.seccion-vista .vista-cab p { text-wrap: pretty; }
+.seccion-vista .nota { max-width: 62ch; margin: .7rem 0 0; }
+.seccion-vista .vacio { max-width: 62ch; margin: .6rem 0 0; }
+
+/* Formularios en línea */
+.fila-form { display: flex; flex-wrap: wrap; gap: .9rem 1rem; align-items: flex-end; margin: 0 0 .5rem; }
+.fila-form label { flex: 1 1 11rem; min-width: 0; }
+.fila-form label.ancho { flex: 2 1 18rem; }
+.fila-form label.chk { flex: 1 1 100%; font-weight: 400; }
+.fila-form .btn { flex: 0 0 auto; }
+.fila-titulo { flex: 1 1 100%; font-weight: 650; }
+.formulario .fila-form { margin-bottom: 1rem; }
+.acciones { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
+.confirmar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; background: var(--papel-2); padding: .75rem .9rem; margin: .9rem 0 0; max-width: 56rem; }
+.confirmar > span { font-weight: 600; }
+.confirmar input { flex: 1 1 14rem; width: auto; }
+
+/* Tablas de datos */
+.seccion-vista .tabla { max-width: none; margin-top: .5rem; }
+.tabla small { display: block; color: var(--tinta-2); font-size: .85rem; }
+.tabla .num { font-weight: 650; font-size: 1.05rem; white-space: nowrap; }
+.tabla tr.hecho td { color: var(--tinta-2); }
+.tabla tfoot th, .tabla tfoot td { border-bottom: 0; border-top: 2px solid var(--tinta); font-size: 1rem; }
+.tabla .acc { text-align: right; white-space: nowrap; }
+.tabla.editable td { padding: .35rem .4rem; vertical-align: middle; }
+.tabla.editable input.der { text-align: right; }
+.tabla.editable td:first-child { min-width: 13rem; }
+.con-icono { display: inline-flex; align-items: center; gap: .4rem; }
+.icono { flex: none; vertical-align: -.2em; }
+.solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Resumen: lista de datos, no tarjetas */
+.datos { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin: 1.25rem 0 0; padding: 0; }
+.datos div { min-width: 9rem; }
+.datos dt { font-size: .85rem; color: var(--tinta-2); }
+.datos dd { margin: .1rem 0 0; font-size: 1.35rem; font-weight: 650; }
+
+/* Listas (muro, visitas, avisos) separadas por línea, sin tarjetas */
+.lista { list-style: none; margin: .5rem 0 0; padding: 0; }
+.lista li { padding: .85rem 0; border-top: 1px solid var(--linea); }
+.lista li:first-child { border-top: 0; }
+.lista p { margin: .3rem 0 .2rem; max-width: 66ch; text-wrap: pretty; }
+.lista-cab { display: flex; flex-wrap: wrap; gap: .3rem .9rem; align-items: baseline; }
+.lista-cab time { margin-left: auto; font-size: .85rem; color: var(--tinta-2); }
+.lista .acc { display: flex; gap: .5rem; flex-wrap: wrap; }
+.lista.compacta li { padding: .55rem 0; }
+.qr { display: block; margin: .6rem 0 .2rem; background: #fff; padding: .5rem; image-rendering: pixelated; }
+.franjas { list-style: none; margin: .2rem 0 0; padding: 0; }
+
+/* Etiquetas de estado: punto + texto */
+.etq { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; font-weight: 600; background: var(--papel-2); padding: .1rem .5rem; color: var(--tinta); }
+.etq::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: var(--losa); }
+.etq-urgente::before, .etq-rechazado::before { background: var(--ladrillo); }
+.etq-mantencion::before, .etq-pendiente::before { background: var(--luz); }
+.etq-asamblea::before, .etq-aprobado::before { background: var(--verde); }
+
+.estado-ok { color: var(--verde-texto); font-weight: 650; } .estado-mora { color: var(--ladrillo-texto); font-weight: 650; }
+
+/* Carga: esqueleto con la forma del contenido */
+.esqueleto { display: grid; gap: .6rem; margin-top: .75rem; }
+.esqueleto span { height: 2.4rem; background: var(--papel-2); animation: latido 1.4s ease-in-out infinite; }
+@keyframes latido { 50% { opacity: .45; } }
+
 .ventana { position: relative; }
+.ventana .paq { position: absolute; top: 3px; right: 3px; display: grid; color: inherit; opacity: .85; }
+
+@media (max-width: 40rem) {
+  .fila-form label, .fila-form label.ancho { flex-basis: 100%; }
+  .fila-form .btn, .acciones .btn { width: 100%; }
+  .tabla { display: block; overflow-x: auto; }
+  .datos div { min-width: 40%; }
+}
+@media (prefers-reduced-motion: reduce) { .esqueleto span { animation: none; } .btn, .mini { transition: none; } }

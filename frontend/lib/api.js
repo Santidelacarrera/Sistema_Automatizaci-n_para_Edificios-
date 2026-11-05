@@ -22,6 +22,21 @@ async function http(sess, method, path, body) {
   return data;
 }
 
+async function subir(sess, path, campo, archivo) {
+  const fd = new FormData();
+  fd.append(campo, archivo);
+  const r = await fetch(BASE + path, { method: "POST", headers: { Authorization: `Bearer ${sess.token}` }, body: fd });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new ApiError(r.status, data.detail ?? r.statusText);
+  return data;
+}
+
+async function imagen(sess, path) {
+  const r = await fetch(BASE + path, { headers: { Authorization: `Bearer ${sess.token}` } });
+  if (!r.ok) throw new ApiError(r.status, "No se pudo cargar la imagen");
+  return URL.createObjectURL(await r.blob());
+}
+
 export async function login(edificio_id, email, password) {
   const r = await fetch(BASE + "/auth/login", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -65,6 +80,8 @@ export function client(sess) {
       return URL.createObjectURL(await r.blob());
     },
     ...comunidadClient((m, p, b) => http(sess, m, `${e}${p}`, b)),
+    conciliar: (archivo) => subir(sess, `${e}/conciliacion`, "cartola", archivo),
+    qrVisita: (id) => imagen(sess, `${e}/visitas/${id}/qr.png`),
   };
 }
 
@@ -83,6 +100,12 @@ function comunidadClient(req) {
     resolverAviso: (id, aprobar, motivo = "") => req("POST", `/avisos-pago/${id}/resolver`, { aprobar, motivo }),
     cobrarIntereses: (b) => req("POST", "/cobranza/intereses", b),
     resumenFinanzas: () => req("GET", "/finanzas/resumen"),
+    generarGastos: (b) => req("POST", "/gastos-comunes/generar", b),
+    enviarGastos: (periodo) => req("POST", `/gastos-comunes/enviar/${periodo}`),
+    enviarCircular: (b) => req("POST", "/circulares", b),
+    editarComunicado: (id, b) => req("PATCH", `/comunicados/${id}`, b),
+    editarEspacio: (id, b) => req("PATCH", `/espacios/${id}`, b),
+    cupos: () => req("GET", "/visitas/cupos"),
     espaciosComunes: () => req("GET", "/espacios-comunes"),
     disponibilidad: (id, fecha) => req("GET", `/espacios-comunes/${id}/disponibilidad?fecha=${fecha}`),
     reservarEspacio: (b) => req("POST", "/reservas-espacio", b),
@@ -200,7 +223,7 @@ function demoClient() {
   ];
   let ajustes = { modo_acceso: "sticker_o_patente", ventana_coincidencia_s: 10, antirrebote_s: 3, anti_passback: false, umbral_confianza_patente: 0.85 };
   let pruebas = [];
-  let espacios = [{ id: 1, nombre: "Quincho", accion: "reservar_quincho", tarifa: 10000 }];
+  let espacios = [{ id: 1, nombre: "Quincho", accion: "reservar_quincho", tarifa: 10000, aforo: 20 }, { id: 2, nombre: "Sala multiuso", accion: "reservar_sala", tarifa: 0, aforo: 40 }];
   let reglas = [{ id: 1, accion: "reservar_quincho", tipo: "horario", params: { desde: "10:00", hasta: "22:00" }, activa: true }];
   const nid = (lista) => Math.max(0, ...lista.map((x) => x.id)) + 1;
   const fallo = (msg, status = 422) => { throw new ApiError(status, msg); };
@@ -351,8 +374,28 @@ function demoClient() {
       a.estado = aprobar ? "aprobado" : "rechazado"; a.motivo = motivo || ""; return { id, estado: a.estado, excedente: 0 };
     },
     cobrarIntereses: async (b) => { const m = cob().morosos.filter((x) => x.dias_atraso > 0); return { periodo: b.periodo, unidades: m.length, ya_aplicados: 0, total: Math.round(m.reduce((s, x) => s + x.vencido, 0) * b.tasa_mensual_pct / 100) }; },
+    generarGastos: async (b) => {
+      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(b.periodo)) fallo("Periodo inválido: use AAAA-MM");
+      const total = b.gastos.reduce((s, g) => s + Number(g.monto), 0);
+      return { periodo: b.periodo, total: total + (b.fondo_reserva_pct ? Math.round(b.gastos.filter((g) => (g.tipo || "ordinario") === "ordinario").reduce((s, g) => s + Number(g.monto), 0) * b.fondo_reserva_pct / 100) : 0), unidades: data.unidades.length };
+    },
+    enviarGastos: async () => ({ encolado: false, estado: "no_configurado", motivo: "Modo demo: el navegador no envía correos" }),
+    enviarCircular: async () => ({ encolado: false, estado: "no_configurado", motivo: "Modo demo: el navegador no envía correos" }),
+    conciliar: async (archivo) => {
+      const filas = (await archivo.text()).trim().split(/\r?\n/).slice(1).filter(Boolean);
+      return { conciliados: [], sin_match: filas.map((f, i) => ({ id: String(i), descripcion: f.split(",")[1] || "", monto: Number(f.split(",")[2]) || 0 })), duplicados: 0, ya_abonados_por_aviso: 0 };
+    },
+    editarComunicado: async (id, b) => { const c = comunicados.find((x) => x.id === id); if (!c) fallo("Comunicado no existe", 404); Object.assign(c, b); return c; },
+    editarEspacio: async (id, b) => {
+      const e = espacios.find((x) => x.id === id); if (!e) fallo("Espacio no existe", 404);
+      if (b.tarifa !== undefined && b.tarifa !== null) e.tarifa = b.tarifa;
+      if (b.aforo !== undefined && b.aforo !== null) e.aforo = b.aforo;
+      return { id, tarifa: e.tarifa, aforo: e.aforo };
+    },
+    cupos: async () => ({ total: data.edificio.cupos_visitas, ocupados: data.edificio.cupos_ocupados, libres: data.edificio.cupos_visitas - data.edificio.cupos_ocupados }),
+    qrVisita: async () => null,
     resumenFinanzas: async () => { const c = cob(); const mor = c.morosos.filter((x) => x.dias_atraso > 0).length; return { unidades: data.unidades.length, unidades_morosas: mor, morosidad_pct: Math.round(mor / data.unidades.length * 1000) / 10, deuda_total: c.total, deuda_vencida: c.morosos.reduce((s, x) => s + x.vencido, 0), avisos_pago_pendientes: avisos.filter((a) => a.estado === "pendiente").length }; },
-    espaciosComunes: async () => espacios.map((e) => ({ ...e, aforo: 20, horario: { desde: "10:00", hasta: "22:00" } })),
+    espaciosComunes: async () => espacios.map((e) => ({ ...e, horario: { desde: "10:00", hasta: "22:00" } })),
     disponibilidad: async () => ({ espacio: "Quincho", aforo: 20, tarifa: 10000, horario: { desde: "10:00", hasta: "22:00" }, abierto: true, ocupadas: [] }),
     reservarEspacio: async () => fallo("Modo demo: las reservas no se guardan"),
     reservarVisita: async () => fallo("Modo demo: las visitas no se guardan"),

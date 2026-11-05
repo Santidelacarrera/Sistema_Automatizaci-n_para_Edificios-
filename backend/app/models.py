@@ -171,6 +171,7 @@ class Cargo(Base):
     unidad_id: Mapped[int] = mapped_column(ForeignKey("unidades.id"), index=True)
     periodo: Mapped[str] = mapped_column(String(7))  # YYYY-MM
     concepto: Mapped[str] = mapped_column(String(80))
+    categoria: Mapped[str] = mapped_column(String(20), default="")  # cuota_base | agua | fondo_reserva | ...
     monto: Mapped[float] = mapped_column(Numeric(14, 2))
     saldo: Mapped[float] = mapped_column(Numeric(14, 2))
     vencimiento: Mapped[date | None] = mapped_column(Date)

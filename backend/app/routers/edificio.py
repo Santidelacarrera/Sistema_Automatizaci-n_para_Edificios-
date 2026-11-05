@@ -171,7 +171,7 @@ def reservar_espacio(edificio_id: str, body: ReservaEspacioIn, user: User, db: S
     db.add(r)
     if float(esp.tarifa) > 0:  # la reserva actualiza automáticamente la cuenta
         db.add(Cargo(edificio_id=ed.id, unidad_id=u.id, periodo=body.desde.strftime("%Y-%m"),
-                     concepto=f"Reserva {esp.nombre}", monto=esp.tarifa, saldo=esp.tarifa,
+                     concepto=f"Reserva {esp.nombre}", categoria="otros", monto=esp.tarifa, saldo=esp.tarifa,
                      vencimiento=body.desde.date()))
     db.commit()
     return {"id": r.id, "tarifa": float(esp.tarifa)}
@@ -204,7 +204,7 @@ def cancelar_reserva(edificio_id: str, reserva_id: int, user: User, db: Session 
             tarifa_anulada = True
     if multa > 0:
         db.add(Cargo(edificio_id=ed.id, unidad_id=r.unidad_id, periodo=ahora.strftime("%Y-%m"),
-                     concepto=f"Multa cancelación {esp.nombre}", monto=multa, saldo=multa,
+                     concepto=f"Multa cancelación {esp.nombre}", categoria="intereses_multas", monto=multa, saldo=multa,
                      vencimiento=(ahora + timedelta(days=30)).date()))
     db.commit()
     return {"estado": "cancelada", "multa": multa, "tarifa_anulada": tarifa_anulada}

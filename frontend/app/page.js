@@ -5,6 +5,7 @@ import Administracion from "./components/Administracion";
 import Edificios from "./components/Edificios";
 import Cobranza from "./components/Cobranza";
 import Comunidad from "./components/Comunidad";
+import Finanzas from "./components/Finanzas";
 import MiDepto from "./components/MiDepto";
 import Drawer from "./components/Drawer";
 import Fachada from "./components/Fachada";
@@ -128,7 +129,7 @@ function Panel({ sess: sesionInicial, onSalir }) {
         {vista === "cobranza" && <Cobranza cob={cob} api={api} onChange={cargar} />}
         {vista === "reservas" && PUEDE_ADMIN(sess) && <Reservas key={edificioId} api={api} data={data} onChange={cargar} />}
         {vista === "finanzas" && PUEDE_ADMIN(sess) && <Finanzas key={edificioId} api={api} data={data} onChange={cargar} />}
-        {vista === "comunidad" && <Comunidad key={edificioId} api={api} data={data} esAdmin={PUEDE_ADMIN(sess)} />}
+        {vista === "comunidad" && <Comunidad key={edificioId} api={api} data={data} esAdmin={PUEDE_ADMIN(sess)} onChange={cargar} />}
         {vista === "admin" && PUEDE_ADMIN(sess) && <Administracion key={edificioId} api={api} data={data} />}
         {vista === "edificios" && ES_SUPERADMIN(sesionInicial) && <Edificios lista={edificios} activo={edificioId} onAbrir={abrirEdificio} error={errEdificios} />}
       </main>
