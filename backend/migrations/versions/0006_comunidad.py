@@ -1,7 +1,7 @@
 """Comunidad: comunicados, encomiendas, avisos de pago, aforo de espacios
 
-Revision ID: 0003_comunidad
-Revises: 0002_stickers
+Revision ID: 0006_comunidad
+Revises: 0005_conversaciones_wa
 Create Date: 2026-11-05
 """
 from typing import Sequence, Union
@@ -9,8 +9,8 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0003_comunidad"
-down_revision: Union[str, None] = "0002_stickers"
+revision: str = "0006_comunidad"
+down_revision: Union[str, None] = "0005_conversaciones_wa"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
