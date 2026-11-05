@@ -2,7 +2,7 @@
 from datetime import date, timedelta
 
 from app.config import utcnow
-from app.models import Cargo, EspacioComun, Regla, Residente, Rol, Unidad
+from app.models import Cargo, EspacioComun, Regla, Residente, Rol
 from app.security import hash_password
 from app.services import access, finance
 
