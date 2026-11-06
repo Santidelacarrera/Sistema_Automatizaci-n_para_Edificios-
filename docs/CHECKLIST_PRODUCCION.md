@@ -7,6 +7,8 @@ Lo que el código ya resuelve y lo que sólo puede hacer una persona con acceso 
 - `/docs`, `/redoc` y `/openapi.json` no se publican en producción ni pasan por el proxy.
 - Logs de todos los contenedores con rotación (10 MB x 5 archivos): el disco del VPS no se llena.
 - Redis con healthcheck; `api`, `worker` y `beat` esperan a Redis sano; el proxy espera a la API sana.
+- Verificado el 2026-11-05 en local: `docker compose up` completo (api, worker, beat, panel, Redis, Caddy, PostgreSQL local) sano; `/ready` ok; `/docs` y `/openapi.json` dan 404; migraciones 0001 a 0007 (subida, bajada y subida) y la suite completa contra PostgreSQL 16 real (273 pasadas); Playwright 36 pasadas.
+- Integrada la rama `claude/comunidad-y-portal` (Mi Depto real, comunidad, migraciones 0006 y 0007).
 - CI: pruebas con SQLite y PostgreSQL real, migraciones, respaldo/restauración, imágenes Docker, E2E, escáner de secretos.
 
 ## Pendiente: requiere acción humana
