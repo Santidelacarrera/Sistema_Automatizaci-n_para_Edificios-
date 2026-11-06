@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Icono from "./Icono";
 
 export const fh = (iso) => (iso ? new Date(iso).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
@@ -7,12 +7,15 @@ export const fd = (iso) => (iso ? new Date(iso).toLocaleDateString("es-CL", { da
 export const hoyISO = () => new Date().toISOString().slice(0, 10);
 
 // Carga una lista y expone recargar(); el error queda como texto, no como excepción.
-export function useLista(cargarFn, dep) {
+export function useLista(cargarFn, dep = []) {
   const [lista, setLista] = useState(null);
   const [err, setErr] = useState("");
+  const fn = useRef(cargarFn);
+  fn.current = cargarFn;
+  const claves = dep.filter((d) => typeof d !== "function"); // las funciones del cliente cambian en cada render del padre
   const recargar = useCallback(async () => {
-    try { setLista(await cargarFn()); setErr(""); } catch (e) { setErr(e.message); setLista((l) => l ?? []); }
-  }, dep); // eslint-disable-line react-hooks/exhaustive-deps
+    try { setLista(await fn.current()); setErr(""); } catch (e) { setErr(e.message); setLista((l) => l ?? []); }
+  }, claves); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { recargar(); }, [recargar]);
   return [lista, recargar, err];
 }

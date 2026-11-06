@@ -1,7 +1,7 @@
 """Comunicados, encomiendas, avisos de pago, Mi Depto, intereses, fondo de reserva, aforo y WhatsApp de visitas."""
-from datetime import date, timedelta
+from datetime import timedelta
 
-from app.config import utcnow
+from app.config import hoy_local, utcnow
 from app.models import Cargo, EspacioComun, Regla, Residente, Rol
 from app.security import hash_password
 from app.services import access, finance
@@ -100,10 +100,10 @@ def test_encomienda_unidad_de_otro_edificio_rechazada(client, seed, db):
 
 # ---------------- avisos de pago
 def test_aviso_de_pago_aprobado_abona_y_es_idempotente(client, seed, db):
-    uid = _cargo(db, seed, "102", 50000, date.today() - timedelta(days=5))
+    uid = _cargo(db, seed, "102", 50000, hoy_local() - timedelta(days=5))
     ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
     body = {"monto": 30000, "banco": "Banco Estado", "nro_operacion": "OP-123456",
-            "fecha_transferencia": date.today().isoformat()}
+            "fecha_transferencia": hoy_local().isoformat()}
     r = client.post(f"{A}/avisos-pago", headers=beto, json=body)
     assert r.status_code == 201
     aid = r.json()["id"]
@@ -119,10 +119,10 @@ def test_aviso_de_pago_aprobado_abona_y_es_idempotente(client, seed, db):
 
 
 def test_aviso_rechazado_exige_motivo_y_no_abona(client, seed, db):
-    uid = _cargo(db, seed, "102", 50000, date.today())
+    uid = _cargo(db, seed, "102", 50000, hoy_local())
     ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
     aid = client.post(f"{A}/avisos-pago", headers=beto, json={
-        "monto": 50000, "banco": "BCI", "nro_operacion": "777888", "fecha_transferencia": date.today().isoformat()}).json()["id"]
+        "monto": 50000, "banco": "BCI", "nro_operacion": "777888", "fecha_transferencia": hoy_local().isoformat()}).json()["id"]
     assert client.post(f"{A}/avisos-pago/{aid}/resolver", headers=ana, json={"aprobar": False}).status_code == 422
     r = client.post(f"{A}/avisos-pago/{aid}/resolver", headers=ana, json={"aprobar": False, "motivo": "No llegó"})
     assert r.json()["estado"] == "rechazado"
@@ -133,25 +133,25 @@ def test_aviso_rechazado_exige_motivo_y_no_abona(client, seed, db):
 
 def test_aviso_pago_validaciones_y_aislamiento_de_unidad(client, seed):
     beto = login(client, "edificio_a", "beto@x.cl")
-    base = {"monto": 1000, "banco": "BCI", "nro_operacion": "ABC123", "fecha_transferencia": date.today().isoformat()}
+    base = {"monto": 1000, "banco": "BCI", "nro_operacion": "ABC123", "fecha_transferencia": hoy_local().isoformat()}
     assert client.post(f"{A}/avisos-pago", headers=beto, json={**base, "unidad_id": seed["edificio_a", "101"].id}).status_code == 403
-    futuro = (date.today() + timedelta(days=2)).isoformat()
+    futuro = (hoy_local() + timedelta(days=2)).isoformat()
     assert client.post(f"{A}/avisos-pago", headers=beto, json={**base, "fecha_transferencia": futuro}).status_code == 422
     assert client.post(f"{A}/avisos-pago", headers=beto, json={**base, "monto": 0}).status_code == 422
 
 
 # ---------------- Mi Depto
 def test_mi_depto_desglose_y_estado(client, seed, db):
-    _cargo(db, seed, "102", 40000, date.today() + timedelta(days=10), "GC:ordinario:Administración")
-    _cargo(db, seed, "102", 12000, date.today() + timedelta(days=10), "GC:ordinario:Agua caliente")
-    _cargo(db, seed, "102", 2000, date.today() + timedelta(days=10), finance.CONCEPTO_FONDO)
+    _cargo(db, seed, "102", 40000, hoy_local() + timedelta(days=10), "GC:ordinario:Administración")
+    _cargo(db, seed, "102", 12000, hoy_local() + timedelta(days=10), "GC:ordinario:Agua caliente")
+    _cargo(db, seed, "102", 2000, hoy_local() + timedelta(days=10), finance.CONCEPTO_FONDO)
     beto = login(client, "edificio_a", "beto@x.cl")
     d = client.get(f"{A}/mi-depto", headers=beto).json()
     assert d["unidad"]["numero"] == "102"
     assert d["cuenta"]["estado"] == "al_dia" and d["cuenta"]["deuda"] == 54000
     assert d["cuenta"]["desglose"] == {"cuota_base": 40000, "agua": 12000, "fondo_reserva": 2000,
                                        "intereses_multas": 0, "otros": 0}
-    _cargo(db, seed, "102", 9000, date.today() - timedelta(days=3), "GC:ordinario:Otro")
+    _cargo(db, seed, "102", 9000, hoy_local() - timedelta(days=3), "GC:ordinario:Otro")
     d = client.get(f"{A}/mi-depto", headers=beto).json()
     assert d["cuenta"]["estado"] == "moroso" and d["cuenta"]["vencida"] == 9000 and d["cuenta"]["deuda"] == 63000
 
@@ -197,8 +197,8 @@ def test_fondo_de_reserva_se_suma_a_gastos_ordinarios(client, seed, db):
 
 def test_intereses_mora_sobre_capital_vencido_e_idempotente(client, seed, db):
     ana = login(client, "edificio_a", "ana@x.cl")
-    vencida = _cargo(db, seed, "102", 100000, date.today() - timedelta(days=40))
-    _cargo(db, seed, "103", 80000, date.today() + timedelta(days=5))  # aún no vence
+    vencida = _cargo(db, seed, "102", 100000, hoy_local() - timedelta(days=40))
+    _cargo(db, seed, "103", 80000, hoy_local() + timedelta(days=5))  # aún no vence
     r = client.post(f"{A}/cobranza/intereses", headers=ana, json={"tasa_mensual_pct": 1.5, "periodo": "2026-11"})
     assert r.json()["unidades"] == 1 and r.json()["total"] == 1500
     r2 = client.post(f"{A}/cobranza/intereses", headers=ana, json={"tasa_mensual_pct": 1.5, "periodo": "2026-11"})
@@ -212,8 +212,8 @@ def test_intereses_mora_sobre_capital_vencido_e_idempotente(client, seed, db):
 
 
 def test_resumen_de_finanzas(client, seed, db):
-    _cargo(db, seed, "102", 100000, date.today() - timedelta(days=40))
-    _cargo(db, seed, "103", 50000, date.today() + timedelta(days=5))
+    _cargo(db, seed, "102", 100000, hoy_local() - timedelta(days=40))
+    _cargo(db, seed, "103", 50000, hoy_local() + timedelta(days=5))
     ana = login(client, "edificio_a", "ana@x.cl")
     r = client.get(f"{A}/finanzas/resumen", headers=ana).json()
     assert r["deuda_total"] == 150000 and r["deuda_vencida"] == 100000
@@ -289,16 +289,16 @@ def test_enlace_whatsapp_de_visita(client, seed, db):
 def _aviso(client, h, monto, op):
     return client.post(f"{A}/avisos-pago", headers=h, json={
         "monto": monto, "banco": "Banco Estado", "nro_operacion": op,
-        "fecha_transferencia": date.today().isoformat()}).json()["id"]
+        "fecha_transferencia": hoy_local().isoformat()}).json()["id"]
 
 
 def _cartola(client, h, descripcion, monto, ident="m1"):
-    csv = f"fecha,descripcion,monto,id\n{date.today().strftime('%d-%m-%Y')},{descripcion},{monto},{ident}\n"
+    csv = f"fecha,descripcion,monto,id\n{hoy_local().strftime('%d-%m-%Y')},{descripcion},{monto},{ident}\n"
     return client.post(f"{A}/conciliacion", headers=h, files={"cartola": ("c.csv", csv.encode())})
 
 
 def test_cartola_despues_de_aprobar_aviso_no_abona_dos_veces(client, seed, db):
-    uid = _cargo(db, seed, "102", 50000, date.today() - timedelta(days=2))
+    uid = _cargo(db, seed, "102", 50000, hoy_local() - timedelta(days=2))
     ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
     aid = _aviso(client, beto, 30000, "OP-998877")
     client.post(f"{A}/avisos-pago/{aid}/resolver", headers=ana, json={"aprobar": True})
@@ -310,7 +310,7 @@ def test_cartola_despues_de_aprobar_aviso_no_abona_dos_veces(client, seed, db):
 
 
 def test_aprobar_aviso_despues_de_la_cartola_no_abona_dos_veces(client, seed, db):
-    uid = _cargo(db, seed, "102", 50000, date.today() - timedelta(days=2))
+    uid = _cargo(db, seed, "102", 50000, hoy_local() - timedelta(days=2))
     ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
     r = _cartola(client, ana, "TRANSF OP-554433 CC-A-102", 30000)
     assert len(r.json()["conciliados"]) == 1
@@ -322,7 +322,7 @@ def test_aprobar_aviso_despues_de_la_cartola_no_abona_dos_veces(client, seed, db
 
 
 def test_numero_de_operacion_debe_coincidir_completo_y_con_el_mismo_monto(client, seed, db):
-    uid = _cargo(db, seed, "102", 90000, date.today() - timedelta(days=2))
+    uid = _cargo(db, seed, "102", 90000, hoy_local() - timedelta(days=2))
     ana, beto = login(client, "edificio_a", "ana@x.cl"), login(client, "edificio_a", "beto@x.cl")
     aid = _aviso(client, beto, 30000, "123")
     client.post(f"{A}/avisos-pago/{aid}/resolver", headers=ana, json={"aprobar": True})  # deuda 60.000

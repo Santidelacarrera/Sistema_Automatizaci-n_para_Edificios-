@@ -38,8 +38,9 @@ export const apiHasBackend = () => Boolean(BASE);
 export const listarEdificios = (sess) => http(sess, "GET", "/edificios");
 
 // ---------- cliente unificado (real o demo) ----------
+let demoUnico = null; // el estado de la demo vive mientras dure la sesión, no cada render
 export function client(sess) {
-  if (sess.demo) return demoClient();
+  if (sess.demo) return (demoUnico ??= demoClient());
   const e = `/edificios/${sess.edificio_id}`;
   return {
     panel: () => http(sess, "GET", `${e}/panel`),
@@ -387,6 +388,6 @@ function demoClient() {
   };
 }
 
-export const demoSession = () => ({ token: "demo", edificio_id: "edificio_a", demo: true });
+export const demoSession = () => (demoUnico = null, { token: "demo", edificio_id: "edificio_a", demo: true });
 export const clp = (n) => "$" + Math.round(n).toLocaleString("es-CL");
 export const normPatente = (p) => (p || "").toUpperCase().replace(/[^A-Z0-9]/g, "");

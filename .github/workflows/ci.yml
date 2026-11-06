@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18  # igual o más nuevo que el pg_dump del runner: un dump nuevo no restaura en un servidor viejo
         env:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ${{ env.PG_CLAVE }}
@@ -77,7 +77,7 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r backend/requirements.txt
-      - run: sudo apt-get update && sudo apt-get install -y postgresql-client-16  # misma versión que el servicio postgres:16
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Respaldo y restauración con datos reales sembrados
         env:
           DATABASE_URL: postgresql+psycopg://ci:${{ env.PG_CLAVE }}@localhost:5432/edificios

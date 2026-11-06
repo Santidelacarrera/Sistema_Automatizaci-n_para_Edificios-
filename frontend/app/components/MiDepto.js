@@ -110,9 +110,11 @@ export default function MiDepto({ api, nombre, onSalir, unidadId, embebido = fal
   const [err, setErr] = useState("");
   const [f, setF] = useState({ monto: "", banco: "", nro_operacion: "", fecha_transferencia: hoyISO() });
   const [msg, setMsg] = useState(null);
+  const apiRef = useRef(api);
+  apiRef.current = api;
   const cargar = useCallback(async () => {
-    try { setD(await api.miDepto(unidadId)); setErr(""); } catch (e) { if (e.status === 401) onSalir(); else setErr(e.message); }
-  }, [api.miDepto, unidadId]); // eslint-disable-line react-hooks/exhaustive-deps
+    try { setD(await apiRef.current.miDepto(unidadId)); setErr(""); } catch (e) { if (e.status === 401) onSalir(); else setErr(e.message); }
+  }, [unidadId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { cargar(); const t = setInterval(cargar, 20000); return () => clearInterval(t); }, [cargar]);
 
   const avisar = async (e) => {
