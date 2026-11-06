@@ -50,9 +50,9 @@ test("edita tarifa y aforo de un espacio común", async ({ page }) => {
   await expect(page.getByRole("row", { name: /Quincho/ })).toContainText("12 personas");
 });
 
-test("finanzas: el fondo de reserva se propone al generar gastos", async ({ page }) => {
+test("finanzas: el fondo de reserva es opcional y parte en 0", async ({ page }) => {
   await ir(page, "Finanzas", "Finanzas");
-  await expect(page.getByLabel("Fondo de reserva (%)")).toHaveValue("5");
+  await expect(page.getByLabel("Fondo de reserva (%)")).toHaveValue("0");
 });
 
 test("finanzas: mora muestra el resumen y los intereses piden confirmación antes de cargarse", async ({ page }) => {
