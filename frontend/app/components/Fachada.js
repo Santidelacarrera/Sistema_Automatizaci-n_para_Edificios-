@@ -1,4 +1,5 @@
 import { clp } from "../../lib/api";
+import Icono from "./Icono";
 
 export function estadoUnidad(u) {
   if (u.vencida > 0) return "persiana";            // deuda vencida: persiana baja
@@ -38,8 +39,9 @@ export default function Fachada({ data, filtro, seleccionada, onSelect }) {
               return (
                 <button key={u.id} role="gridcell" className={`ventana ${est} ${apagada ? "apagada" : ""} ${seleccionada === u.id ? "sel" : ""}`}
                   onClick={() => onSelect(u.id)}
-                  aria-label={`Departamento ${u.numero}: ${est === "persiana" ? "deuda vencida " + clp(u.vencida) : est === "encendida" ? "visita en el edificio" : est === "vacia" ? "sin residentes" : "al día"}`}>
+                  aria-label={`Departamento ${u.numero}: ${est === "persiana" ? "deuda vencida " + clp(u.vencida) : est === "encendida" ? "visita en el edificio" : est === "vacia" ? "sin residentes" : "al día"}${u.encomiendas ? `, ${u.encomiendas} encomienda(s) por retirar` : ""}`}>
                   <span className="num">{u.numero}</span>
+                  {u.encomiendas > 0 && <span className="paq" title={`${u.encomiendas} encomienda(s) por retirar`}><Icono n="paquete" size={13} /></span>}
                   {u.vehiculos.length > 0 && <span className="autos" aria-hidden="true">{"▪".repeat(u.vehiculos.length)}</span>}
                 </button>
               );

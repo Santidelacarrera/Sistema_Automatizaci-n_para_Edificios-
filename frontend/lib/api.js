@@ -38,8 +38,9 @@ export const apiHasBackend = () => Boolean(BASE);
 export const listarEdificios = (sess) => http(sess, "GET", "/edificios");
 
 // ---------- cliente unificado (real o demo) ----------
+let demoUnico = null; // el estado de la demo vive mientras dure la sesión, no cada render
 export function client(sess) {
-  if (sess.demo) return demoClient();
+  if (sess.demo) return (demoUnico ??= demoClient());
   const e = `/edificios/${sess.edificio_id}`;
   return {
     panel: () => http(sess, "GET", `${e}/panel`),
@@ -64,6 +65,31 @@ export function client(sess) {
       if (!r.ok) throw new ApiError(r.status, "No se pudo cargar el QR");
       return URL.createObjectURL(await r.blob());
     },
+    ...comunidadClient((m, p, b) => http(sess, m, `${e}${p}`, b)),
+  };
+}
+
+// Comunidad: Mi Depto, comunicados, encomiendas, avisos de pago e intereses.
+function comunidadClient(req) {
+  return {
+    miDepto: (unidad_id) => req("GET", `/mi-depto${unidad_id ? `?unidad_id=${unidad_id}` : ""}`),
+    comunicados: () => req("GET", "/comunicados?todos=true"),
+    publicarComunicado: (b) => req("POST", "/comunicados", b),
+    retirarComunicado: (id) => req("DELETE", `/comunicados/${id}`),
+    encomiendas: (estado) => req("GET", `/encomiendas${estado ? `?estado=${estado}` : ""}`),
+    recibirEncomienda: (b) => req("POST", "/encomiendas", b),
+    entregarEncomienda: (id, retirada_por) => req("POST", `/encomiendas/${id}/entregar`, { retirada_por }),
+    avisosPago: () => req("GET", "/avisos-pago"),
+    avisarPago: (b) => req("POST", "/avisos-pago", b),
+    resolverAviso: (id, aprobar, motivo = "") => req("POST", `/avisos-pago/${id}/resolver`, { aprobar, motivo }),
+    cobrarIntereses: (b) => req("POST", "/cobranza/intereses", b),
+    resumenFinanzas: () => req("GET", "/finanzas/resumen"),
+    editarComunicado: (id, b) => req("PATCH", `/comunicados/${id}`, b),
+    editarEspacio: (id, b) => req("PATCH", `/espacios/${id}`, b),
+    cupos: () => req("GET", "/visitas/cupos"),
+    espaciosComunes: () => req("GET", "/espacios-comunes"),
+    disponibilidad: (id, fecha) => req("GET", `/espacios-comunes/${id}/disponibilidad?fecha=${fecha}`),
+    compartirVisita: (id, telefono = "") => req("GET", `/visitas/${id}/whatsapp?telefono=${encodeURIComponent(telefono)}`),
   };
 }
 
@@ -176,7 +202,7 @@ function demoClient() {
   ];
   let ajustes = { modo_acceso: "sticker_o_patente", ventana_coincidencia_s: 10, antirrebote_s: 3, anti_passback: false, umbral_confianza_patente: 0.85 };
   let pruebas = [];
-  let espacios = [{ id: 1, nombre: "Quincho", accion: "reservar_quincho", tarifa: 10000 }];
+  let espacios = [{ id: 1, nombre: "Quincho", accion: "reservar_quincho", tarifa: 10000, aforo: 20 }, { id: 2, nombre: "Sala multiuso", accion: "reservar_sala", tarifa: 0, aforo: 40 }];
   let reglas = [{ id: 1, accion: "reservar_quincho", tipo: "horario", params: { desde: "10:00", hasta: "22:00" }, activa: true }];
   const nid = (lista) => Math.max(0, ...lista.map((x) => x.id)) + 1;
   const fallo = (msg, status = 422) => { throw new ApiError(status, msg); };
@@ -282,8 +308,66 @@ function demoClient() {
       return { id, activa: r.activa };
     },
   };
+
+  // Comunidad en memoria (modo demo).
+  const u1 = data.unidades[0];
+  let comunicados = [
+    { id: 1, titulo: "Mantención de ascensores", cuerpo: "El jueves entre 9:00 y 13:00 se revisará el ascensor norte.", categoria: "mantencion", fijado: true, publicado_at: iso(-3000), vigente_hasta: null },
+    { id: 2, titulo: "Asamblea ordinaria", cuerpo: "Sábado 18:00 en la sala multiuso. Se votará el presupuesto.", categoria: "asamblea", fijado: false, publicado_at: iso(-9000), vigente_hasta: null },
+  ];
+  let encomiendas = [
+    { id: 1, unidad_id: u1.id, unidad: u1.numero, transportista: "Chilexpress", remitente: "", descripcion: "Caja mediana", estado: "pendiente", recibida_at: iso(-200), entregada_at: null, retirada_por: "" },
+    { id: 2, unidad_id: data.unidades[5].id, unidad: data.unidades[5].numero, transportista: "Mercado Libre", remitente: "", descripcion: "", estado: "pendiente", recibida_at: iso(-90), entregada_at: null, retirada_por: "" },
+  ];
+  let avisos = [{ id: 1, unidad_id: data.unidades[6].id, unidad: data.unidades[6].numero, monto: 96000, banco: "Banco Estado", nro_operacion: "OP-448812", fecha_transferencia: new Date().toISOString().slice(0, 10), estado: "pendiente", creado: iso(-60), motivo: "" }];
+  const comunidad = {
+    miDepto: async (uid) => { const u1 = data.unidades.find((x) => x.id === uid) || data.unidades[0]; return ({
+      unidad: { id: u1.id, numero: u1.numero, codigo_cobro: u1.codigo_cobro, estacionamientos: u1.estacionamientos },
+      cuenta: { estado: u1.vencida > 0 ? "moroso" : "al_dia", deuda: u1.deuda, vencida: u1.vencida,
+        desglose: { cuota_base: Math.round(u1.deuda * 0.7), agua: Math.round(u1.deuda * 0.2), fondo_reserva: Math.round(u1.deuda * 0.1), intereses_multas: 0, otros: 0 }, cargos: [] },
+      vehiculos: u1.vehiculos, tags: [], encomiendas_pendientes: encomiendas.filter((e) => e.unidad_id === u1.id && e.estado === "pendiente"),
+      visitas_activas: [], avisos_pago: avisos.filter((a) => a.unidad_id === u1.id), comunicados: comunicados.slice(0, 5),
+    }); },
+    comunicados: async () => [...comunicados].sort((a, b) => Number(b.fijado) - Number(a.fijado)),
+    publicarComunicado: async (b) => { const c = { id: nid(comunicados), publicado_at: new Date().toISOString(), vigente_hasta: null, fijado: false, categoria: "aviso", ...b }; comunicados.push(c); return { id: c.id }; },
+    retirarComunicado: async (id) => { comunicados = comunicados.filter((c) => c.id !== id); return { ok: true }; },
+    encomiendas: async (estado) => encomiendas.filter((e) => !estado || e.estado === estado),
+    recibirEncomienda: async (b) => {
+      const u = data.unidades.find((x) => x.id === b.unidad_id); if (!u) fallo("Unidad no existe en este edificio", 404);
+      const e = { id: nid(encomiendas), unidad: u.numero, estado: "pendiente", recibida_at: new Date().toISOString(), entregada_at: null, retirada_por: "", remitente: "", descripcion: "", transportista: "", ...b };
+      encomiendas.unshift(e); u.encomiendas = (u.encomiendas || 0) + 1; return { id: e.id };
+    },
+    entregarEncomienda: async (id, retirada_por) => {
+      const e = encomiendas.find((x) => x.id === id); if (!e) fallo("Encomienda no existe", 404);
+      if (e.estado === "entregada") fallo("La encomienda ya fue entregada", 409);
+      Object.assign(e, { estado: "entregada", entregada_at: new Date().toISOString(), retirada_por }); return { id, estado: e.estado, entregada_at: e.entregada_at };
+    },
+    avisosPago: async () => avisos,
+    avisarPago: async (b) => {
+      if (avisos.some((a) => a.banco === b.banco && a.nro_operacion === b.nro_operacion)) fallo("Ese número de operación ya fue informado para ese banco", 409);
+      const a = { id: nid(avisos), unidad_id: u1.id, unidad: u1.numero, estado: "pendiente", creado: new Date().toISOString(), motivo: "", ...b }; avisos.unshift(a); return { id: a.id, estado: a.estado };
+    },
+    resolverAviso: async (id, aprobar, motivo) => {
+      const a = avisos.find((x) => x.id === id); if (!a) fallo("Aviso no existe", 404);
+      if (!aprobar && !motivo?.trim()) fallo("Indica el motivo del rechazo");
+      a.estado = aprobar ? "aprobado" : "rechazado"; a.motivo = motivo || ""; return { id, estado: a.estado, excedente: 0 };
+    },
+    cobrarIntereses: async (b) => { const m = cob().morosos.filter((x) => x.dias_atraso > 0); return { periodo: b.periodo, unidades: m.length, ya_aplicados: 0, total: Math.round(m.reduce((s, x) => s + x.vencido, 0) * b.tasa_mensual_pct / 100) }; },
+    editarComunicado: async (id, b) => { const c = comunicados.find((x) => x.id === id); if (!c) fallo("Comunicado no existe", 404); Object.assign(c, b); return c; },
+    editarEspacio: async (id, b) => {
+      const e = espacios.find((x) => x.id === id); if (!e) fallo("Espacio no existe", 404);
+      if (b.tarifa !== undefined && b.tarifa !== null) e.tarifa = b.tarifa;
+      if (b.aforo !== undefined && b.aforo !== null) e.aforo = b.aforo;
+      return { id, tarifa: e.tarifa, aforo: e.aforo };
+    },
+    cupos: async () => ({ total: data.edificio.cupos_visitas, ocupados: data.edificio.cupos_ocupados, libres: data.edificio.cupos_visitas - data.edificio.cupos_ocupados }),
+    resumenFinanzas: async () => { const c = cob(); const mor = c.morosos.filter((x) => x.dias_atraso > 0).length; return { unidades: data.unidades.length, unidades_morosas: mor, morosidad_pct: Math.round(mor / data.unidades.length * 1000) / 10, deuda_total: c.total, deuda_vencida: c.morosos.reduce((s, x) => s + x.vencido, 0), avisos_pago_pendientes: avisos.filter((a) => a.estado === "pendiente").length }; },
+    espaciosComunes: async () => espacios.map((e) => ({ ...e, horario: { desde: "10:00", hasta: "22:00" } })),
+    disponibilidad: async () => ({ espacio: "Quincho", aforo: 20, tarifa: 10000, horario: { desde: "10:00", hasta: "22:00" }, abierto: true, ocupadas: [] }),
+    compartirVisita: async (id) => ({ mensaje: "Hola, te invito al depto 101. Muestra este código en la entrada: DEMO", url: "https://wa.me/?text=DEMO", codigo_qr: "DEMO" }),
+  };
   return {
-    ...admin,
+    ...admin, ...comunidad,
     panel: () => wait(data), accesos: () => wait(accesos), visitas: () => wait(visitas), cobranza: () => wait(cob()),
     addVehiculo: async (b) => {
       const u = data.unidades.find((x) => x.id === b.unidad_id);
@@ -304,6 +388,6 @@ function demoClient() {
   };
 }
 
-export const demoSession = () => ({ token: "demo", edificio_id: "edificio_a", demo: true });
+export const demoSession = () => (demoUnico = null, { token: "demo", edificio_id: "edificio_a", demo: true });
 export const clp = (n) => "$" + Math.round(n).toLocaleString("es-CL");
 export const normPatente = (p) => (p || "").toUpperCase().replace(/[^A-Z0-9]/g, "");

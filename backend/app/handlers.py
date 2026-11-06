@@ -33,3 +33,9 @@ def _no_show(db, edificio_id, p):
 def _pago(db, edificio_id, p):
     _notificar_unidad(db, p["unidad_id"],
                       f"✅ Recibimos su pago de ${p['monto']:,.0f}. Deuda actual: ${p['deuda']:,.0f}.")
+
+
+@events.on("encomienda.recibida")
+def _encomienda(db, edificio_id, p):
+    de = f" de {p['transportista']}" if p.get("transportista") else ""
+    _notificar_unidad(db, p["unidad_id"], f"📦 Llegó una encomienda{de} para su departamento. Retírela en conserjería.")

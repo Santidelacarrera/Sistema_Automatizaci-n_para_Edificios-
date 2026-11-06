@@ -20,6 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    from alembic import context
+    if context.is_offline_mode():
+        return
     conn = op.get_bind()
     for eid, clave in conn.execute(sa.text("SELECT id, device_api_key FROM edificios")).fetchall():
         if len(clave) == 64 and all(c in "0123456789abcdef" for c in clave):

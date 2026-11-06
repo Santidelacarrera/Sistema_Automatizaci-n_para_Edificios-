@@ -206,6 +206,11 @@ La documentación interactiva está en `/docs` (OpenAPI) en desarrollo; en produ
 | Visitas y espacios | `visitas` (QR en PNG en `…/visitas/{id}/qr.png`), `reservas-espacio` (con cancelación y multa) |
 | Finanzas | `gastos-comunes/generar`, `gastos-comunes/enviar/{periodo}`, `conciliacion`, `lecturas`, `unidades/{id}/deuda` |
 | Comunicación | `cobranza/recordatorios`, `circulares`, `webhooks/whatsapp` |
+| Portal del residente | `GET …/mi-depto` (estado de cuenta con desglose, vehículos, tags, paquetes, visitas, comunicados), `POST/GET …/avisos-pago` (el admin aprueba o rechaza en `…/avisos-pago/{id}/resolver`; si la cartola ya abonó ese pago, o lo abona después, no se abona dos veces: se cruza por banco, n.º de operación y monto) |
+| Comunidad | `comunicados` (muro; sólo admin publica), `encomiendas` (conserjería registra y entrega con firma y hora; el residente ve las suyas) |
+| Espacios | `GET …/espacios-comunes`, `…/espacios-comunes/{id}/disponibilidad?fecha=`, `PATCH …/espacios/{id}` (tarifa y aforo); `reservas-espacio` acepta `asistentes` y respeta el aforo |
+| Visitas por WhatsApp | `GET …/visitas/{id}/whatsapp?telefono=` devuelve el mensaje y el enlace `wa.me` |
+| Morosidad | `POST …/cobranza/intereses` (interés mensual sobre capital vencido, idempotente por periodo), `GET …/finanzas/resumen`; `gastos-comunes/generar` acepta `fondo_reserva_pct` |
 | Multi-edificio | `GET /edificios` (sólo superadmin) |
 | Operación | `GET /health`, `GET /edificios/{id}/diagnostico` (sólo admin) |
 

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { clp } from "../../lib/api";
 import { mensajeError } from "../../lib/validar";
+import { Morosidad, Resumen } from "./Morosidad";
 
-const SECCIONES = [["gastos", "Gastos comunes"], ["cartola", "Cartola bancaria"], ["circular", "Circular"], ["medidores", "Medidores"]];
+const SECCIONES = [["gastos", "Gastos comunes"], ["cartola", "Cartola bancaria"], ["circular", "Circular"], ["medidores", "Medidores"], ["mora", "Mora e intereses"]];
 const mesActual = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; };
 const FILA = () => ({ k: Math.random().toString(36).slice(2), concepto: "", monto: "", tipo: "ordinario", base: "coeficiente", servicio: "agua" });
 
@@ -26,6 +27,7 @@ const textoEnvio = (r) => r.encolado ? { ok: true, t: "Se están enviando en seg
 function GenerarGastos({ api, unidades, onGenerado }) {
   const [periodo, setPeriodo] = useState(mesActual());
   const [venc, setVenc] = useState("");
+  const [fondo, setFondo] = useState("0");
   const [filas, setFilas] = useState([FILA()]);
   const [err, setErr] = useState({});
   const [confirmar, setConfirmar] = useState(false);
@@ -49,7 +51,7 @@ function GenerarGastos({ api, unidades, onGenerado }) {
   const generar = async () => {
     setBusy(true); setMsg(null);
     try {
-      const r = await api.generarGastos({ periodo, vencimiento: venc, gastos: filas.map(({ k, ...g }) => ({ ...g, concepto: g.concepto.trim(), monto: Number(g.monto) })) });
+      const r = await api.generarGastos({ periodo, vencimiento: venc, fondo_reserva_pct: Number(fondo) || 0, gastos: filas.map(({ k, ...g }) => ({ ...g, concepto: g.concepto.trim(), monto: Number(g.monto) })) });
       setMsg({ ok: true, t: `Gastos de ${periodo} generados: ${clp(r.total)} repartidos entre ${r.unidades} departamentos.` });
       setConfirmar(false); setFilas([FILA()]); onGenerado();
     } catch (e) { setMsg({ ok: false, t: mensajeError(e.detail ?? e.message) }); setConfirmar(false); }
@@ -62,6 +64,7 @@ function GenerarGastos({ api, unidades, onGenerado }) {
       <div className="grid-form">
         <Campo id="gg-periodo" label="Mes" error={err.periodo}><input id="gg-periodo" type="month" value={periodo} onChange={(e) => setPeriodo(e.target.value)} aria-invalid={!!err.periodo} /></Campo>
         <Campo id="gg-venc" label="Vence el" error={err.venc}><input id="gg-venc" type="date" value={venc} onChange={(e) => setVenc(e.target.value)} aria-invalid={!!err.venc} /></Campo>
+        <Campo id="gg-fondo" label="Fondo de reserva (%)" ayuda="Opcional. Se suma sobre los gastos ordinarios y se reparte por coeficiente; 0 no agrega nada."><input id="gg-fondo" type="number" min="0" max="100" step="0.5" value={fondo} onChange={(e) => setFondo(e.target.value)} /></Campo>
       </div>
       <fieldset className="gastos-filas">
         <legend>Gastos del mes</legend>
@@ -254,6 +257,7 @@ export default function Finanzas({ api, data, onChange }) {
       {sec === "cartola" && <Cartola api={api} onListo={onChange} />}
       {sec === "circular" && <Circular api={api} />}
       {sec === "medidores" && <Medidores api={api} unidades={data.unidades} />}
+      {sec === "mora" && (<div className="seccion-vista"><Resumen api={api} refresco={0} /><Morosidad api={api} onChange={onChange} /></div>)}
     </div>
   );
 }

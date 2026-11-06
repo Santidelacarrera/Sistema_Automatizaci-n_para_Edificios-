@@ -254,7 +254,7 @@ def editar_tag(edificio_id: str, tag_id: int, body: TagPatch, user: Admin, db: S
 @router.get("/espacios")
 def listar_espacios(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
-    return [{"id": e.id, "nombre": e.nombre, "accion": e.accion, "tarifa": float(e.tarifa)}
+    return [{"id": e.id, "nombre": e.nombre, "accion": e.accion, "tarifa": float(e.tarifa), "aforo": e.aforo}
             for e in db.scalars(select(EspacioComun).where(EspacioComun.edificio_id == ed.id)
                                 .order_by(EspacioComun.nombre))]
 
