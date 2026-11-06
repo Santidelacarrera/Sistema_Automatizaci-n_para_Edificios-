@@ -6,7 +6,7 @@ const ETQ_ESTADO = { activo: "Activo", perdido: "Perdido", bloqueado: "Bloqueado
 const COMO_FECHA = (iso) => (iso ? new Date(iso).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "Nunca");
 const ULTIMOS = (uid) => uid.slice(-8);
 
-export default function Drawer({ u, api, onClose, onChange, esAdmin, unidades = [] }) {
+export default function Drawer({ u, api, onClose, onChange, esAdmin, unidades = [], onVerPortal }) {
   const [pat, setPat] = useState("");
   const [desc, setDesc] = useState("");
   const [msg, setMsg] = useState(null);
@@ -37,6 +37,7 @@ export default function Drawer({ u, api, onClose, onChange, esAdmin, unidades = 
       <button className="cerrar" onClick={onClose} aria-label="Cerrar ficha del departamento">×</button>
       <h2 className="drawer-num">{u.numero}</h2>
       <p className="drawer-sub">Código de pago <code>{u.codigo_cobro}</code></p>
+      {onVerPortal && <button type="button" className="btn-portal-depto" onClick={() => onVerPortal(u.id)}>🏢 Ver Portal como este Propietario</button>}
 
       <section>
         <h3>Cuenta</h3>

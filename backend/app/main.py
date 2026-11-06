@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import handlers  # noqa: F401  (registra suscriptores del bus)
 from .config import settings, validar_para_arranque
 from .db import Base, engine
-from .routers import administracion, auth, devices, edificio, panel, webhooks
+from .routers import administracion, auth, comunidad, devices, edificio, panel, webhooks
 
 validar_para_arranque()  # falla al importar si la configuración no es segura para el entorno
 
@@ -46,7 +46,7 @@ async def cabeceras_de_seguridad(request, call_next):
 app.add_middleware(CORSMiddleware,
                    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
                    allow_methods=["*"], allow_headers=["*"])
-for r in (auth.router, devices.router, edificio.router, panel.router, administracion.router, webhooks.router):
+for r in (auth.router, devices.router, edificio.router, panel.router, comunidad.router, administracion.router, webhooks.router):
     app.include_router(r)
 app.include_router(administracion.edificios_router)
 

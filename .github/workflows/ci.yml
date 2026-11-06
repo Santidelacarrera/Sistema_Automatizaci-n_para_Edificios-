@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18  # igual o más nuevo que el pg_dump del runner: un dump nuevo no restaura en un servidor viejo
         env:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ${{ env.PG_CLAVE }}

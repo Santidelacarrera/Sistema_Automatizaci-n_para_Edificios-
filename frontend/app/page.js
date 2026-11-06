@@ -4,14 +4,17 @@ import { apiHasBackend, client, demoSession, listarEdificios, login, session } f
 import Administracion from "./components/Administracion";
 import Edificios from "./components/Edificios";
 import Cobranza from "./components/Cobranza";
+import Comunidad from "./components/Comunidad";
+import MiDepto from "./components/MiDepto";
 import Drawer from "./components/Drawer";
 import Fachada from "./components/Fachada";
 import Finanzas from "./components/Finanzas";
 import Porton from "./components/Porton";
 import Reservas from "./components/Reservas";
 import Visitas from "./components/Visitas";
+import PortalPropietario from "./components/PortalPropietario";
 
-const VISTAS = [["fachada", "Fachada"], ["porton", "Portón"], ["visitas", "Visitas"], ["reservas", "Reservas"], ["cobranza", "Cobranza"], ["finanzas", "Finanzas"], ["admin", "Administración"]];
+const VISTAS = [["fachada", "Fachada"], ["propietario", "Mi Depto"], ["porton", "Portón"], ["visitas", "Visitas"], ["reservas", "Reservas"], ["cobranza", "Cobranza"], ["comunidad", "Conserjería"], ["finanzas", "Finanzas"], ["admin", "Administración"]];
 const SOLO_ADMIN = ["admin", "finanzas", "reservas"]; // reservas usa la lista de espacios, que es de administración
 const PUEDE_ADMIN = (sess) => sess.demo || sess.rol === "admin" || sess.rol === "superadmin";
 const ES_SUPERADMIN = (sess) => !sess.demo && sess.rol === "superadmin";
@@ -117,13 +120,15 @@ function Panel({ sess: sesionInicial, onSalir }) {
             </div>
             <Fachada data={data} filtro={filtro} seleccionada={sel} onSelect={setSel} />
           </section>
-          {u && <Drawer key={u.id} u={u} api={api} onClose={() => setSel(null)} onChange={cargar} esAdmin={PUEDE_ADMIN(sess)} unidades={data.unidades} />}
+          {u && <Drawer key={u.id} u={u} api={api} onClose={() => setSel(null)} onChange={cargar} esAdmin={PUEDE_ADMIN(sess)} unidades={data.unidades} onVerPortal={(id) => { setSel(id); setVista("propietario"); }} />}
         </>)}
+        {vista === "propietario" && <PortalPropietario data={data} api={api} sess={sess} deptoInicial={sel} />}
         {vista === "porton" && <Porton accesos={accesos} data={data} />}
         {vista === "visitas" && <Visitas visitas={visitas} data={data} api={api} />}
         {vista === "cobranza" && <Cobranza cob={cob} api={api} onChange={cargar} />}
         {vista === "reservas" && PUEDE_ADMIN(sess) && <Reservas key={edificioId} api={api} data={data} onChange={cargar} />}
         {vista === "finanzas" && PUEDE_ADMIN(sess) && <Finanzas key={edificioId} api={api} data={data} onChange={cargar} />}
+        {vista === "comunidad" && <Comunidad key={edificioId} api={api} data={data} esAdmin={PUEDE_ADMIN(sess)} onChange={cargar} />}
         {vista === "admin" && PUEDE_ADMIN(sess) && <Administracion key={edificioId} api={api} data={data} />}
         {vista === "edificios" && ES_SUPERADMIN(sesionInicial) && <Edificios lista={edificios} activo={edificioId} onAbrir={abrirEdificio} error={errEdificios} />}
       </main>
@@ -137,5 +142,6 @@ export default function Page() {
   const entrar = (s) => { session.set(s); setSess(s); };
   const salir = () => { session.clear(); setSess(null); };
   if (sess === undefined) return null;
+  if (sess && !sess.demo && sess.rol === "residente") return <MiDepto api={client(sess)} nombre={sess.nombre} onSalir={salir} />;
   return sess ? <Panel sess={sess} onSalir={salir} /> : <Login onOk={entrar} />;
 }
