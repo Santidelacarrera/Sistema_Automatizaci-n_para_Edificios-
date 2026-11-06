@@ -195,7 +195,7 @@ una sola vez. El detalle de cada credencial, cómo obtenerla y cómo rotarla est
 
 ## API
 
-La documentación interactiva está en `/docs` (OpenAPI) cuando la API corre. Resumen por dominio:
+La documentación interactiva está en `/docs` (OpenAPI) en desarrollo; en producción (`ENTORNO=produccion`) no se publica. Resumen por dominio:
 
 | Dominio | Endpoints principales |
 |---|---|
