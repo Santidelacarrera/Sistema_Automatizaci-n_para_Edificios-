@@ -20,7 +20,11 @@ async def lifespan(_):
     yield
 
 
-app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan)
+_prod = settings.entorno == "produccion"
+# En producción no se publica la documentación interactiva (reduce la superficie de ataque).
+app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan,
+              docs_url=None if _prod else "/docs", redoc_url=None if _prod else "/redoc",
+              openapi_url=None if _prod else "/openapi.json")
 
 
 @app.exception_handler(SATimeoutError)

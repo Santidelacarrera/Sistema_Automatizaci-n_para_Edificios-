@@ -7,6 +7,10 @@
 #   2) docker compose --profile db-local up -d --build
 #
 # Todos los valores sensibles vienen de .env (nunca de este archivo).
+x-logs: &logs
+  driver: json-file
+  options: {max-size: "10m", max-file: "5"}
+
 services:
   db:
     profiles: ["db-local"]          # sólo si se activa el perfil db-local
@@ -20,16 +24,25 @@ services:
   redis:
     image: redis:7
     restart: unless-stopped
+    logging: *logs
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
   api:
     build: ./backend
     restart: unless-stopped
+    logging: *logs
     env_file: .env
     environment:
       # Si .env trae DATABASE_URL (Supabase), se usa esa; si no, la base local del perfil db-local.
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://edificios:${DB_PASSWORD:-}@db:5432/edificios}
       REDIS_URL: redis://redis:6379/0
       CELERY_EAGER: "false"
-    depends_on: [redis]
+      ENTORNO: ${ENTORNO:-produccion}   # producción por defecto: exige JWT propio y PostgreSQL
+    depends_on:
+      redis: {condition: service_healthy}
     expose: ["8000"]   # sólo la ve el proxy: no se publica al exterior
     # --proxy-headers: detrás del proxy, la IP del cliente viene en X-Forwarded-For (la usa el bloqueo de login).
     # "*" es seguro porque este contenedor no tiene puertos publicados: sólo el proxy puede hablarle.
@@ -46,10 +59,12 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://${DOMINIO:?defina DOMINIO en .env}
     restart: unless-stopped
+    logging: *logs
     expose: ["3000"]
   proxy:
     image: caddy:2
     restart: unless-stopped
+    logging: *logs
     ports: ["80:80", "443:443"]
     environment:
       DOMINIO: ${DOMINIO:?defina DOMINIO en .env}
@@ -57,26 +72,34 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_datos:/data      # certificados: no borrar, Let's Encrypt limita las emisiones
       - caddy_config:/config
-    depends_on: [api, panel]
+    depends_on:
+      api: {condition: service_healthy}
+      panel: {condition: service_started}
   worker:
     build: ./backend
     restart: unless-stopped
     command: celery -A app.tasks.celery worker -l info
+    logging: *logs
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://edificios:${DB_PASSWORD:-}@db:5432/edificios}
       REDIS_URL: redis://redis:6379/0
       CELERY_EAGER: "false"
-    depends_on: [redis]
+      ENTORNO: ${ENTORNO:-produccion}   # producción por defecto: exige JWT propio y PostgreSQL
+    depends_on:
+      redis: {condition: service_healthy}
   beat:
     build: ./backend
     restart: unless-stopped
     command: celery -A app.tasks.celery beat -l info
+    logging: *logs
     env_file: .env
     environment:
       REDIS_URL: redis://redis:6379/0
       CELERY_EAGER: "false"
-    depends_on: [redis]
+      ENTORNO: ${ENTORNO:-produccion}   # producción por defecto: exige JWT propio y PostgreSQL
+    depends_on:
+      redis: {condition: service_healthy}
 volumes:
   pgdata:
   caddy_datos:
