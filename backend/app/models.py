@@ -69,6 +69,7 @@ class Unidad(Base):
     coeficiente: Mapped[float] = mapped_column(Numeric(9, 6))  # copropiedad, suma ~1 por edificio
     codigo_cobro: Mapped[str] = mapped_column(String(30), unique=True)
     estacionamientos: Mapped[int] = mapped_column(Integer, default=0)
+    torre: Mapped[str] = mapped_column(String(40), default="", server_default="")
     saldo_favor: Mapped[float] = mapped_column(Numeric(14, 2), default=0, server_default="0")
     residentes: Mapped[list["Residente"]] = relationship(back_populates="unidad")
 
@@ -152,6 +153,7 @@ class EspacioComun(Base):
     accion: Mapped[str] = mapped_column(String(60))  # clave de reglas
     tarifa: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
     aforo: Mapped[int] = mapped_column(Integer, default=0)  # personas máximas; 0 = sin límite
+    garantia: Mapped[float] = mapped_column(Numeric(12, 2), default=0, server_default="0")
 
 
 class ReservaEspacio(Base):
@@ -165,6 +167,8 @@ class ReservaEspacio(Base):
     estado: Mapped[str] = mapped_column(String(20), default="confirmada")
     asistentes: Mapped[int] = mapped_column(Integer, default=0)  # personas previstas; se compara con el aforo
     cargo_id: Mapped[int | None] = mapped_column(ForeignKey("cargos.id"), unique=True)
+    garantia_estado: Mapped[str] = mapped_column(String(20), default="", server_default="")
+    penalizacion: Mapped[float] = mapped_column(Numeric(12, 2), default=0, server_default="0")
 
 
 class Cargo(Base):

@@ -153,3 +153,91 @@ def detalle(edificio_id: str, asamblea_id: int, user: User, db: Session = Depend
             "mi_recibo": voto.recibo if voto else None,
             "padron": [ficha(p, "residente_id unidad_id coeficiente presente") for p in ps] if admin else [],
             "validez_juridica_verificada": False}
+
+
+@router.get("/{asamblea_id}/compromisos")
+def listar_compromisos(edificio_id: str, asamblea_id: int, user: User, db: Session = Depends(get_db)):
+    from ..operations_models import CompromisoAsamblea
+    edificio(db, user, edificio_id)
+    a = recurso(db, Asamblea, edificio_id, asamblea_id)
+    if a.estado == "borrador" and user.rol not in (Rol.admin, Rol.superadmin):
+        raise HTTPException(404, "Asamblea no publicada")
+    return [ficha(c, "id asamblea_id titulo responsable_id vencimiento estado notas creado")
+            for c in db.scalars(select(CompromisoAsamblea).where(
+                CompromisoAsamblea.edificio_id == edificio_id, CompromisoAsamblea.asamblea_id == a.id)
+                .order_by(CompromisoAsamblea.id))]
+
+
+@router.post("/{asamblea_id}/compromisos", status_code=201)
+def crear_compromiso(edificio_id: str, asamblea_id: int, body: dict, user: Admin, db: Session = Depends(get_db)):
+    from datetime import date as dt_date
+    from ..operations_models import CompromisoAsamblea
+    edificio(db, user, edificio_id, True)
+    a = recurso(db, Asamblea, edificio_id, asamblea_id)
+    titulo = str(body.get("titulo") or "").strip()
+    if len(titulo) < 3 or len(titulo) > 160:
+        raise HTTPException(422, "El título del compromiso debe tener entre 3 y 160 caracteres")
+    resp_id = body.get("responsable_id")
+    if resp_id is not None:
+        recurso(db, Residente, edificio_id, int(resp_id))
+    venc = dt_date.fromisoformat(body["vencimiento"]) if body.get("vencimiento") else None
+    c = CompromisoAsamblea(edificio_id=edificio_id, asamblea_id=a.id, titulo=titulo,
+                           responsable_id=int(resp_id) if resp_id else None, vencimiento=venc,
+                           notas=str(body.get("notas") or "")[:500])
+    db.add(c)
+    db.flush()
+    auditar(db, user, edificio_id, "asamblea.compromiso_creado", a.id, compromiso_id=c.id)
+    db.commit()
+    return ficha(c, "id asamblea_id titulo responsable_id vencimiento estado notas creado")
+
+
+@router.patch("/{asamblea_id}/compromisos/{compromiso_id}")
+def actualizar_compromiso(edificio_id: str, asamblea_id: int, compromiso_id: int, body: dict,
+                          user: Admin, db: Session = Depends(get_db)):
+    from ..operations_models import CompromisoAsamblea
+    edificio(db, user, edificio_id, True)
+    recurso(db, Asamblea, edificio_id, asamblea_id)
+    c = recurso(db, CompromisoAsamblea, edificio_id, compromiso_id)
+    if c.asamblea_id != asamblea_id:
+        raise HTTPException(404, "Compromiso no pertenece a esta asamblea")
+    estado = str(body.get("estado") or c.estado)
+    if estado not in ("pendiente", "en_progreso", "cumplido"):
+        raise HTTPException(422, "Estado de compromiso inválido")
+    c.estado = estado
+    if "notas" in body:
+        c.notas = str(body["notas"] or "")[:500]
+    auditar(db, user, edificio_id, "asamblea.compromiso_actualizado", asamblea_id,
+            compromiso_id=c.id, estado=c.estado)
+    db.commit()
+    return ficha(c, "id asamblea_id titulo responsable_id vencimiento estado notas creado")
+
+
+@router.get("/{asamblea_id}/acta.pdf")
+def acta_pdf(edificio_id: str, asamblea_id: int, user: User, db: Session = Depends(get_db)):
+    from fastapi.responses import Response
+    from ..operations_models import CompromisoAsamblea
+    from ..services.reports import pdf
+    ed = edificio(db, user, edificio_id)
+    a = recurso(db, Asamblea, edificio_id, asamblea_id)
+    if a.estado != "cerrada":
+        raise HTTPException(409, "El acta PDF se emite cuando la asamblea está cerrada")
+    ps = db.scalars(select(ParticipanteAsamblea).where(ParticipanteAsamblea.asamblea_id == a.id)).all()
+    votos = db.scalars(select(Voto).where(Voto.asamblea_id == a.id)).all()
+    pesos = {p.id: p.coeficiente for p in ps}
+    compromisos = db.scalars(select(CompromisoAsamblea).where(CompromisoAsamblea.asamblea_id == a.id)).all()
+    filas = [[op, str(sum(v.opcion == idx for v in votos)),
+              f"{float(sum(pesos[v.participante_id] for v in votos if v.opcion == idx)):.4f}"]
+             for idx, op in enumerate(a.opciones)]
+    notas = [
+        f"Agenda: {a.agenda}",
+        f"Participantes en padrón: {len(ps)} · Asistentes confirmados: {sum(p.presente for p in ps)}",
+        f"Acta y acuerdos: {a.acta}",
+    ]
+    if compromisos:
+        notas.append("Compromisos registrados: " + "; ".join(f"{c.titulo} ({c.estado})" for c in compromisos))
+    notas.append("Documento informativo de consulta comunitaria; su validez jurídica formal depende de revisión legal.")
+    data = pdf(f"Acta de Asamblea — {a.titulo}", f"{ed.nombre} · Fecha {a.fecha.strftime('%Y-%m-%d %H:%M')}",
+               ["Opción", "Votos", "Coeficiente"], filas, notas)
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="acta-asamblea-{a.id}.pdf"',
+                             "Cache-Control": "no-store"})

@@ -36,4 +36,12 @@ def purgar(db: Session) -> dict:
             Visita.hasta < ahora_local() - timedelta(days=settings.retencion_visitas_dias),
             Visita.nombre_visita != "[eliminado]").values(nombre_visita="[eliminado]", patente="")).rowcount
     db.flush()
+    from ..operations_models import ComandoAcceso, Notificacion, TokenRecuperacion
+    res["tokens_recuperacion"] = db.execute(delete(TokenRecuperacion).where(
+        TokenRecuperacion.expira < ahora - timedelta(days=1))).rowcount
+    res["comandos_expirados"] = db.execute(delete(ComandoAcceso).where(
+        ComandoAcceso.expira < ahora - timedelta(days=30))).rowcount
+    if settings.retencion_eventos_dias > 0:
+        res["notificaciones"] = db.execute(delete(Notificacion).where(
+            Notificacion.creado < ahora - timedelta(days=settings.retencion_eventos_dias))).rowcount
     return res

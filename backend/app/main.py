@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import jwt
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, TimeoutError as SATimeoutError
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +11,7 @@ from .config import settings, validar_para_arranque
 from .db import Base, engine
 from .routers import administracion, auth, comunidad, devices, edificio, panel, webhooks
 from .routers import asambleas, comercial, documentos, gestion, iot, mfa, operaciones, reportes
+from .services.realtime import realtime_manager
 
 validar_para_arranque()  # falla al importar si la configuración no es segura para el entorno
 
@@ -86,3 +88,28 @@ def ready():
             estado["redis"] = "falla"
     ok = all(v == "ok" for v in estado.values())
     return JSONResponse({"ok": ok, **estado}, status_code=200 if ok else 503)
+
+
+@app.websocket("/ws/edificios/{edificio_id}")
+async def ws_edificio(websocket: WebSocket, edificio_id: str, token: str | None = None):
+    """Canal WebSocket autenticado por edificio para eventos en tiempo real."""
+    if not token:
+        await websocket.close(code=4401)
+        return
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+    except jwt.PyJWTError:
+        await websocket.close(code=4401)
+        return
+    if payload.get("rol") != "superadmin" and payload.get("edificio_id") != edificio_id:
+        await websocket.close(code=4403)
+        return
+    await realtime_manager.conectar(edificio_id, websocket)
+    try:
+        await websocket.send_json({"tipo": "conectado", "edificio_id": edificio_id})
+        while True:
+            msg = await websocket.receive_text()
+            if msg == "ping":
+                await websocket.send_json({"tipo": "pong"})
+    except WebSocketDisconnect:
+        realtime_manager.desconectar(edificio_id, websocket)

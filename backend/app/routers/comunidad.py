@@ -22,6 +22,7 @@ from ..schemas import (AvisoPagoIn, ComunicadoIn, ComunicadoPatch, EncomiendaIn,
                        InteresesIn, ResolverAvisoIn)
 from ..security import Principal, current_user, require_roles, tenant_of
 from ..services import finance
+from ..services.cache import cache_get, cache_invalidate, cache_set
 from ..services.reconciliation import _aplicar, pago_de_cartola_para
 from ..services.transactions import bloquear_edificio
 
@@ -314,13 +315,18 @@ def compartir_visita(edificio_id: str, visita_id: int, user: User, telefono: str
 @router.get("/espacios-comunes")
 def espacios_comunes(edificio_id: str, user: User, db: Session = Depends(get_db)):
     """Espacios con su tarifa, aforo y horario permitido; visibles para el residente que reserva."""
+    if (cached := cache_get(f"espacios:{edificio_id}")) is not None:
+        _ed(db, user, edificio_id)
+        return cached
     ed = _ed(db, user, edificio_id)
     horarios = {r.accion: r.params for r in db.scalars(select(Regla).where(
         Regla.edificio_id == ed.id, Regla.tipo == "horario", Regla.activa.is_(True)))}
-    return [{"id": e.id, "nombre": e.nombre, "tarifa": float(e.tarifa), "aforo": e.aforo,
+    res = [{"id": e.id, "nombre": e.nombre, "tarifa": float(e.tarifa), "garantia": float(e.garantia), "aforo": e.aforo,
              "horario": horarios.get(e.accion)}
             for e in db.scalars(select(EspacioComun).where(EspacioComun.edificio_id == ed.id)
                                 .order_by(EspacioComun.nombre))]
+    cache_set(f"espacios:{ed.id}", res, ttl_s=30)
+    return res
 
 
 @router.get("/espacios-comunes/{espacio_id}/disponibilidad")
@@ -356,7 +362,8 @@ def editar_espacio(edificio_id: str, espacio_id: int, body: EspacioPatch, user: 
     if body.aforo is not None:
         e.aforo = body.aforo
     db.commit()
-    return {"id": e.id, "tarifa": float(e.tarifa), "aforo": e.aforo}
+    cache_invalidate(f"espacios:{ed.id}")
+    return {"id": e.id, "tarifa": float(e.tarifa), "garantia": float(e.garantia), "aforo": e.aforo}
 
 
 # ---------------------------------------------------------------- morosidad: intereses
@@ -386,3 +393,89 @@ def resumen_finanzas(edificio_id: str, user: Admin, db: Session = Depends(get_db
     return {"unidades": unidades, "unidades_morosas": morosas,
             "morosidad_pct": round(morosas / unidades * 100, 1) if unidades else 0.0,
             "deuda_total": deuda, "deuda_vencida": vencida, "avisos_pago_pendientes": por_aprobar}
+
+
+@router.post("/reservas-espacio/{reserva_id}/garantia")
+def gestionar_garantia_reserva(edificio_id: str, reserva_id: int, body: dict, user: Staff,
+                               db: Session = Depends(get_db)):
+    """Gestiona garantía de reserva de espacio común (08.16): retenida, devuelta o ejecutada."""
+    ed = _ed(db, user, edificio_id)
+    r = db.get(ReservaEspacio, reserva_id)
+    if not r or r.edificio_id != ed.id:
+        raise HTTPException(404, "Reserva no existe")
+    estado = str(body.get("estado", "")).strip().lower()
+    if estado not in ("retenida", "devuelta", "ejecutada"):
+        raise HTTPException(422, "Estado de garantía inválido (retenida, devuelta o ejecutada)")
+    r.garantia_estado = estado
+    espacio = db.get(EspacioComun, r.espacio_id)
+    if estado == "ejecutada" and espacio and float(espacio.garantia) > 0:
+        db.add(Cargo(
+            edificio_id=ed.id,
+            unidad_id=r.unidad_id,
+            periodo=hoy_local().strftime("%Y-%m"),
+            concepto=f"Ejecución de garantía espacio {espacio.nombre} (reserva #{r.id})",
+            monto=espacio.garantia,
+            saldo=espacio.garantia,
+            vencimiento=hoy_local() + timedelta(days=15),
+        ))
+    db.commit()
+    return {"id": r.id, "garantia_estado": r.garantia_estado}
+
+
+@router.post("/reservas-espacio/{reserva_id}/penalizar")
+def penalizar_reserva(edificio_id: str, reserva_id: int, body: dict, user: Admin,
+                      db: Session = Depends(get_db)):
+    """Aplica penalización configurable a una reserva y genera cargo (08.18)."""
+    from decimal import Decimal
+    ed = _ed(db, user, edificio_id)
+    r = db.get(ReservaEspacio, reserva_id)
+    if not r or r.edificio_id != ed.id:
+        raise HTTPException(404, "Reserva no existe")
+    try:
+        monto = Decimal(str(body.get("monto", 0)))
+    except Exception:
+        raise HTTPException(422, "Monto de penalización inválido")
+    if monto <= 0:
+        raise HTTPException(422, "El monto de penalización debe ser mayor a 0")
+    motivo = str(body.get("motivo", "Incumplimiento de reglamento de espacio común")).strip()[:180]
+    r.penalizacion = (r.penalizacion or Decimal("0")) + monto
+    cargo = Cargo(
+        edificio_id=ed.id,
+        unidad_id=r.unidad_id,
+        periodo=hoy_local().strftime("%Y-%m"),
+        concepto=f"Penalización reserva #{r.id}: {motivo}",
+        monto=monto,
+        saldo=monto,
+        vencimiento=hoy_local() + timedelta(days=15),
+    )
+    db.add(cargo)
+    db.commit()
+    return {"id": r.id, "penalizacion": float(r.penalizacion), "cargo_id": cargo.id}
+
+
+@router.post("/comunicados-torre", status_code=201)
+def comunicado_por_torre(edificio_id: str, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Envía comunicado segmentado por torre específica (10.03)."""
+    from ..operations_models import Notificacion
+    ed = _ed(db, user, edificio_id)
+    torre = str(body.get("torre", "")).strip()
+    titulo = str(body.get("titulo", "")).strip()
+    cuerpo = str(body.get("cuerpo", "")).strip()
+    if not torre or not titulo or not cuerpo:
+        raise HTTPException(422, "Se requiere torre, titulo y cuerpo")
+    unidades = db.scalars(select(Unidad).where(Unidad.edificio_id == ed.id, Unidad.torre == torre)).all()
+    if not unidades:
+        raise HTTPException(404, f"No hay unidades registradas en torre '{torre}'")
+    com = Comunicado(edificio_id=ed.id, titulo=f"[Torre {torre}] {titulo}"[:160], cuerpo=cuerpo)
+    db.add(com)
+    db.flush()
+    uids = [u.id for u in unidades]
+    residentes = db.scalars(select(Residente).where(
+        Residente.edificio_id == ed.id, Residente.unidad_id.in_(uids), Residente.activo.is_(True))).all()
+    for res in residentes:
+        db.add(Notificacion(
+            edificio_id=ed.id, residente_id=res.id, clave=f"torre:{torre}:{com.id}",
+            titulo=com.titulo, texto=cuerpo, canal="app",
+        ))
+    db.commit()
+    return {"id": com.id, "torre": torre, "unidades": len(uids), "notificados": len(residentes)}

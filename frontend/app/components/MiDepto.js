@@ -142,6 +142,14 @@ export default function MiDepto({ api, nombre, onSalir, unidadId, embebido = fal
             <table className="tabla"><tbody>
               {DESGLOSE.filter(([k]) => c.desglose[k] > 0).map(([k, t]) => <tr key={k}><td>{t}</td><td className="der">{clp(c.desglose[k])}</td></tr>)}
             </tbody><tfoot><tr><th>Total a pagar</th><th className="der">{clp(c.deuda)}</th></tr></tfoot></table>)}
+            {api.operar && c.deuda > 0 && <button className="btn" style={{ marginLeft: "0.5rem" }} onClick={async () => {
+              try {
+                const tx = await api.operar("POST", "/pagos/pasarela/iniciar", { proveedor: "sandbox", monto: c.deuda });
+                await api.operar("POST", `/pagos/pasarela/${tx.id}/confirmar`, { resultado_sandbox: "autorizada" });
+                setMsg({ ok: true, t: `Pago en línea sandbox autorizado (${tx.orden_compra}).` });
+                await cargar();
+              } catch (e) { setErr(e.message); }
+            }}>Pagar en línea (Sandbox)</button>}
           <p className="nota">Al transferir, escriba el código <code>{d.unidad.codigo_cobro}</code> en el comentario para que se asigne solo.</p>
         </section>
 

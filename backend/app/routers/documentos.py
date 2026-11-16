@@ -115,3 +115,43 @@ def preguntar(edificio_id: str, body: Pregunta, user: User, db: Session = Depend
     return {"respuesta": result.get("answer", ""), "abstencion": False,
             "fuentes": [{"id": permitidos[c["document_id"]].id, "titulo": permitidos[c["document_id"]].titulo,
                          "pagina": c.get("page"), "fragmento": c.get("excerpt", "")} for c in fuentes]}
+
+
+class CompararIn(Entrada):
+    documentos: list[int] = Field(min_length=2, max_length=10)
+
+
+@router.get("/{documento_id}/inteligencia")
+def inteligencia_documento(edificio_id: str, documento_id: int, user: User, db: Session = Depends(get_db)):
+    """Consulta resumen, entidades, fechas, montos y obligaciones extraídas por DOCMIND."""
+    edificio(db, user, edificio_id)
+    d = autorizado(db, user, edificio_id, documento_id)
+    res = docmind.request(edificio_id, "GET", f"/documents/{d.externo_id}/summary")
+    return {
+        "documento_id": d.id,
+        "titulo": d.titulo,
+        "categoria": d.categoria,
+        "resumen": res.get("summary", ""),
+        "entidades": res.get("entities", []),
+        "campos": res.get("fields", {}),
+        "obligaciones": res.get("obligations", []),
+    }
+
+
+@router.post("/comparar")
+def comparar_documentos(edificio_id: str, body: CompararIn, user: Admin, db: Session = Depends(get_db)):
+    """Compara de 2 a 10 documentos autorizados del edificio mediante DOCMIND."""
+    edificio(db, user, edificio_id)
+    docs = [autorizado(db, user, edificio_id, did) for did in dict.fromkeys(body.documentos)]
+    if len(docs) < 2:
+        raise HTTPException(422, "Seleccione al menos dos documentos distintos para comparar")
+    mapa = {d.externo_id: d for d in docs}
+    res = docmind.request(edificio_id, "POST", "/intelligence/compare", json={"document_ids": list(mapa)})
+    if not isinstance(res, dict):
+        raise HTTPException(502, "DOCMIND devolvió una comparación inválida")
+    return {
+        "documentos": [{"id": d.id, "titulo": d.titulo, "categoria": d.categoria} for d in docs],
+        "diferencias": res.get("differences", []),
+        "contradicciones": res.get("contradictions", []),
+        "resumen": res.get("summary", ""),
+    }

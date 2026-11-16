@@ -79,6 +79,39 @@ function Panel({ sess: sesionInicial, onSalir }) {
   const [sel, setSel] = useState(null);
   const [filtro, setFiltro] = useState(null);
   const [err, setErr] = useState("");
+  const [tema, setTema] = useState("claro");
+  const [sidebarAbierto, setSidebarAbierto] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
+  const [resultadosBusq, setResultadosBusq] = useState(null);
+
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("fachada_tema") : null;
+    if (saved === "oscuro") setTema("oscuro");
+  }, []);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", tema === "oscuro" ? "dark" : "light");
+      window.localStorage.setItem("fachada_tema", tema);
+    }
+  }, [tema]);
+
+  useEffect(() => {
+    const q = busqueda.trim();
+    if (q.length < 2) { setResultadosBusq(null); return; }
+    if (sess.demo && data) {
+      const t = q.toLowerCase();
+      setResultadosBusq({
+        unidades: data.unidades.filter((x) => x.numero.toLowerCase().includes(t)).slice(0, 6),
+        residentes: [], incidencias: [], documentos: [], proveedores: [],
+      });
+      return;
+    }
+    const timer = setTimeout(() => {
+      api.operar("GET", `/buscar?q=${encodeURIComponent(q)}`).then(setResultadosBusq).catch(() => {});
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [busqueda, edificioId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargar = useCallback(async () => {
     try {
@@ -110,24 +143,64 @@ function Panel({ sess: sesionInicial, onSalir }) {
   return (
     <div className="shell">
       <header className="cab">
-        <div className="marca"><b>Fachada</b><span>{data.edificio.nombre}{sess.demo ? " · ejemplo" : ""}</span></div>
+        <div className="cab-izq">
+          <button type="button" className="btn-icono" aria-label="Alternar barra lateral" onClick={() => setSidebarAbierto((v) => !v)}>☰</button>
+          <div className="marca"><b>Fachada</b><span>{data.edificio.nombre}{sess.demo ? " · ejemplo" : ""}</span></div>
+        </div>
         {ES_SUPERADMIN(sesionInicial) && (
           <label className="selector-edificio">Edificio
             <select value={edificioId} onChange={(e) => abrirEdificio(e.target.value)}>
               {(edificios.length ? edificios : [{ id: edificioId, nombre: data.edificio.nombre }]).map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
             </select>
           </label>)}
-        <nav aria-label="Secciones">
+        <div className="busqueda-global">
+          <input type="search" aria-label="Búsqueda global" placeholder="Buscar depto, residente, documento…"
+            value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+          {resultadosBusq && (
+            <div className="busqueda-resultados">
+              {resultadosBusq.unidades?.map((uItem) => (
+                <button key={`u-${uItem.id}`} type="button" onClick={() => { setSel(uItem.id); setVista("fachada"); setBusqueda(""); setResultadosBusq(null); }}>
+                  Depto {uItem.numero}{uItem.torre ? ` · Torre ${uItem.torre}` : ""}
+                </button>
+              ))}
+              {resultadosBusq.residentes?.map((rItem) => (
+                <button key={`r-${rItem.id}`} type="button" onClick={() => { setSel(rItem.unidad_id); setVista("fachada"); setBusqueda(""); setResultadosBusq(null); }}>
+                  Residente: {rItem.nombre}
+                </button>
+              ))}
+              {resultadosBusq.incidencias?.map((iItem) => (
+                <button key={`i-${iItem.id}`} type="button" onClick={() => { setVista("operaciones"); setBusqueda(""); setResultadosBusq(null); }}>
+                  Incidencia: {iItem.titulo} ({iItem.estado})
+                </button>
+              ))}
+              {resultadosBusq.documentos?.map((dItem) => (
+                <button key={`d-${dItem.id}`} type="button" onClick={() => { setVista("operaciones"); setBusqueda(""); setResultadosBusq(null); }}>
+                  Doc: {dItem.titulo}
+                </button>
+              ))}
+              {(!resultadosBusq.unidades?.length && !resultadosBusq.residentes?.length && !resultadosBusq.incidencias?.length && !resultadosBusq.documentos?.length) && (
+                <span className="busqueda-vacia">Sin coincidencias</span>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="cab-acciones">
+          <button type="button" className="btn-tema" title="Cambiar tema claro u oscuro" onClick={() => setTema((t) => (t === "oscuro" ? "claro" : "oscuro"))}>
+            {tema === "oscuro" ? "Modo claro" : "Modo oscuro"}
+          </button>
+          <button className="salir" onClick={onSalir}>Salir</button>
+        </div>
+      </header>
+      {err && <p role="alert" className="banda">{err}</p>}
+      <div className="cuerpo-layout">
+        <nav aria-label="Secciones" className={sidebarAbierto ? "sidebar" : "sidebar colapsada"}>
           {[...(ES_SUPERADMIN(sesionInicial) ? [["edificios", "Edificios"], ["comercial", "Administración SaaS"], ...VISTAS] : VISTAS),
             ...(!sess.demo ? [["operaciones", "Gestión comunitaria"]] : [])].filter(([k]) => !SOLO_ADMIN.includes(k) || PUEDE_ADMIN(sess)).map(([k, t]) => (
             <button key={k} className={vista === k ? "tab on" : "tab"} aria-current={vista === k ? "page" : undefined} onClick={() => setVista(k)}>
               {t}{k === "cobranza" && cob.morosos.length > 0 ? <sup>{cob.morosos.length}</sup> : null}
             </button>))}
         </nav>
-        <button className="salir" onClick={onSalir}>Salir</button>
-      </header>
-      {err && <p role="alert" className="banda">{err}</p>}
-      <main className={`vista ${u && vista === "fachada" ? "con-drawer" : ""}`}>
+        <main className={`vista ${u && vista === "fachada" ? "con-drawer" : ""}`}>
         {vista === "fachada" && (<>
           <section className="centro">
             <div className="resumen">
@@ -153,6 +226,7 @@ function Panel({ sess: sesionInicial, onSalir }) {
           onCrear={async (body) => { await crearEdificio(sesionInicial, body); setEdificios(await listarEdificios(sesionInicial)); }}
           onEditar={async (id, body) => { await editarEdificio(sesionInicial, id, body); setEdificios(await listarEdificios(sesionInicial)); }} />}
       </main>
+      </div>
     </div>
   );
 }

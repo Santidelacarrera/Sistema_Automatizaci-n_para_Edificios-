@@ -90,3 +90,26 @@ test("gestión responsive y accesibilidad básica con datos reales", async ({ pa
   expect(resultado.violations.filter((v) => ["serious", "critical"].includes(v.impact))).toEqual([]);
   await page.screenshot({ path: "../.artifacts/e2e/gestion-movil.png", fullPage: true });
 });
+
+test("contabilidad, personal y asistente IA con backend real", async ({ page }) => {
+  await entrar(page);
+  await page.getByRole("button", { name: "Gestión comunitaria", exact: true }).click();
+  await page.getByRole("button", { name: "Contabilidad", exact: true }).click();
+  await expect(page.getByText("Caja disponible")).toBeVisible();
+  await page.getByLabel("Concepto").fill("Mantención eléctrica E2E");
+  await page.getByLabel("Monto (CLP)").fill("45000");
+  await page.getByRole("button", { name: "Registrar en libro contable" }).click();
+  await expect(page.getByRole("status")).toContainText("Cambios guardados");
+
+  await page.getByRole("button", { name: "Personal y comunidad", exact: true }).click();
+  await page.getByLabel("Nombre completo").fill("Luis Conserje E2E");
+  await page.getByLabel("RUT", { exact: true }).fill("12.345.678-5");
+  await page.getByRole("button", { name: "Registrar trabajador" }).click();
+  await expect(page.getByText("Luis Conserje E2E")).toBeVisible();
+
+  await page.getByRole("button", { name: "Asistente IA", exact: true }).click();
+  await expect(page.getByText("Proyección de caja a 30 días:")).toBeVisible();
+  await page.getByLabel("Consulta administrativa o solicitud de borrador").fill("Genera un borrador de circular");
+  await page.getByRole("button", { name: "Consultar asistente" }).click();
+  await expect(page.getByText("Informativo operativo y financiero")).toBeVisible();
+});

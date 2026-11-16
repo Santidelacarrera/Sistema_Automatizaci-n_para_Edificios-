@@ -4,8 +4,8 @@ import { clp } from "../../lib/api";
 import { Estado, fh } from "./ui";
 import Dispositivos from "./Dispositivos";
 
-const TITULOS = { resumen: "Resumen", incidencias: "Incidencias", proveedores: "Proveedores y mantenimiento", asambleas: "Asambleas", documentos: "Documentos", notificaciones: "Notificaciones", automatizaciones: "Automatizaciones", dispositivos: "Dispositivos", soporte: "Soporte", suscripcion: "Mi suscripción" };
-const CAMINOS = { resumen: "/dashboard", incidencias: "/incidencias", proveedores: "/proveedores", asambleas: "/asambleas", documentos: "/documentos", notificaciones: "/notificaciones", automatizaciones: "/automatizaciones", dispositivos: "/dispositivos", soporte: "/soporte", suscripcion: "/suscripcion" };
+const TITULOS = { resumen: "Resumen", incidencias: "Incidencias", proveedores: "Proveedores y mantenimiento", contabilidad: "Contabilidad", personal: "Personal y comunidad", ia: "Asistente IA", asambleas: "Asambleas", documentos: "Documentos", notificaciones: "Notificaciones", automatizaciones: "Automatizaciones", dispositivos: "Dispositivos", soporte: "Soporte", suscripcion: "Mi suscripción" };
+const CAMINOS = { resumen: "/dashboard", incidencias: "/incidencias", proveedores: "/proveedores", contabilidad: "/contabilidad/balance", personal: "/personal", ia: "/ia/analisis", asambleas: "/asambleas", documentos: "/documentos", notificaciones: "/notificaciones", automatizaciones: "/automatizaciones", dispositivos: "/dispositivos", soporte: "/soporte", suscripcion: "/suscripcion" };
 const datosForm = (e) => Object.fromEntries(new FormData(e.currentTarget));
 
 export default function Operaciones({ api, esAdmin }) {
@@ -61,7 +61,7 @@ export default function Operaciones({ api, esAdmin }) {
   return <section className="gestion-comunidad" aria-label="Gestión comunitaria">
     <header className="vista-cab"><h2>Gestión comunitaria</h2><p>Seguimiento, acuerdos y documentos de su comunidad.</p></header>
     <nav className="gestion-tabs" aria-label="Módulos de comunidad">
-      {Object.entries(TITULOS).filter(([k]) => esAdmin || !["resumen", "proveedores", "automatizaciones", "dispositivos", "soporte", "suscripcion"].includes(k)).map(([k, v]) =>
+      {Object.entries(TITULOS).filter(([k]) => esAdmin || !["resumen", "proveedores", "contabilidad", "personal", "ia", "automatizaciones", "dispositivos", "soporte", "suscripcion"].includes(k)).map(([k, v]) =>
         <button key={k} className={`tab ${tab === k ? "on" : ""}`} aria-current={tab === k ? "page" : undefined} onClick={() => {
           if (k !== tab) { secuencia.current++; setDatos(null); setDetalle(null); setTab(k); }
         }}>{v}</button>)}
@@ -233,5 +233,77 @@ export default function Operaciones({ api, esAdmin }) {
         <button className="btn" disabled={busy}>Guardar automatizaciones</button></form>
       <button className="btn sec" disabled={busy} onClick={() => accion(() => request("POST", "/automatizaciones/ejecutar"), "Reglas revisadas; consulte las incidencias y notificaciones.")}>Ejecutar revisión ahora</button>
     </section>}
+
+    {tab === "contabilidad" && datos && esAdmin && <>
+      <div className="gestion-indicadores">
+        <article><span>Caja disponible</span><strong>{clp(datos.caja_disponible)}</strong></article>
+        <article><span>Ingresos acumulados</span><strong>{clp(datos.ingresos_totales)}</strong></article>
+        <article><span>Egresos pagados</span><strong>{clp(datos.egresos_totales)}</strong></article>
+        <article><span>Cuentas por cobrar</span><strong>{clp(datos.cuentas_por_cobrar)}</strong></article>
+        <article><span>Cuentas por pagar</span><strong>{clp(datos.cuentas_por_pagar)}</strong></article>
+        <article><span>Fondo de reserva</span><strong>{clp(datos.fondo_reserva?.recaudado || 0)}</strong></article>
+      </div>
+      <section className="gestion-card"><h3>Registrar ingreso, egreso o cuenta por pagar</h3>
+        <form className="gestion-form" onSubmit={enviar("/contabilidad/movimientos", (d) => ({ ...d, monto: Number(d.monto), proveedor_id: d.proveedor_id ? Number(d.proveedor_id) : null }))}>
+          <label>Tipo<select name="tipo"><option value="egreso">Egreso / Gasto proveedor</option><option value="ingreso">Ingreso extraordinario</option><option value="ajuste">Ajuste contable</option></select></label>
+          <label>Categoría<input name="categoria" defaultValue="mantenimiento" required maxLength={40} /></label>
+          <label>Concepto<input name="concepto" required minLength={3} maxLength={200} /></label>
+          <label>Monto (CLP)<input name="monto" type="number" min="1" step="0.01" required /></label>
+          <label>Estado<select name="estado"><option value="confirmado">Pagado / Confirmado</option><option value="pendiente">Cuenta por pagar (pendiente)</option></select></label>
+          <label>Proveedor (opcional)<select name="proveedor_id"><option value="">Sin proveedor</option>{proveedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select></label>
+          <button className="btn" disabled={busy}>Registrar en libro contable</button>
+        </form>
+      </section>
+      <section className="gestion-card"><h3>Presupuesto por rubro</h3>
+        <form className="fila-form" onSubmit={enviar("/contabilidad/presupuestos", (d) => ({ ...d, monto_presupuestado: Number(d.monto_presupuestado) }))}>
+          <label>Período (AAAA-MM)<input name="periodo" defaultValue={new Date().toISOString().slice(0, 7)} required /></label>
+          <label>Rubro<input name="categoria" defaultValue="mantenimiento" required /></label>
+          <label>Presupuesto (CLP)<input name="monto_presupuestado" type="number" min="0" required /></label>
+          <button className="btn" disabled={busy}>Guardar presupuesto</button>
+        </form>
+      </section>
+    </>}
+
+    {tab === "personal" && datos && esAdmin && <>
+      <section className="gestion-card"><h3>Registrar personal de planta y turnos</h3>
+        <form className="gestion-form" onSubmit={enviar("/personal")}>
+          <label>Nombre completo<input name="nombre" minLength={2} maxLength={120} required /></label>
+          <label>RUT<input name="rut" maxLength={15} required /></label>
+          <label>Cargo<select name="cargo"><option value="conserje">Conserje</option><option value="mayordomo">Mayordomo</option><option value="aseo">Personal de aseo</option><option value="mantencion">Técnico de mantención</option></select></label>
+          <label>Turno asignado<input name="turno" defaultValue="Diurno 08:00-20:00" maxLength={80} required /></label>
+          <button className="btn" disabled={busy}>Registrar trabajador</button>
+        </form>
+        {datos.length === 0 ? <p className="vacio">No hay trabajadores de planta registrados.</p> :
+          <ul className="items">{datos.map((t) => <li key={t.id}><b>{t.nombre}</b> · {t.rut} · {t.cargo} · Turno: {t.turno}</li>)}</ul>}
+      </section>
+      <section className="gestion-card"><h3>Registros de comunidad (copropietarios, comité, bienes comunes)</h3>
+        <form className="gestion-form" onSubmit={enviar("/registros-comunidad")}>
+          <label>Categoría<select name="categoria"><option value="copropietario">Copropietario</option><option value="arrendatario">Contrato de arriendo</option><option value="comite">Miembro de comité</option><option value="bien_comun">Bien común</option><option value="bodega_estac">Bodega / Estacionamiento</option></select></label>
+          <label>Nombre o descripción<input name="titulo" minLength={2} maxLength={160} required /></label>
+          <label>RUT (opcional)<input name="rut" maxLength={15} /></label>
+          <label>Contacto / Detalle<input name="detalle" maxLength={500} /></label>
+          <button className="btn" disabled={busy}>Guardar registro</button>
+        </form>
+      </section>
+    </>}
+
+    {tab === "ia" && datos && esAdmin && <>
+      <section className="gestion-card"><h3>Analítica predictiva y estado del edificio</h3>
+        <p>Proyección de caja a 30 días: <b>{clp(datos.resumen_financiero?.proyeccion_caja_30d || 0)}</b> · Incidencias abiertas: <b>{datos.incidencias?.abiertas || 0}</b></p>
+        <h4>Recomendaciones automáticas</h4>
+        <ul className="items">{datos.recomendaciones?.map((rec, i) => <li key={i}>{rec}</li>)}</ul>
+      </section>
+      <section className="gestion-card"><h3>Consultar asistente o redactar circular</h3>
+        <form className="gestion-form" onSubmit={async (e) => {
+          e.preventDefault(); const d = datosForm(e);
+          await accion(async () => setRespuesta(await request("POST", "/ia/asistente", { pregunta: d.pregunta })), "Análisis generado.");
+        }}>
+          <label>Consulta administrativa o solicitud de borrador<textarea name="pregunta" minLength={3} maxLength={500} placeholder="Ej.: Resume el estado financiero y genera un borrador de circular para la comunidad" required /></label>
+          <button className="btn" disabled={busy}>Consultar asistente</button>
+        </form>
+        {respuesta?.respuesta && <article className="gestion-card"><p>{respuesta.respuesta}</p>
+          {respuesta.borrador_circular && <pre className="gestion-texto">{respuesta.borrador_circular.asunto}\n\n{respuesta.borrador_circular.cuerpo}</pre>}</article>}
+      </section>
+    </>}
   </section>;
 }

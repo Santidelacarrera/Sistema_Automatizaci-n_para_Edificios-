@@ -24,26 +24,23 @@ restauración de archivos y latencia. La clasificación automática no se duplic
 
 ## Pasarelas de pago
 
-Las tres opciones se evaluaron por su documentación oficial. **No hay adaptador ni sandbox implementado todavía.**
-Ese trabajo de software no debe describirse como un simple bloqueo por credenciales.
+Se implementaron los adaptadores desacoplados en `backend/app/services/payment_gateways.py` y los endpoints `/edificios/{id}/pagos/pasarela/iniciar` y `/edificios/{id}/pagos/pasarela/{tx_id}/confirmar` (con persistencia en `TransaccionPasarela`, idempotencia, actualización de cargos/saldos y asiento en `MovimientoContable`):
 
-| Proveedor | Evidencia oficial consultada | Pendiente |
+| Proveedor | Estado técnico | Variables requeridas para operación real |
 |---|---|---|
-| Transbank Webpay Plus | [Documentación](https://transbankdevelopers.com/documentacion/webpay-plus), [ambiente de integración](https://transbankdevelopers.com/documentacion/como_empezar) | Crear/confirmar/consultar transacciones con configuración explícita de integración, probar retornos y conciliación; condiciones comerciales para producción. |
-| Mercado Pago | [Webhooks](https://www.mercadopago.cl/developers/en/docs/checkout-pro-preferences/additional-content/notifications/webhooks) | Credenciales de prueba, firma, consulta de estado al proveedor, importes/moneda/tenant, reintentos e idempotencia. |
-| Khipu | [Inicio API 3.0](https://docs.khipu.com/en/quick-start) | API key de desarrollo, creación de cobro y confirmación de notificación; verificar contrato v3 antes de reutilizar ejemplos v2. |
+| Sandbox local (`sandbox`) | Implementado y probado en backend + `MiDepto.js` (deshabilitado en `ENTORNO=produccion`). | Ninguna (sólo desarrollo/pruebas). |
+| Transbank Webpay Plus (`transbank`) | Adaptador REST v1.2 implementado y probado con `MockTransport`. | `TRANSBANK_COMMERCE_CODE`, `TRANSBANK_API_KEY`, `TRANSBANK_ENV` (`integracion` \| `produccion`). |
+| Mercado Pago (`mercadopago`) | Adaptador Checkout Preferences + consulta `/v1/payments/{id}` implementado. | `MERCADOPAGO_ACCESS_TOKEN`, `PAYMENT_WEBHOOK_SECRET`. |
+| Khipu (`khipu`) | Adaptador API v3.0 (`/v3/payments`) implementado. | `KHIPU_API_KEY`, `PAYMENT_WEBHOOK_SECRET`. |
 
-Registrar una transferencia manual o una cuota SaaS no equivale a ejecutar un pago de pasarela.
-No hay afirmación de disponibilidad comercial, tarifa contractual, certificación o pago sandbox exitoso.
+Sin credenciales reales configuradas en `.env`, los proveedores externos responden HTTP `503` explícito y nunca simulan un cobro real.
 
 ## Mensajería
 
-Correo SMTP y el adaptador Evolution legado tienen pruebas con dobles. El outbox persiste estado y reintentos,
+Correo SMTP y el adaptador Evolution tienen pruebas con dobles. El outbox persiste estado y reintentos,
 con broker/worker locales comprobados; falta validar red y entrega real al proveedor. Las notificaciones dentro de la aplicación sí están integradas.
 
-Para WhatsApp oficial se revisó [WhatsApp Business Platform](https://developers.facebook.com/documentation/business-messaging/whatsapp/overview/).
-Faltan adaptador oficial, cuenta/número autorizados, plantillas y validación del webhook. La existencia del adaptador
-Evolution no acredita autorización de Meta. No se conectó ninguna instancia ni se envió mensaje alguno.
+Para **WhatsApp oficial (Meta Cloud API v20.0)** se implementó el adaptador en `backend/app/services/whatsapp.py` junto a `GET /webhooks/whatsapp` (verificación `hub.verify_token`) y `POST /webhooks/whatsapp/cloud` (verificación HMAC-SHA256 `X-Hub-Signature-256`). Requiere configurar `WHATSAPP_CLOUD_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET` y `WHATSAPP_VERIFY_TOKEN` en `.env`. No se enviaron mensajes reales ni se conectó ninguna cuenta comercial de Meta.
 Push y SMS no están implementados.
 
 ## Controladores y cámaras

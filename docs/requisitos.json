@@ -27,17 +27,17 @@
     "id": "03.04",
     "modulo": "PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT",
     "requisito": "Copropietarios.",
-    "estado": "PARCIAL",
-    "evidencia": "`security.py`, `routers/gestion.py`, `routers/comercial.py`; `/edificios`, `/saas/*`; tests `superadmin`, `admin`, `comercial`, `operaciones_integradas`.",
-    "pendiente": "Sin rol diferenciado de propietario ni historial dominial."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "03.05",
     "modulo": "PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT",
     "requisito": "Arrendatarios.",
-    "estado": "PARCIAL",
-    "evidencia": "`security.py`, `routers/gestion.py`, `routers/comercial.py`; `/edificios`, `/saas/*`; tests `superadmin`, `admin`, `comercial`, `operaciones_integradas`.",
-    "pendiente": "Sin contratos de arriendo ni relaci?n temporal de ocupaci?n."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "03.06",
@@ -59,9 +59,9 @@
     "id": "03.08",
     "modulo": "PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT",
     "requisito": "Comités.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`security.py`, `routers/gestion.py`, `routers/comercial.py`; `/edificios`, `/saas/*`; tests `superadmin`, `admin`, `comercial`, `operaciones_integradas`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "03.09",
@@ -219,25 +219,25 @@
     "id": "04.03",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Registrar estacionamientos y bodegas.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "04.04",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Registrar bienes comunes.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "04.05",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Asociar propietarios y arrendatarios a cada unidad.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "04.06",
@@ -251,9 +251,9 @@
     "id": "04.07",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Mantener historial de propietarios.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "04.08",
@@ -267,9 +267,9 @@
     "id": "04.09",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Administrar contactos de emergencia.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "04.10",
@@ -283,9 +283,9 @@
     "id": "04.11",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Registrar mascotas, cuando corresponda.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes en software; no implica validación jurídica de títulos."
   },
   {
     "id": "04.12",
@@ -379,17 +379,17 @@
     "id": "05.08",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Convenios de pago.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.09",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Descuentos y ajustes autorizados.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.10",
@@ -523,25 +523,25 @@
     "id": "05.26",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Integración con pasarelas de pago.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Adaptador y sandbox a?n no implementados; no atribuirlo solamente a credenciales."
+    "estado": "PARCIAL",
+    "evidencia": "`services/payment_gateways.py` (Sandbox, Transbank Webpay Plus, Mercado Pago, Khipu), `routers/gestion.py` (`/pagos/pasarela/*`), `MiDepto.js`; `test_modulos_completos.py`.",
+    "pendiente": "Adaptadores y sandbox implementados y probados con mocks; requiere credenciales reales de comercio."
   },
   {
     "id": "05.27",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Libro de ingresos y egresos.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Movimientos de cobranza no equivalen a libro contable de doble partida."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.28",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Registro de gastos.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.29",
@@ -555,9 +555,9 @@
     "id": "05.30",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Cuentas por pagar.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.31",
@@ -571,65 +571,65 @@
     "id": "05.32",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Presupuestos.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.33",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Balance.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.34",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Estado financiero.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.35",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Flujo de caja.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.36",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Fondos de reserva.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.37",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Reportes mensuales.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.38",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Reportes anuales.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.39",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Historial contable.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`MovimientoContable`, `PresupuestoRubro`, `ConvenioPago`), `routers/gestion.py` (`/contabilidad/*`, `/convenios-pago`, `/cargos/*/ajustar`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes de software; revisar plan de cuentas con contador."
   },
   {
     "id": "05.40",
@@ -971,9 +971,9 @@
     "id": "07.08",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Registro de visitas recurrentes.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Modelo VisitaRecurrente, migración 0013, endpoints GET/POST/DELETE /visitas-recurrentes; test_18_funcionalidades.py.",
+    "pendiente": "Ninguno en backend."
   },
   {
     "id": "07.09",
@@ -1011,9 +1011,9 @@
     "id": "07.13",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Fotografías cuando estén autorizadas.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Modelo AdjuntoOperacion, migración 0013, POST/GET /adjuntos/porteria_visita|porteria_encomienda con autorización explícita; test_18_funcionalidades.py.",
+    "pendiente": "Ninguno en backend."
   },
   {
     "id": "07.14",
@@ -1163,9 +1163,9 @@
     "id": "08.16",
     "modulo": "RESERVAS DE ESPACIOS COMUNES",
     "requisito": "Garantías.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "EspacioComun.garantia, ReservaEspacio.garantia_estado, POST /reservas-espacio/{id}/garantia (genera Cargo si ejecutada); test_18_funcionalidades.py.",
+    "pendiente": "Ninguno en backend."
   },
   {
     "id": "08.17",
@@ -1179,9 +1179,9 @@
     "id": "08.18",
     "modulo": "RESERVAS DE ESPACIOS COMUNES",
     "requisito": "Penalizaciones configurables.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "ReservaEspacio.penalizacion y POST /reservas-espacio/{id}/penalizar (genera Cargo); test_18_funcionalidades.py.",
+    "pendiente": "Ninguno en backend."
   },
   {
     "id": "08.19",
@@ -1227,9 +1227,9 @@
     "id": "09.02",
     "modulo": "MANTENIMIENTO Y GESTIÓN DE INCIDENCIAS",
     "requisito": "Fotografías y archivos adjuntos.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/operaciones.py`, `services/automation.py`; `/incidencias/*`, `/ordenes-trabajo/*`, `/mantenimientos`; tests `operaciones_integradas`; E2E `operaciones`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "AdjuntoOperacion y POST/GET /adjuntos/incidencia/{id} (PNG/JPEG/PDF hasta 2 MiB); test_18_funcionalidades.py.",
+    "pendiente": "Ninguno en backend."
   },
   {
     "id": "09.03",
@@ -1379,9 +1379,9 @@
     "id": "10.03",
     "modulo": "COMUNICACIÓN Y NOTIFICACIONES",
     "requisito": "Comunicaciones por torre.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/notifications.py`, `handlers.py`, `tasks.py`; `/notificaciones/*`, `/comunicados`; tests `envios`, `operaciones_integradas`, E2E `operaciones`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Unidad.torre, migración 0013 y POST /comunicados-torre con notificación por torre; test_18_funcionalidades.py.",
+    "pendiente": "Ninguno en backend."
   },
   {
     "id": "10.04",
@@ -1483,17 +1483,17 @@
     "id": "10.16",
     "modulo": "COMUNICACIÓN Y NOTIFICACIONES",
     "requisito": "WhatsApp mediante proveedores oficiales y APIs autorizadas.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/notifications.py`, `handlers.py`, `tasks.py`; `/notificaciones/*`, `/comunicados`; tests `envios`, `operaciones_integradas`, E2E `operaciones`.",
-    "pendiente": "Adaptador Evolution existente; falta adapter oficial verificado y configuraci?n autorizada. No se enviaron mensajes."
+    "estado": "PARCIAL",
+    "evidencia": "`services/whatsapp.py` (Meta Cloud API v20.0 + firma HMAC), `routers/webhooks.py` (`GET /webhooks/whatsapp`, `POST /webhooks/whatsapp/cloud`); `test_modulos_completos.py`.",
+    "pendiente": "Adaptador oficial implementado y probado con mocks; requiere cuenta Meta Business y token productivo."
   },
   {
     "id": "10.17",
     "modulo": "COMUNICACIÓN Y NOTIFICACIONES",
     "requisito": "Notificaciones push.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/notifications.py`, `handlers.py`, `tasks.py`; `/notificaciones/*`, `/comunicados`; tests `envios`, `operaciones_integradas`, E2E `operaciones`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "BLOQUEADA POR SERVICIO EXTERNO O HARDWARE",
+    "evidencia": "SuscripcionPush, push_sms.enviar_push, POST /push/suscribir y /notificaciones/enviar-externo probados con mock HTTP en test_18_funcionalidades.py.",
+    "pendiente": "Configurar FCM_SERVER_KEY en producción para entrega real."
   },
   {
     "id": "10.18",
@@ -1507,9 +1507,9 @@
     "id": "10.19",
     "modulo": "COMUNICACIÓN Y NOTIFICACIONES",
     "requisito": "SMS cuando sea necesario.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/notifications.py`, `handlers.py`, `tasks.py`; `/notificaciones/*`, `/comunicados`; tests `envios`, `operaciones_integradas`, E2E `operaciones`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "BLOQUEADA POR SERVICIO EXTERNO O HARDWARE",
+    "evidencia": "push_sms.enviar_sms (Twilio REST) y POST /notificaciones/enviar-externo probados con mock HTTP en test_18_funcionalidades.py.",
+    "pendiente": "Configurar TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_FROM_NUMBER para envío real."
   },
   {
     "id": "11.01",
@@ -1539,9 +1539,9 @@
     "id": "11.04",
     "modulo": "ASAMBLEAS, VOTACIONES Y COMITÉS",
     "requisito": "Documentos asociados.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/asambleas.py`; `/asambleas/*`; tests `operaciones_integradas`, E2E `operaciones`; consulta comunitaria sin certificaci?n jur?dica.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`CompromisoAsamblea`), `routers/asambleas.py` (`/compromisos`, `/acta.pdf`); `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes de software; validez jurídica sujeta a revisión legal."
   },
   {
     "id": "11.05",
@@ -1587,9 +1587,9 @@
     "id": "11.10",
     "modulo": "ASAMBLEAS, VOTACIONES Y COMITÉS",
     "requisito": "Seguimiento de compromisos.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/asambleas.py`; `/asambleas/*`; tests `operaciones_integradas`, E2E `operaciones`; consulta comunitaria sin certificaci?n jur?dica.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`CompromisoAsamblea`), `routers/asambleas.py` (`/compromisos`, `/acta.pdf`); `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes de software; validez jurídica sujeta a revisión legal."
   },
   {
     "id": "11.11",
@@ -1756,8 +1756,8 @@
     "modulo": "DOCUMENTACIÓN INTELIGENTE: DOCMIND AI",
     "requisito": "Resumen de documentos.",
     "estado": "PARCIAL",
-    "evidencia": "`routers/documentos.py`, `services/docmind.py`; `/documentos/*`; tests de contrato HTTP `docmind_mfa`; DOCMIND no ejecutado en vivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "evidencia": "`routers/documentos.py` (`/{id}/inteligencia`, `/comparar`), `services/docmind.py`; `test_modulos_completos.py`.",
+    "pendiente": "Endpoints integrados y probados con MockTransport; requiere instancia DOCMIND viva para validación real."
   },
   {
     "id": "12.20",
@@ -1771,41 +1771,41 @@
     "id": "12.21",
     "modulo": "DOCUMENTACIÓN INTELIGENTE: DOCMIND AI",
     "requisito": "Comparación de documentos.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/documentos.py`, `services/docmind.py`; `/documentos/*`; tests de contrato HTTP `docmind_mfa`; DOCMIND no ejecutado en vivo.",
-    "pendiente": "No existe comparaci?n documental integrada."
+    "estado": "PARCIAL",
+    "evidencia": "`routers/documentos.py` (`/{id}/inteligencia`, `/comparar`), `services/docmind.py`; `test_modulos_completos.py`.",
+    "pendiente": "Endpoints integrados y probados con MockTransport; requiere instancia DOCMIND viva para validación real."
   },
   {
     "id": "12.22",
     "modulo": "DOCUMENTACIÓN INTELIGENTE: DOCMIND AI",
     "requisito": "Extracción de obligaciones contractuales.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/documentos.py`, `services/docmind.py`; `/documentos/*`; tests de contrato HTTP `docmind_mfa`; DOCMIND no ejecutado en vivo.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "PARCIAL",
+    "evidencia": "`routers/documentos.py` (`/{id}/inteligencia`, `/comparar`), `services/docmind.py`; `test_modulos_completos.py`.",
+    "pendiente": "Endpoints integrados y probados con MockTransport; requiere instancia DOCMIND viva para validación real."
   },
   {
     "id": "13.01",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Responder preguntas sobre gastos comunes.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.02",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Consultar deudas.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.03",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Explicar movimientos financieros autorizados.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.04",
@@ -1851,73 +1851,73 @@
     "id": "13.09",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Detectar anomalías financieras.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.10",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Analizar incidencias.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.11",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Generar informes.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.12",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Resumir actividad del edificio.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.13",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Ayudar a preparar reuniones.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.14",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Proponer acciones de mantenimiento.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.15",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Identificar patrones de morosidad.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.16",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Generar borradores de circulares.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "13.17",
     "modulo": "INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA",
     "requisito": "Responder preguntas frecuentes.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/llm.py`, `docmind.py`, `automation.py`; `/documentos/preguntar`, `/automatizaciones/*`; tests `docmind_mfa`, `operaciones_integradas`; no asistente general.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`, `/ia/asistente`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Modo determinista verificado; enriquecimiento LLM opcional requiere `ANTHROPIC_API_KEY`."
   },
   {
     "id": "14.01",
@@ -1948,8 +1948,8 @@
     "modulo": "APLICACIÓN MÓVIL Y PORTAL DE RESIDENTES",
     "requisito": "Pagar.",
     "estado": "PARCIAL",
-    "evidencia": "`frontend/app/components/MiDepto.js`, `Operaciones.js`; API con permisos de residente; E2E `flujo`, `operaciones`; portal web responsive.",
-    "pendiente": "S?lo aviso de transferencia; no checkout ni sandbox de pasarela."
+    "evidencia": "`MiDepto.js` (Pagar en línea Sandbox + aviso transferencia), `routers/gestion.py` (`/pagos/pasarela/*`); `test_modulos_completos.py`.",
+    "pendiente": "Flujo sandbox completo; pasarela real requiere credenciales comerciales."
   },
   {
     "id": "14.05",
@@ -2043,9 +2043,9 @@
     "id": "14.16",
     "modulo": "APLICACIÓN MÓVIL Y PORTAL DE RESIDENTES",
     "requisito": "Actualizar sus datos.",
-    "estado": "PARCIAL",
-    "evidencia": "`frontend/app/components/MiDepto.js`, `Operaciones.js`; API con permisos de residente; E2E `flujo`, `operaciones`; portal web responsive.",
-    "pendiente": "Administraci?n puede editar; no edici?n aut?noma del perfil de residente."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`routers/gestion.py` (`/mi-perfil`); `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "14.17",
@@ -2283,41 +2283,41 @@
     "id": "16.11",
     "modulo": "MÓDULO DE PROVEEDORES Y PERSONAL",
     "requisito": "Registro de trabajadores.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`TrabajadorEdificio`, `AsistenciaPersonal`), `routers/operaciones.py` (`/personal`, `/personal/asistencia`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "16.12",
     "modulo": "MÓDULO DE PROVEEDORES Y PERSONAL",
     "requisito": "Turnos.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`TrabajadorEdificio`, `AsistenciaPersonal`), `routers/operaciones.py` (`/personal`, `/personal/asistencia`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "16.13",
     "modulo": "MÓDULO DE PROVEEDORES Y PERSONAL",
     "requisito": "Asistencia cuando corresponda.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`TrabajadorEdificio`, `AsistenciaPersonal`), `routers/operaciones.py` (`/personal`, `/personal/asistencia`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "16.14",
     "modulo": "MÓDULO DE PROVEEDORES Y PERSONAL",
     "requisito": "Permisos.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`TrabajadorEdificio`, `AsistenciaPersonal`), `routers/operaciones.py` (`/personal`, `/personal/asistencia`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "16.15",
     "modulo": "MÓDULO DE PROVEEDORES Y PERSONAL",
     "requisito": "Historial de actividades.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`TrabajadorEdificio`, `AsistenciaPersonal`), `routers/operaciones.py` (`/personal`, `/personal/asistencia`), `Operaciones.js`; `test_modulos_completos.py`, E2E `operaciones.spec.js`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "17.01",
@@ -2363,17 +2363,17 @@
     "id": "17.06",
     "modulo": "CUMPLIMIENTO LEGAL Y NORMATIVO EN CHILE",
     "requisito": "Registro de copropietarios.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`docs/EXTERNAL_INTEGRATIONS.md`, `PRIVACIDAD.md`; normas consultadas en BCN; revisi?n jur?dica no ejecutada.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "PARCIAL",
+    "evidencia": "Endpoint GET /padron-copropietarios vinculado a RegistroComunidad, unidades y coeficiente; test_18_funcionalidades.py.",
+    "pendiente": "Validación jurídica final conforme a Ley 21.442."
   },
   {
     "id": "17.07",
     "modulo": "CUMPLIMIENTO LEGAL Y NORMATIVO EN CHILE",
     "requisito": "Presupuestos.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`docs/EXTERNAL_INTEGRATIONS.md`, `PRIVACIDAD.md`; normas consultadas en BCN; revisi?n jur?dica no ejecutada.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "PARCIAL",
+    "evidencia": "PresupuestoRubro.aprobado_asamblea_id y POST /contabilidad/presupuestos/{id}/aprobar; test_18_funcionalidades.py.",
+    "pendiente": "Validación jurídica del acta de aprobación presupuestaria."
   },
   {
     "id": "17.08",
@@ -2443,9 +2443,9 @@
     "id": "18.04",
     "modulo": "SEGURIDAD EMPRESARIAL",
     "requisito": "Recuperación segura de cuentas.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`security.py`, `services/mfa.py`, `routers/mfa.py`, `privacidad.py`, scripts de respaldo; tests `login_bloqueo`, `seguridad_config`, `docmind_mfa`, `privacidad`; recuperaci?n PostgreSQL real.",
-    "pendiente": "No recuperaci?n p?blica de contrase?a ni c?digos de recuperaci?n MFA."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`TokenRecuperacion`), `routers/auth.py` (`/auth/recuperar/solicitar`, `/auth/recuperar/confirmar`); `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes; en producción se entrega vía SMTP configurado."
   },
   {
     "id": "18.05",
@@ -2667,9 +2667,9 @@
     "id": "19.07",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "WebSockets cuando sean necesarios.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "ConnectionManager en services/realtime.py y WebSocket autenticado /ws/edificios/{id}; probado en test_18_funcionalidades.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.08",
@@ -2787,9 +2787,9 @@
     "id": "19.22",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Caché.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "services/cache.py (Redis + TTL memoria) integrado en /dashboard y /espacios-comunes; test_18_funcionalidades.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.23",
@@ -2939,9 +2939,9 @@
     "id": "20.16",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Pasarelas sandbox.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "No pago de pasarela sandbox ejecutado."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/payment_gateways.py`, `test_modulos_completos.py::test_pasarela_pago_sandbox_transbank_y_aislamiento`.",
+    "pendiente": "Sandbox local y mocks HTTP de Transbank verificados."
   },
   {
     "id": "20.17",
@@ -2995,9 +2995,9 @@
     "id": "21.04",
     "modulo": "DISEÑO UX/UI",
     "requisito": "Sidebar adaptable.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Sidebar colapsable y adaptable (.cuerpo-layout, .sidebar) en page.js y globals.css; build y 36 pruebas Playwright/axe-core OK.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "21.05",
@@ -3019,9 +3019,9 @@
     "id": "21.07",
     "modulo": "DISEÑO UX/UI",
     "requisito": "Búsqueda global.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Endpoint GET /edificios/{id}/buscar con aislamiento por rol/unidad e input global en cabecera (page.js); test_18_funcionalidades.py y build OK.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "21.08",
@@ -3043,9 +3043,9 @@
     "id": "21.10",
     "modulo": "DISEÑO UX/UI",
     "requisito": "Modo oscuro y claro.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Selector de tema Claro/Oscuro ([data-theme='dark'] en globals.css + persistencia localStorage en page.js); build y axe-core OK.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "21.11",
@@ -3099,57 +3099,57 @@
     "id": "22.01",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Predicción de morosidad.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.02",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Detección de gastos inusuales.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.03",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Comparación presupuestaria.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.04",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Proyección de caja.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.05",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Alertas de desviaciones.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.06",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Predicción de mantenimientos.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "prediccion_mantenimientos en services/llm.py expuesto en /ia/analisis; probado en test_18_funcionalidades.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.07",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Detección de patrones de incidencias.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.08",
@@ -3163,17 +3163,17 @@
     "id": "22.09",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Optimización de tareas.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "optimizacion_tareas en services/llm.py expuesto en /ia/analisis; probado en test_18_funcionalidades.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.10",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Panel de eficiencia del edificio.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.11",
@@ -3243,9 +3243,9 @@
     "id": "22.19",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Alertas por consumos anormales.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.20",
@@ -3267,9 +3267,9 @@
     "id": "22.22",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Satisfacción de residentes.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "EncuestaComunidad, RespuestaEncuesta y endpoints GET/POST /encuestas + /encuestas/{id}/responder; test_18_funcionalidades.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.23",
@@ -3291,9 +3291,9 @@
     "id": "22.25",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Recomendaciones administrativas.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`.",
+    "pendiente": "Analítica determinista sobre datos reales del edificio."
   },
   {
     "id": "22.26",
@@ -3411,9 +3411,9 @@
     "id": "23.01",
     "modulo": "INTEGRACIÓN ENTRE TODOS LOS MÓDULOS",
     "requisito": "Un pago debe actualizar la deuda del departamento, la contabilidad y los reportes.",
-    "estado": "PARCIAL",
-    "evidencia": "`handlers.py`, `services/reconciliation.py`, `automation.py`, routers de operaciones; tests integrados y E2E de los dominios asociados.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`routers/gestion.py` (`confirmar_pago_pasarela` actualiza `Cargo`, `Pago` y `MovimientoContable`); `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "23.02",
@@ -3443,9 +3443,9 @@
     "id": "23.05",
     "modulo": "INTEGRACIÓN ENTRE TODOS LOS MÓDULOS",
     "requisito": "Una factura debe poder almacenarse en DOCMIND y asociarse a un gasto.",
-    "estado": "NO IMPLEMENTADA",
-    "evidencia": "`handlers.py`, `services/reconciliation.py`, `automation.py`, routers de operaciones; tests integrados y E2E de los dominios asociados.",
-    "pendiente": "Requiere desarrollo e integraci?n; no es un bloqueo externo."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`MovimientoContable.documento_id` vinculado a `Documento` DOCMIND en `routers/gestion.py`; `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes."
   },
   {
     "id": "23.06",
@@ -3475,9 +3475,9 @@
     "id": "23.09",
     "modulo": "INTEGRACIÓN ENTRE TODOS LOS MÓDULOS",
     "requisito": "Una asamblea debe poder generar un acta documental.",
-    "estado": "PARCIAL",
-    "evidencia": "`handlers.py`, `services/reconciliation.py`, `automation.py`, routers de operaciones; tests integrados y E2E de los dominios asociados.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "`operations_models.py` (`CompromisoAsamblea`), `routers/asambleas.py` (`/compromisos`, `/acta.pdf`); `test_modulos_completos.py`.",
+    "pendiente": "Sin pendientes de software; validez jurídica sujeta a revisión legal."
   },
   {
     "id": "23.10",

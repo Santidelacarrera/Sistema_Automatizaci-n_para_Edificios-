@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import Cargo, Residente, Tag, Vehiculo
+from ..operations_models import Incidencia, Notificacion
 from ..validacion import rut_formato
 
 
@@ -22,6 +23,10 @@ def exportar(db: Session, r: Residente) -> dict:
         "vehiculos_de_la_unidad": [{"patente": v.patente, "descripcion": v.descripcion} for v in vehiculos],
         "cargos_de_la_unidad": [{"periodo": c.periodo, "concepto": c.concepto, "monto": float(c.monto),
                                  "saldo": float(c.saldo)} for c in cargos],
+        "incidencias_reportadas": [{"id": i.id, "titulo": i.titulo, "estado": i.estado}
+                                   for i in db.scalars(select(Incidencia).where(Incidencia.autor_id == r.id))],
+        "notificaciones": [{"id": n.id, "titulo": n.titulo, "canal": n.canal}
+                           for n in db.scalars(select(Notificacion).where(Notificacion.residente_id == r.id))],
     }
 
 
@@ -43,3 +48,11 @@ def anonimizar(db: Session, r: Residente) -> None:
         db.delete(factor)
     for n in db.scalars(select(Notificacion).where(Notificacion.residente_id == r.id)):
         n.texto, n.titulo, n.estado = "[eliminado]", "[eliminado]", "cancelado"
+    from ..operations_models import ComentarioIncidencia, TokenRecuperacion
+    from ..commercial_models import MensajeSoporte
+    for c in db.scalars(select(ComentarioIncidencia).where(ComentarioIncidencia.autor_id == r.id)):
+        c.texto = "[eliminado]"
+    for m in db.scalars(select(MensajeSoporte).where(MensajeSoporte.autor_id == r.id)):
+        m.texto = "[eliminado]"
+    for tk in db.scalars(select(TokenRecuperacion).where(TokenRecuperacion.residente_id == r.id)):
+        db.delete(tk)
