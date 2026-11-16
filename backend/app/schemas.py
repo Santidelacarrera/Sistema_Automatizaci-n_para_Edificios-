@@ -1,15 +1,19 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel as PydanticBaseModel, ConfigDict, Field, model_validator
 
+
+class BaseModel(PydanticBaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
 from .models import Rol, TipoTag
 
 
 class LoginIn(BaseModel):
-    edificio_id: str
-    email: str
-    password: str
+    edificio_id: str = Field(min_length=1, max_length=40)
+    email: str = Field(min_length=3, max_length=160)
+    password: str = Field(min_length=1, max_length=1024)
+    codigo_mfa: str | None = Field(None, pattern=r"^\d{6}$")
 
 
 class ValidarAccesoIn(BaseModel):
@@ -22,9 +26,9 @@ class ValidarAccesoIn(BaseModel):
 
 
 class UnidadIn(BaseModel):
-    numero: str
-    coeficiente: float = Field(gt=0)
-    codigo_cobro: str
+    numero: str = Field(min_length=1, max_length=20)
+    coeficiente: float = Field(gt=0, le=1)
+    codigo_cobro: str = Field(min_length=1, max_length=30)
     estacionamientos: int = Field(0, ge=0)
 
 
@@ -53,7 +57,7 @@ class ReglaIn(BaseModel):
 
 class VisitaIn(BaseModel):
     unidad_id: int | None = None
-    nombre_visita: str
+    nombre_visita: str = Field(min_length=1, max_length=120)
     desde: datetime
     hasta: datetime
     patente: str = ""
@@ -68,12 +72,20 @@ class ReservaEspacioIn(BaseModel):
     hasta: datetime
     asistentes: int = Field(0, ge=0, le=1000)
 
+    @model_validator(mode="after")
+    def fechas_locales(self):
+        if self.desde.tzinfo or self.hasta.tzinfo:
+            raise ValueError("Use hora local del edificio sin desplazamiento UTC")
+        if self.hasta <= self.desde:
+            raise ValueError("Rango horario inválido")
+        return self
+
 
 class GastoIn(BaseModel):
-    concepto: str
-    monto: float = Field(gt=0)
-    tipo: str = "ordinario"
-    base: str = "coeficiente"
+    concepto: str = Field(min_length=1, max_length=55)
+    monto: float = Field(gt=0, le=999999999999)
+    tipo: Literal["ordinario", "extraordinario"] = "ordinario"
+    base: Literal["coeficiente", "consumo"] = "coeficiente"
     servicio: str = "agua"
     categoria: Literal["cuota_base", "agua", "otros"] | None = None  # None: se deduce del tipo de base
 
@@ -81,7 +93,7 @@ class GastoIn(BaseModel):
 class GenerarGastosIn(BaseModel):
     periodo: str = Field(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")
     vencimiento: date
-    gastos: list[GastoIn]
+    gastos: list[GastoIn] = Field(min_length=1, max_length=500)
     fondo_reserva_pct: float = Field(0, ge=0, le=100)  # % sobre los gastos ordinarios
 
 
@@ -160,7 +172,7 @@ class VehiculoIn(BaseModel):
 class PagoIn(BaseModel):
     """Pago confirmado por la pasarela/banco ya resuelto: sólo se registra y se comunica."""
     unidad_id: int
-    monto: float = Field(gt=0)
+    monto: float = Field(gt=0, le=999999999999, multiple_of=0.01)
     referencia: str = ""
     ref_externa: str = Field(min_length=1, max_length=80)
 

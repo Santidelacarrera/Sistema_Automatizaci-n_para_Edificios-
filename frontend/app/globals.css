@@ -871,3 +871,32 @@ div.aviso p { margin: 0 0 .35rem; }
   .datos div { min-width: 40%; }
 }
 @media (prefers-reduced-motion: reduce) { .esqueleto span { animation: none; } }
+/* Gestión comunitaria: los mismos controles y tipografías del panel. */
+.gestion-comunidad { width: 100%; max-width: 1180px; margin: 0 auto; padding: 1.25rem; min-width: 0; }
+.gestion-tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.5rem; }
+.gestion-tabs .tab { color: #334155; background: #e2e8f0; }
+.gestion-tabs .tab:hover { color: #0f172a; background: #cbd5e1; }
+.gestion-tabs .tab.on { color: #ffffff; background: #1d4ed8; }
+.gestion-card { border: 1px solid var(--linea, #cbd5cf); border-radius: 12px; padding: 1.4rem; margin: 1.25rem 0; }
+.gestion-form { display: grid; gap: 1rem; max-width: 640px; }
+.gestion-form label { display: grid; gap: .4rem; }
+.gestion-form textarea { min-height: 90px; width: 100%; resize: vertical; }
+.gestion-form input, .gestion-form select, .gestion-form textarea { max-width: 100%; min-height: 40px; }
+.gestion-form .btn { justify-self: start; }
+.gestion-form .gestion-checkbox, .gestion-checkbox { display: flex; align-items: center; gap: .6rem; }
+.gestion-checkbox input { width: 18px; min-height: 18px; }
+.gestion-indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 1rem; }
+.gestion-indicadores article { border: 1px solid var(--linea, #cbd5cf); padding: 1.2rem; border-radius: 12px; display: grid; gap: .5rem; }
+.gestion-indicadores strong { font-size: 1.65rem; font-variant-numeric: tabular-nums; }
+.gestion-recibo { overflow-wrap: anywhere; }
+.gestion-texto { white-space: pre-wrap; overflow-wrap: anywhere; }
+.gestion-comunidad .items { padding: 0; }
+.gestion-comunidad fieldset { border: 1px solid #98a69c; padding: 1rem; }
+.gestion-comunidad details { margin: 1rem 0; }
+.gestion-comunidad button { min-height: 36px; }
+@media (max-width: 640px) {
+  .gestion-comunidad { padding: .6rem; }
+  .gestion-card { padding: .85rem; }
+  .gestion-tabs .tab { flex: 1 1 40%; }
+  .gestion-comunidad .fila-form { display: grid; }
+}

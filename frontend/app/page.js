@@ -1,6 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { apiHasBackend, client, demoSession, listarEdificios, login, session } from "../lib/api";
+import { apiHasBackend, cerrarSesion, client, confirmarMfa, crearEdificio, demoSession, editarEdificio, listarEdificios, login, prepararMfa, session } from "../lib/api";
+import Operaciones from "./components/Operaciones";
+import Comercial from "./components/Comercial";
 import Administracion from "./components/Administracion";
 import Edificios from "./components/Edificios";
 import Cobranza from "./components/Cobranza";
@@ -15,7 +17,7 @@ import Visitas from "./components/Visitas";
 import PortalPropietario from "./components/PortalPropietario";
 
 const VISTAS = [["fachada", "Fachada"], ["propietario", "Mi Depto"], ["porton", "Portón"], ["visitas", "Visitas"], ["reservas", "Reservas"], ["cobranza", "Cobranza"], ["comunidad", "Conserjería"], ["finanzas", "Finanzas"], ["admin", "Administración"]];
-const SOLO_ADMIN = ["admin", "finanzas", "reservas"]; // reservas usa la lista de espacios, que es de administración
+const SOLO_ADMIN = ["admin", "finanzas", "reservas", "cobranza", "propietario"];
 const PUEDE_ADMIN = (sess) => sess.demo || sess.rol === "admin" || sess.rol === "superadmin";
 const ES_SUPERADMIN = (sess) => !sess.demo && sess.rol === "superadmin";
 
@@ -23,9 +25,20 @@ function Login({ onOk }) {
   const [f, setF] = useState({ edificio_id: "", email: "", password: "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const [setup, setSetup] = useState(null);
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); setErr("");
-    try { onOk(await login(f.edificio_id.trim(), f.email.trim(), f.password)); }
+    try {
+      if (setup) { onOk(await confirmarMfa(setup.token, codigo)); }
+      else {
+        const s = await login(f.edificio_id.trim(), f.email.trim(), f.password, codigo);
+        if (s.mfa_setup_required) {
+          const provision = await prepararMfa(s.setup_token, f.password);
+          setSetup({ ...provision, token: s.setup_token }); setCodigo("");
+        } else onOk(s);
+      }
+    }
     catch (x) { setErr(x.message === "Failed to fetch" ? "No hay conexión con el servidor." : x.message); }
     setBusy(false);
   };
@@ -41,6 +54,8 @@ function Login({ onOk }) {
           <label>Edificio<input value={f.edificio_id} onChange={(e) => setF({ ...f, edificio_id: e.target.value })} placeholder="edificio_a" required /></label>
           <label>Correo<input type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} required autoComplete="username" /></label>
           <label>Contraseña<input type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} required autoComplete="current-password" /></label>
+          {setup && <div className="aviso"><p>Agregue esta clave a su aplicación autenticadora y confirme el código de seis dígitos para proteger la cuenta.</p><code className="gestion-recibo">{setup.secreto}</code></div>}
+          <label>Código de autenticador{!setup && " (si está activo)"}<input value={codigo} onChange={(e) => setCodigo(e.target.value)} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required={Boolean(setup)} /></label>
           <button className="btn" disabled={busy}>Entrar</button>
         </>)}
         {err && <p role="alert" className="aviso err">{err}</p>}
@@ -67,7 +82,8 @@ function Panel({ sess: sesionInicial, onSalir }) {
 
   const cargar = useCallback(async () => {
     try {
-      const [d, a, v, c] = await Promise.all([api.panel(), api.accesos(), api.visitas(), api.cobranza()]);
+      const [d, a, v, c] = await Promise.all([api.panel(), api.accesos(), api.visitas(),
+        PUEDE_ADMIN(sess) ? api.cobranza() : Promise.resolve({ morosos: [], total: 0 })]);
       setData(d); setAccesos(a); setVisitas(v); setCob(c); setErr("");
     } catch (e) {
       if (e.status === 401) onSalir(); else setErr(e.message === "Failed to fetch" ? "Sin conexión con el servidor. Reintentando…" : e.message);
@@ -102,7 +118,8 @@ function Panel({ sess: sesionInicial, onSalir }) {
             </select>
           </label>)}
         <nav aria-label="Secciones">
-          {(ES_SUPERADMIN(sesionInicial) ? [["edificios", "Edificios"], ...VISTAS] : VISTAS).filter(([k]) => !SOLO_ADMIN.includes(k) || PUEDE_ADMIN(sess)).map(([k, t]) => (
+          {[...(ES_SUPERADMIN(sesionInicial) ? [["edificios", "Edificios"], ["comercial", "Administración SaaS"], ...VISTAS] : VISTAS),
+            ...(!sess.demo ? [["operaciones", "Gestión comunitaria"]] : [])].filter(([k]) => !SOLO_ADMIN.includes(k) || PUEDE_ADMIN(sess)).map(([k, t]) => (
             <button key={k} className={vista === k ? "tab on" : "tab"} aria-current={vista === k ? "page" : undefined} onClick={() => setVista(k)}>
               {t}{k === "cobranza" && cob.morosos.length > 0 ? <sup>{cob.morosos.length}</sup> : null}
             </button>))}
@@ -130,7 +147,11 @@ function Panel({ sess: sesionInicial, onSalir }) {
         {vista === "finanzas" && PUEDE_ADMIN(sess) && <Finanzas key={edificioId} api={api} data={data} onChange={cargar} />}
         {vista === "comunidad" && <Comunidad key={edificioId} api={api} data={data} esAdmin={PUEDE_ADMIN(sess)} onChange={cargar} />}
         {vista === "admin" && PUEDE_ADMIN(sess) && <Administracion key={edificioId} api={api} data={data} />}
-        {vista === "edificios" && ES_SUPERADMIN(sesionInicial) && <Edificios lista={edificios} activo={edificioId} onAbrir={abrirEdificio} error={errEdificios} />}
+        {vista === "operaciones" && !sess.demo && <Operaciones key={edificioId} api={api} esAdmin={PUEDE_ADMIN(sess)} />}
+        {vista === "comercial" && ES_SUPERADMIN(sesionInicial) && <Comercial sess={sesionInicial} edificios={edificios} />}
+        {vista === "edificios" && ES_SUPERADMIN(sesionInicial) && <Edificios lista={edificios} activo={edificioId} onAbrir={abrirEdificio} error={errEdificios}
+          onCrear={async (body) => { await crearEdificio(sesionInicial, body); setEdificios(await listarEdificios(sesionInicial)); }}
+          onEditar={async (id, body) => { await editarEdificio(sesionInicial, id, body); setEdificios(await listarEdificios(sesionInicial)); }} />}
       </main>
     </div>
   );
@@ -140,7 +161,7 @@ export default function Page() {
   const [sess, setSess] = useState(undefined);
   useEffect(() => { setSess(session.get()); }, []);
   const entrar = (s) => { session.set(s); setSess(s); };
-  const salir = () => { session.clear(); setSess(null); };
+  const salir = async () => { try { await cerrarSesion(sess); } catch { /* Sesión local siempre se cierra; el servidor puede estar desconectado. */ } finally { session.clear(); setSess(null); } };
   if (sess === undefined) return null;
   if (sess && !sess.demo && sess.rol === "residente") return <MiDepto api={client(sess)} nombre={sess.nombre} onSalir={salir} />;
   return sess ? <Panel sess={sess} onSalir={salir} /> : <Login onOk={entrar} />;

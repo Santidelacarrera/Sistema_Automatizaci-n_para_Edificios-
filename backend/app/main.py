@@ -2,13 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import TimeoutError as SATimeoutError
+from sqlalchemy.exc import IntegrityError, TimeoutError as SATimeoutError
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import handlers  # noqa: F401  (registra suscriptores del bus)
 from .config import settings, validar_para_arranque
 from .db import Base, engine
 from .routers import administracion, auth, comunidad, devices, edificio, panel, webhooks
+from .routers import asambleas, comercial, documentos, gestion, iot, mfa, operaciones, reportes
 
 validar_para_arranque()  # falla al importar si la configuración no es segura para el entorno
 
@@ -21,6 +22,12 @@ async def lifespan(_):
 
 
 app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan)
+
+
+@app.exception_handler(IntegrityError)
+async def conflicto_integridad(request, exc):
+    # Nunca revelar SQL, claves ni valores del registro que provocó el conflicto.
+    return JSONResponse({"detail": "Conflicto con un registro existente. Recargue los datos antes de reintentar."}, status_code=409)
 
 
 @app.exception_handler(SATimeoutError)
@@ -49,6 +56,8 @@ app.add_middleware(CORSMiddleware,
 for r in (auth.router, devices.router, edificio.router, panel.router, comunidad.router, administracion.router, webhooks.router):
     app.include_router(r)
 app.include_router(administracion.edificios_router)
+for modulo in (operaciones, asambleas, gestion, documentos, mfa, reportes, iot, comercial):
+    app.include_router(modulo.router)
 
 
 @app.get("/health")

@@ -1,4 +1,5 @@
 "use client";
+import Operaciones from "./Operaciones";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clp } from "../../lib/api";
 import { Confirmar, Estado, fh, hoyISO } from "./ui";
@@ -135,6 +136,8 @@ export default function MiDepto({ api, nombre, onSalir, unidadId, embebido = fal
 
         <section aria-labelledby="h-cuenta">
           <h3 id="h-cuenta">Gastos comunes</h3>
+          {api.descargar && <button className="btn sec" onClick={async () => { try { await api.descargar(`/unidades/${d.unidad.id}/estado-cuenta.pdf`, "estado-cuenta.pdf"); } catch (e) { setErr(e.message); } }}>Descargar estado de cuenta PDF</button>}
+          {c.saldo_favor > 0 && <p className="estado-ok">Saldo a favor: {clp(c.saldo_favor)}. Se aplicará a sus próximos gastos comunes.</p>}
           {c.deuda === 0 ? <p className="vacio">No tiene cargos pendientes.</p> : (
             <table className="tabla"><tbody>
               {DESGLOSE.filter(([k]) => c.desglose[k] > 0).map(([k, t]) => <tr key={k}><td>{t}</td><td className="der">{clp(c.desglose[k])}</td></tr>)}
@@ -188,7 +191,7 @@ export default function MiDepto({ api, nombre, onSalir, unidadId, embebido = fal
         <div className="marca"><b>Depto {d.unidad.numero}</b><span>{nombre || "Residente"}</span></div>
         <button className="salir" onClick={onSalir}>Salir</button>
       </header>
-      <main className="vista seccion-vista mi-depto">{contenido}</main>
+      <main className="vista seccion-vista mi-depto">{contenido}{api.operar && <Operaciones api={api} esAdmin={false} />}</main>
     </div>
   );
 }

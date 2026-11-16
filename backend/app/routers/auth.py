@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 
 from ..config import settings, utcnow
 from ..db import get_db
-from ..models import IntentoLogin, Residente
+from ..models import Edificio, IntentoLogin, Residente, Rol
+from ..operations_models import SegundoFactor
+from ..services import mfa
 from ..schemas import LoginIn
 from ..security import create_token, hash_password, verify_password
 
@@ -45,14 +47,28 @@ def login(body: LoginIn, request: Request, db: Session = Depends(get_db)):
     if espera:
         raise HTTPException(429, f"Demasiados intentos fallidos. Intente de nuevo en {espera} minuto(s).",
                             headers={"Retry-After": str(espera * 60)})
-    r = db.scalar(select(Residente).where(Residente.edificio_id == body.edificio_id,
-                                          Residente.email == body.email, Residente.activo.is_(True)))
+    r = db.scalar(select(Residente).where(Residente.edificio_id == body.edificio_id.strip(),
+                                          func.lower(Residente.email) == body.email.strip().lower(), Residente.activo.is_(True)))
     ok = verify_password(body.password, r.password_hash if r else _HASH_RELLENO) and r is not None
+    if ok and r.rol != Rol.superadmin:
+        ed = db.get(Edificio, r.edificio_id)
+        ok = bool(ed and ed.activo)
+    factor = None
+    if ok:
+        factor = db.scalar(select(SegundoFactor).where(SegundoFactor.residente_id == r.id).with_for_update())
+        if factor and factor.activo:
+            ok = mfa.verificar(factor, body.codigo_mfa)
     db.add(IntentoLogin(clave=clave, ip=ip, exitoso=ok))
     if not ok:
         db.commit()
         raise HTTPException(401, "Credenciales inválidas")
     db.execute(delete(IntentoLogin).where(IntentoLogin.clave == clave, IntentoLogin.exitoso.is_(False)))
     db.commit()
-    return {"access_token": create_token(r.id, r.edificio_id, r.rol), "token_type": "bearer",
+    if mfa.requerido(r.rol) and not (factor and factor.activo):
+        import jwt
+        mfa.cifrador()  # fail closed si falta la clave; no emite una sesión privilegiada
+        token = jwt.encode({"sub": str(r.id), "sv": r.session_version, "purpose": "mfa_setup",
+                            "exp": utcnow() + timedelta(minutes=10)}, settings.jwt_secret, algorithm="HS256")
+        return {"mfa_setup_required": True, "setup_token": token}
+    return {"access_token": create_token(r.id, r.edificio_id, r.rol, r.session_version, bool(factor and factor.activo)), "token_type": "bearer",
             "rol": r.rol.value, "nombre": r.nombre}

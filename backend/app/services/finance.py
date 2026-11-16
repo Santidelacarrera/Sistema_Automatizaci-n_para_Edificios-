@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from .. import events
 from ..config import hoy_local
 from ..models import Cargo, LecturaMedidor, Unidad
+from .transactions import bloquear_edificio
 
 
 CONCEPTO_FONDO = "GC:fondo_reserva:Fondo de Reserva"
@@ -46,6 +47,7 @@ def prorratear(unidades: pd.DataFrame, monto: float, base: str = "coeficiente",
 def generar_cargos(db: Session, edificio_id: str, periodo: str, vencimiento: date,
                    gastos: list[dict], fondo_reserva_pct: float = 0) -> dict:
     """gastos: [{"concepto","monto","tipo":"ordinario|extraordinario","base":"coeficiente|consumo","servicio":"agua"}]"""
+    bloquear_edificio(db, edificio_id)
     if db.scalar(select(func.count(Cargo.id)).where(
             Cargo.edificio_id == edificio_id, Cargo.periodo == periodo, Cargo.concepto.like("GC:%"))):
         raise ValueError(f"Ya se generaron gastos comunes para {periodo}")
@@ -80,6 +82,8 @@ def generar_cargos(db: Session, edificio_id: str, periodo: str, vencimiento: dat
                                  concepto=CONCEPTO_FONDO, categoria="fondo_reserva", monto=c, saldo=c, vencimiento=vencimiento))
             total_unidad += fondo
     db.flush()
+    from .reconciliation import aplicar_credito
+    aplicar_credito(db, edificio_id)
     events.publish(db, edificio_id, "gastos.generados", {"periodo": periodo})
     return {"periodo": periodo, "total": float(total_unidad.sum()), "unidades": len(us)}
 
@@ -117,7 +121,9 @@ def estado_cuenta(db: Session, unidad_id: int) -> dict:
         desglose[categoria_cargo(c.concepto, c.categoria)] += float(c.saldo)
         if c.vencimiento and c.vencimiento < hoy:
             vencida += float(c.saldo)
+    u = db.get(Unidad, unidad_id)
     return {"estado": "moroso" if vencida > 0 else "al_dia", "deuda": round(sum(desglose.values()), 2),
+            "saldo_favor": float(u.saldo_favor) if u else 0,
             "vencida": round(vencida, 2), "desglose": {k: round(v, 2) for k, v in desglose.items()},
             "cargos": [{"id": c.id, "periodo": c.periodo, "concepto": c.concepto.split(":")[-1],
                         "saldo": float(c.saldo),
@@ -129,6 +135,7 @@ def aplicar_intereses(db: Session, edificio_id: str, periodo: str, tasa_mensual_
     """Interés simple mensual sobre el capital vencido (excluye intereses y multas previos).
     Idempotente: una unidad recibe como máximo un cargo ``Interés mora <periodo>``."""
     hoy = hoy or hoy_local()
+    bloquear_edificio(db, edificio_id)
     concepto = f"{PREFIJO_INTERES} {periodo}"
     filas = db.execute(
         select(Cargo.unidad_id, func.sum(Cargo.saldo)).where(

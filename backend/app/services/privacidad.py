@@ -18,7 +18,7 @@ def exportar(db: Session, r: Residente) -> dict:
     return {
         "residente": {"nombre": r.nombre, "rut": rut_formato(r.rut), "email": r.email, "telefono": r.telefono,
                       "rol": r.rol.value, "activo": r.activo, "unidad": r.unidad.numero},
-        "tags": [{"codigo": t.uid, "tipo": t.tipo.value, "estado": t.estado.value} for t in tags],
+        "tags": [{"codigo": t.uid, "tipo": t.tipo.value, "estado": str(t.estado.value if hasattr(t.estado, "value") else t.estado)} for t in tags],
         "vehiculos_de_la_unidad": [{"patente": v.patente, "descripcion": v.descripcion} for v in vehiculos],
         "cargos_de_la_unidad": [{"periodo": c.periodo, "concepto": c.concepto, "monto": float(c.monto),
                                  "saldo": float(c.saldo)} for c in cargos],
@@ -36,3 +36,10 @@ def anonimizar(db: Session, r: Residente) -> None:
         t.estado = EstadoTag.bloqueado
     r.nombre, r.rut, r.email, r.telefono = "[eliminado]", "", "", ""
     r.password_hash, r.activo = "", False
+    r.session_version += 1
+    from ..operations_models import Notificacion, SegundoFactor
+    factor = db.get(SegundoFactor, r.id)
+    if factor:
+        db.delete(factor)
+    for n in db.scalars(select(Notificacion).where(Notificacion.residente_id == r.id)):
+        n.texto, n.titulo, n.estado = "[eliminado]", "[eliminado]", "cancelado"

@@ -9,13 +9,21 @@ Está compuesta por cuatro piezas que se pueden desplegar por separado:
 | Pieza | Carpeta | Tecnología |
 |---|---|---|
 | API y lógica de negocio | `backend/` | FastAPI, SQLAlchemy 2, Alembic, Celery + Redis |
-| Panel de administración | `frontend/` | Next.js 14 (App Router), React 18 |
+| Panel de administración | `frontend/` | Next.js 15 (App Router), React 19 |
 | Lector del portón | `firmware/esp32/` | MicroPython en ESP32, Ethernet W5500 |
 | Traductor de cámaras | `backend/integraciones/lpr/` | FastAPI, adaptadores por marca |
 
 > **Estado.** La lógica de negocio está cubierta por pruebas automáticas. Lo que toca hardware,
 > WhatsApp real, correo real y Supabase real **no se ha verificado en producción**: ver la
 > [matriz de estado](#estado-de-verificación) antes de depender de cualquiera de ellas.
+
+La ampliación de noviembre de 2026 incorpora incidencias, mantenimiento, proveedores, asambleas,
+notificaciones persistentes, integración DOCMIND, MFA, reportes PDF, dispositivos de laboratorio y gestión SaaS.
+El encargo integral **todavía no está completo**. Consulte el
+[informe de implementación y validación](docs/FINAL_COMPLETION_REPORT.md) y la
+[matriz de 459 criterios](docs/FEATURE_COMPLETION_MATRIX.md), que distinguen software probado,
+alcance parcial y trabajo pendiente. Para repetir los recorridos con datos aislados:
+`python scripts/e2e_local.py` (requiere dependencias Python/Node y Chromium instalados).
 
 ---
 

@@ -85,6 +85,8 @@ def validar_residente(db: Session, ed: Edificio, datos: dict, actual: Residente 
 
 
 def crear_residente(db: Session, ed: Edificio, datos: dict, password: str | None) -> Residente:
+    from .commercial import comprobar_cupo
+    comprobar_cupo(db, ed.id, "residentes")
     limpio = validar_residente(db, ed, datos)
     r = Residente(edificio_id=ed.id, password_hash=hash_password(password) if password else "", **limpio)
     db.add(r)
@@ -96,10 +98,13 @@ def editar_residente(db: Session, ed: Edificio, r: Residente, cambios: dict, pas
     actual = {"nombre": r.nombre, "rut": r.rut, "email": r.email, "telefono": r.telefono,
               "unidad_id": r.unidad_id, "rol": r.rol, "activo": r.activo}
     limpio = validar_residente(db, ed, actual | cambios, actual=r, campos=set(cambios))
+    if limpio["rol"] != r.rol or limpio["activo"] != r.activo:
+        r.session_version += 1
     for campo, valor in limpio.items():
         setattr(r, campo, valor)
     if password:
         r.password_hash = hash_password(password)
+        r.session_version += 1
     db.flush()
     return r
 

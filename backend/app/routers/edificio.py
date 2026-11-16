@@ -15,6 +15,7 @@ from ..schemas import (CircularIn, GenerarGastosIn, LecturaIn, ReservaEspacioIn,
 from ..security import Principal, current_user, require_roles, tenant_of
 from ..services import access, email, finance, reconciliation
 from ..services.resultado import ENCOLADO, NO_CONFIGURADO
+from ..services.transactions import bloquear_edificio
 
 MAX_CARTOLA_BYTES = 5_000_000
 
@@ -50,6 +51,8 @@ def _unidad_propia(db, user, ed, unidad_id):
 @router.post("/unidades", status_code=201)
 def crear_unidad(edificio_id: str, body: UnidadIn, user: Admin, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
+    from ..services.commercial import comprobar_cupo
+    comprobar_cupo(db, ed.id, "unidades")
     u = Unidad(edificio_id=ed.id, **body.model_dump())
     db.add(u)
     try:
@@ -123,6 +126,8 @@ async def conciliar(edificio_id: str, user: Admin, cartola: UploadFile = File(..
 @router.get("/unidades/{unidad_id}/deuda")
 def deuda(edificio_id: str, unidad_id: int, user: User, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
+    if user.rol == Rol.conserje:
+        raise HTTPException(403, "Permisos insuficientes")
     u = _unidad_propia(db, user, ed, unidad_id)
     return {"unidad": u.numero, "deuda": finance.deuda_unidad(db, u.id)}
 
@@ -144,6 +149,7 @@ def reservar_visita(edificio_id: str, body: VisitaIn, user: User, db: Session = 
 @router.post("/reservas-espacio", status_code=201)
 def reservar_espacio(edificio_id: str, body: ReservaEspacioIn, user: User, db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
+    bloquear_edificio(db, ed.id)
     u = _unidad_propia(db, user, ed, body.unidad_id)
     esp = db.get(EspacioComun, body.espacio_id)
     if not esp or esp.edificio_id != ed.id:
@@ -170,9 +176,12 @@ def reservar_espacio(edificio_id: str, body: ReservaEspacioIn, user: User, db: S
                        asistentes=body.asistentes)
     db.add(r)
     if float(esp.tarifa) > 0:  # la reserva actualiza automáticamente la cuenta
-        db.add(Cargo(edificio_id=ed.id, unidad_id=u.id, periodo=body.desde.strftime("%Y-%m"),
+        cargo = Cargo(edificio_id=ed.id, unidad_id=u.id, periodo=body.desde.strftime("%Y-%m"),
                      concepto=f"Reserva {esp.nombre}", categoria="otros", monto=esp.tarifa, saldo=esp.tarifa,
-                     vencimiento=body.desde.date()))
+                     vencimiento=body.desde.date())
+        db.add(cargo)
+        db.flush()
+        r.cargo_id = cargo.id
     db.commit()
     return {"id": r.id, "tarifa": float(esp.tarifa)}
 
@@ -182,6 +191,7 @@ def cancelar_reserva(edificio_id: str, reserva_id: int, user: User, db: Session 
     """Cancela una reserva. Si se cancela con menos aviso que el de la regla multa_cancelacion,
     se carga la multa; si el cargo de la tarifa aún no tiene abonos, se anula."""
     ed = _ed(db, user, edificio_id)
+    bloquear_edificio(db, ed.id)
     r = db.get(ReservaEspacio, reserva_id)
     if not r or r.edificio_id != ed.id:
         raise HTTPException(404, "Reserva no existe")
@@ -195,10 +205,10 @@ def cancelar_reserva(edificio_id: str, reserva_id: int, user: User, db: Session 
     multa = rules.multa_cancelacion(db, ed.id, esp.accion, r.desde, ahora)
     r.estado = "cancelada"
     tarifa_anulada = False
-    if float(esp.tarifa) > 0:
+    if r.cargo_id is not None:
         cargo_tarifa = db.scalar(select(Cargo).where(
-            Cargo.edificio_id == ed.id, Cargo.unidad_id == r.unidad_id, Cargo.concepto == f"Reserva {esp.nombre}",
-            Cargo.periodo == r.desde.strftime("%Y-%m"), Cargo.saldo == Cargo.monto))  # sólo si no tiene abonos
+            Cargo.id == r.cargo_id, Cargo.edificio_id == ed.id,
+            Cargo.saldo == Cargo.monto))  # sólo si no tiene abonos
         if cargo_tarifa:
             cargo_tarifa.saldo = 0
             tarifa_anulada = True

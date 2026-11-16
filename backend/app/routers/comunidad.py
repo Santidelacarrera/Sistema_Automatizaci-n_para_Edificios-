@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -23,6 +23,7 @@ from ..schemas import (AvisoPagoIn, ComunicadoIn, ComunicadoPatch, EncomiendaIn,
 from ..security import Principal, current_user, require_roles, tenant_of
 from ..services import finance
 from ..services.reconciliation import _aplicar, pago_de_cartola_para
+from ..services.transactions import bloquear_edificio
 
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["comunidad"])
 User = Annotated[Principal, Depends(current_user)]
@@ -144,7 +145,7 @@ def recibir_encomienda(edificio_id: str, body: EncomiendaIn, user: Staff, db: Se
 
 @router.get("/encomiendas")
 def listar_encomiendas(edificio_id: str, user: User, estado: str | None = None, unidad_id: int | None = None,
-                       limit: int = 100, db: Session = Depends(get_db)):
+                       limit: int = Query(100, ge=1, le=300), db: Session = Depends(get_db)):
     """Conserjería ve todas; el residente sólo las de su unidad (aunque pida otra, recibe 403)."""
     ed = _ed(db, user, edificio_id)
     q = select(Encomienda, Unidad.numero).join(Unidad, Unidad.id == Encomienda.unidad_id).where(
@@ -165,6 +166,7 @@ def entregar_encomienda(edificio_id: str, encomienda_id: int, body: EntregaIn, u
                         db: Session = Depends(get_db)):
     """Registra fecha y hora exactas del retiro y quién firma. No se puede entregar dos veces."""
     ed = _ed(db, user, edificio_id)
+    bloquear_edificio(db, ed.id)
     e = db.get(Encomienda, encomienda_id)
     if not e or e.edificio_id != ed.id:
         raise HTTPException(404, "Encomienda no existe")
@@ -222,6 +224,7 @@ def resolver_aviso(edificio_id: str, aviso_id: int, body: ResolverAvisoIn, user:
                    db: Session = Depends(get_db)):
     """Aprobar abona el monto a los cargos más antiguos (idempotente por aviso) y avisa al residente."""
     ed = _ed(db, user, edificio_id)
+    bloquear_edificio(db, ed.id)
     a = db.get(AvisoPago, aviso_id)
     if not a or a.edificio_id != ed.id:
         raise HTTPException(404, "Aviso no existe")
@@ -236,10 +239,11 @@ def resolver_aviso(edificio_id: str, aviso_id: int, body: ResolverAvisoIn, user:
         if pago_de_cartola_para(db, ed.id, a.unidad_id, a.nro_operacion, float(a.monto)):
             ya_conciliado = True  # la cartola ya abonó este pago: aprobar el aviso no vuelve a abonar
         elif not db.scalar(select(Pago.id).where(Pago.edificio_id == ed.id, Pago.ref_banco == ref)):
-            excedente = _aplicar(db, a.unidad_id, float(a.monto))
-            db.add(Pago(edificio_id=ed.id, unidad_id=a.unidad_id, monto=a.monto, fecha=a.fecha_transferencia,
+            pago = Pago(edificio_id=ed.id, unidad_id=a.unidad_id, monto=a.monto, fecha=a.fecha_transferencia,
                         referencia=f"Transferencia {a.banco} op. {a.nro_operacion}"[:200], ref_banco=ref,
-                        conciliado=True))
+                        conciliado=True)
+            db.add(pago)
+            excedente = _aplicar(db, a.unidad_id, float(a.monto), pago)
             db.flush()
             events.publish(db, ed.id, "pago.conciliado", {"unidad_id": a.unidad_id, "monto": float(a.monto),
                                                            "deuda": finance.deuda_unidad(db, a.unidad_id)})
@@ -255,6 +259,8 @@ def resolver_aviso(edificio_id: str, aviso_id: int, body: ResolverAvisoIn, user:
 def mi_depto(edificio_id: str, user: User, unidad_id: int | None = None, db: Session = Depends(get_db)):
     """Todo lo que el residente consulta en una pantalla: cuenta, vehículos y tags, paquetes y avisos."""
     ed = _ed(db, user, edificio_id)
+    if user.rol == Rol.conserje:
+        raise HTTPException(403, "Permisos insuficientes")
     u = _unidad(db, user, ed, unidad_id)
     ahora = ahora_local()
     veh = db.scalars(select(Vehiculo).where(Vehiculo.unidad_id == u.id, Vehiculo.activo.is_(True))).all()

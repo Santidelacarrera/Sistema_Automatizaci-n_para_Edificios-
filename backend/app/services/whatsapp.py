@@ -81,9 +81,11 @@ def clasificar(texto: str) -> str:
 def identificar_residente(db: Session, telefono: str) -> Residente | None:
     """Match por teléfono; tolera con/sin código de país comparando los últimos 9 dígitos."""
     cola = telefono[-9:]
-    for r in db.scalars(select(Residente).where(Residente.telefono.like(f"%{cola}"), Residente.activo.is_(True))):
-        return r
-    return None
+    if len(cola) != 9 or not cola.isdigit():
+        return None
+    candidatos = db.scalars(select(Residente).where(Residente.telefono.like(f"%{cola}"),
+                                                   Residente.activo.is_(True)).limit(2)).all()
+    return candidatos[0] if len(candidatos) == 1 else None
 
 
 def faltantes() -> list[str]:

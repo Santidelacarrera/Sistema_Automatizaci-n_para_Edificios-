@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from: str = "administracion@example.com"
+    # Un proyecto DOCMIND exclusivo por edificio. Las claves sólo se leen del entorno.
+    docmind_url: str = ""
+    docmind_tenants: dict[str, dict[str, str]] = {}
+    mfa_encryption_key: str = ""  # clave Fernet; independiente de JWT_SECRET
+    mfa_required_privileged: bool = False  # producción siempre exige MFA a admin/superadmin
 
 
 settings = Settings()

@@ -13,6 +13,13 @@ import configurar_entorno as ce  # noqa: E402
 from app.config import Settings  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def configuracion_de_archivo_sin_pool_del_runner(monkeypatch):
+    # Estas pruebas verifican archivos .env; el pool del runner no debe prevalecer sobre esos archivos.
+    for variable in ("DB_POOL_SIZE", "DB_MAX_OVERFLOW", "DB_POOL_TIMEOUT"):
+        monkeypatch.delenv(variable, raising=False)
+
+
 def test_plantilla_vacia_no_rompe_la_configuracion(tmp_path, monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)  # conftest la exporta; el entorno gana al archivo
     ruta = tmp_path / ".env"

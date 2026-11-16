@@ -80,13 +80,18 @@ def test_desactivar_residente_corta_su_acceso_al_instante(client, seed):
                                             "password": "secreto123"}).status_code == 401
 
 
-def test_cambio_de_rol_surte_efecto_sin_nuevo_login(client, seed):
+def test_cambio_de_rol_revoca_sesion_y_exige_nuevo_login(client, seed):
     h_admin = login(client, "edificio_a", "ana@x.cl")
     h_beto = login(client, "edificio_a", "beto@x.cl")
     assert client.get("/edificios/edificio_a/residentes", headers=h_beto).status_code == 403
     beto = next(r for r in client.get("/edificios/edificio_a/residentes", headers=h_admin).json() if r["nombre"] == "Beto Soto")
     client.patch(f"/edificios/edificio_a/residentes/{beto['id']}", headers=h_admin, json={"rol": "admin"})
-    assert client.get("/edificios/edificio_a/residentes", headers=h_beto).status_code == 200
+    assert client.get("/edificios/edificio_a/residentes", headers=h_beto).status_code == 401
+    h_beto_nuevo = login(client, "edificio_a", "beto@x.cl")
+    assert client.get("/edificios/edificio_a/residentes", headers=h_beto_nuevo).status_code == 200
+    client.patch(f"/edificios/edificio_a/residentes/{beto['id']}", headers=h_admin, json={"rol": "residente"})
+    assert client.get("/edificios/edificio_a/residentes", headers=h_beto_nuevo).status_code == 401
+    assert client.get("/edificios/edificio_a/residentes", headers=login(client, "edificio_a", "beto@x.cl")).status_code == 403
 
 
 def test_residente_no_administra_residentes(client, seed):

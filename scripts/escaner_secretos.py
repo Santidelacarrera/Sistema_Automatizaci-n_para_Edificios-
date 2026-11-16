@@ -49,9 +49,9 @@ def hallazgos_en_texto(texto: str) -> list[tuple[int, str]]:
 
 
 def archivos_versionados(raiz: Path) -> list[Path]:
-    """Lista de archivos rastreados por Git (o vacío si no es un repositorio)."""
+    """Archivos rastreados y nuevos no ignorados; incluye cambios aún sin commit."""
     try:
-        salida = subprocess.run(["git", "ls-files", "-z"], cwd=raiz, capture_output=True, check=True).stdout
+        salida = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=raiz, capture_output=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError):
         return []
     return [raiz / n for n in salida.decode("utf-8", "replace").split("\0") if n]

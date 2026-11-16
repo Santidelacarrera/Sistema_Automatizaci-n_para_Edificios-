@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,7 @@ from ..models import (AccesoLog, Cargo, Edificio, Encomienda, EspacioComun, Esta
 from ..schemas import PagoIn, RecordatorioIn, VehiculoIn
 from ..security import Principal, require_roles, tenant_of
 from ..services import access, cobranza, diagnostico as diag, finance
+from ..services.transactions import bloquear_edificio
 
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["panel"])
 Staff = Annotated[Principal, Depends(require_roles(Rol.admin, Rol.conserje))]
@@ -53,12 +54,14 @@ def panel(edificio_id: str, user: Staff, db: Session = Depends(get_db)):
         Encomienda.edificio_id == ed.id, Encomienda.estado == "pendiente").group_by(Encomienda.unidad_id)).all())
     unidades = db.scalars(select(Unidad).where(Unidad.edificio_id == ed.id)).all()
     ocupados = access.cupos_ocupados(db, ed.id, ahora, ahora)
+    financiero = user.rol in (Rol.admin, Rol.superadmin)
     return {
         "edificio": {"id": ed.id, "nombre": ed.nombre, "cupos_visitas": ed.cupos_visitas,
                      "cupos_ocupados": ocupados},
         "unidades": [{"id": u.id, "numero": u.numero, "estacionamientos": u.estacionamientos,
-                      "codigo_cobro": u.codigo_cobro, "deuda": float(deuda.get(u.id, 0)),
-                      "vencida": float(vencida.get(u.id, 0)), "residentes": res[u.id],
+                      "codigo_cobro": u.codigo_cobro if financiero else None,
+                      "deuda": float(deuda.get(u.id, 0)) if financiero else None,
+                      "vencida": float(vencida.get(u.id, 0)) if financiero else None, "residentes": res[u.id],
                       "vehiculos": veh[u.id], "visitas_activas": vis[u.id],
                       "encomiendas": paquetes.get(u.id, 0)} for u in unidades],
     }
@@ -72,7 +75,7 @@ def diagnostico(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
 
 
 @router.get("/accesos")
-def accesos(edificio_id: str, user: Staff, limit: int = 50, db: Session = Depends(get_db)):
+def accesos(edificio_id: str, user: Staff, limit: int = Query(50, ge=1, le=200), db: Session = Depends(get_db)):
     ed = _ed(db, user, edificio_id)
     rows = db.scalars(select(AccesoLog).where(AccesoLog.edificio_id == ed.id)
                       .order_by(AccesoLog.id.desc()).limit(min(limit, 200))).all()
@@ -133,12 +136,17 @@ def registrar_pago(edificio_id: str, body: PagoIn, user: Admin, db: Session = De
     u = db.get(Unidad, body.unidad_id)
     if not u or u.edificio_id != ed.id:
         raise HTTPException(404, "Unidad no existe en este edificio")
-    if db.scalar(select(Pago.id).where(Pago.edificio_id == ed.id, Pago.ref_banco == body.ref_externa)):
+    bloquear_edificio(db, ed.id)
+    previo = db.scalar(select(Pago).where(Pago.edificio_id == ed.id, Pago.ref_banco == body.ref_externa))
+    if previo:
+        if previo.unidad_id != u.id or float(previo.monto) != body.monto:
+            raise HTTPException(409, "Referencia de pago ya utilizada con otros datos")
         return {"duplicado": True}
     from ..services.reconciliation import _aplicar
-    excedente = _aplicar(db, u.id, body.monto)
-    db.add(Pago(edificio_id=ed.id, unidad_id=u.id, monto=body.monto, fecha=hoy_local(),
-                referencia=body.referencia[:200], ref_banco=body.ref_externa, conciliado=True))
+    pago = Pago(edificio_id=ed.id, unidad_id=u.id, monto=body.monto, fecha=hoy_local(),
+                referencia=body.referencia[:200], ref_banco=body.ref_externa, conciliado=True)
+    db.add(pago)
+    excedente = _aplicar(db, u.id, body.monto, pago)
     db.flush()
     events.publish(db, ed.id, "pago.conciliado",
                    {"unidad_id": u.id, "monto": body.monto, "deuda": finance.deuda_unidad(db, u.id)})

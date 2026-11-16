@@ -48,6 +48,7 @@ class Edificio(Base):
     __tablename__ = "edificios"
     id: Mapped[str] = mapped_column(String(40), primary_key=True)  # p.ej. "edificio_a"
     nombre: Mapped[str] = mapped_column(String(120))
+    activo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     cupos_visitas: Mapped[int] = mapped_column(Integer, default=6)
     max_estac_por_unidad: Mapped[int] = mapped_column(Integer, default=2)
     tolerancia_visita_min: Mapped[int] = mapped_column(Integer, default=20)
@@ -68,6 +69,7 @@ class Unidad(Base):
     coeficiente: Mapped[float] = mapped_column(Numeric(9, 6))  # copropiedad, suma ~1 por edificio
     codigo_cobro: Mapped[str] = mapped_column(String(30), unique=True)
     estacionamientos: Mapped[int] = mapped_column(Integer, default=0)
+    saldo_favor: Mapped[float] = mapped_column(Numeric(14, 2), default=0, server_default="0")
     residentes: Mapped[list["Residente"]] = relationship(back_populates="unidad")
 
 
@@ -83,6 +85,7 @@ class Residente(Base):
     password_hash: Mapped[str] = mapped_column(String(200), default="")
     rol: Mapped[Rol] = mapped_column(Enum(Rol), default=Rol.residente)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    session_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     unidad: Mapped[Unidad] = relationship(back_populates="residentes")
 
 
@@ -161,6 +164,7 @@ class ReservaEspacio(Base):
     hasta: Mapped[datetime] = mapped_column(DateTime)
     estado: Mapped[str] = mapped_column(String(20), default="confirmada")
     asistentes: Mapped[int] = mapped_column(Integer, default=0)  # personas previstas; se compara con el aforo
+    cargo_id: Mapped[int | None] = mapped_column(ForeignKey("cargos.id"), unique=True)
 
 
 class Cargo(Base):
@@ -198,7 +202,20 @@ class Pago(Base):
     referencia: Mapped[str] = mapped_column(String(200), default="")
     ref_banco: Mapped[str] = mapped_column(String(80), default="")  # id de transacción -> idempotencia
     conciliado: Mapped[bool] = mapped_column(Boolean, default=False)
+    excedente: Mapped[float] = mapped_column(Numeric(14, 2), default=0, server_default="0")
+    revertido: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    duplicado_de_id: Mapped[int | None] = mapped_column(ForeignKey("pagos.id"))
     __table_args__ = (UniqueConstraint("edificio_id", "ref_banco"),)
+
+
+class AplicacionPago(Base):
+    """Trazabilidad de abonos: permite revertir exactamente los cargos afectados."""
+    __tablename__ = "aplicaciones_pago"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    pago_id: Mapped[int] = mapped_column(ForeignKey("pagos.id"), index=True)
+    cargo_id: Mapped[int] = mapped_column(ForeignKey("cargos.id"), index=True)
+    monto: Mapped[float] = mapped_column(Numeric(14, 2))
 
 
 class Evento(Base):
@@ -324,3 +341,7 @@ class AvisoPago(Base):
     creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     resuelto_at: Mapped[datetime | None] = mapped_column(DateTime)
     motivo: Mapped[str] = mapped_column(String(200), default="")
+
+
+from . import operations_models  # noqa: E402,F401 — registra los dominios en Alembic
+from . import commercial_models  # noqa: E402,F401
