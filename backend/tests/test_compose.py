@@ -35,3 +35,20 @@ def test_ningun_servicio_tiene_secretos_escritos_a_mano():
     texto = (RAIZ / "docker-compose.yml").read_text(encoding="utf-8")
     # tras "edificios:" sólo puede venir una variable de .env, nunca una clave escrita a mano
     assert not re.search(r"edificios:(?!\$\{)[^\s@}]+@", texto)
+
+
+def test_produccion_por_defecto_en_servicios_de_python():
+    servicios = _compose()["services"]
+    for nombre in ("api", "worker", "beat"):
+        assert servicios[nombre]["environment"]["ENTORNO"] == "${ENTORNO:-produccion}", nombre
+
+
+def test_los_servicios_rotan_sus_logs():
+    servicios = _compose()["services"]
+    for nombre in ("redis", "api", "panel", "proxy", "worker", "beat"):
+        assert servicios[nombre]["logging"]["options"]["max-size"], nombre
+
+
+def test_docs_interactivas_solo_fuera_de_produccion():
+    texto = (RAIZ / "Caddyfile").read_text(encoding="utf-8")
+    assert "/docs" not in texto and "/openapi.json" not in texto

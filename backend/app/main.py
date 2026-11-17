@@ -26,9 +26,17 @@ async def lifespan(_):
     yield
 
 
+<<<<<<< HEAD
 app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan)
 _INICIO = time.monotonic()
 _METRICS = {"http_requests_total": 0}
+=======
+_prod = settings.entorno == "produccion"
+# En producción no se publica la documentación interactiva (reduce la superficie de ataque).
+app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan,
+              docs_url=None if _prod else "/docs", redoc_url=None if _prod else "/redoc",
+              openapi_url=None if _prod else "/openapi.json")
+>>>>>>> origin/claude/sistema-edificios-backend
 
 
 @app.exception_handler(IntegrityError)
