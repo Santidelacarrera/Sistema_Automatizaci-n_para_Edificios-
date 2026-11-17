@@ -412,3 +412,33 @@ class RespuestaEncuesta(Base):
     puntaje: Mapped[int] = mapped_column(Integer)  # 1..5
     comentario: Mapped[str] = mapped_column(String(400), default="")
     creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class BloqueoEspacio(Base):
+    """Bloqueo temporal de un espacio común por mantenimiento u obra."""
+    __tablename__ = "bloqueos_espacio"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    espacio_id: Mapped[int] = mapped_column(ForeignKey("espacios_comunes.id"), index=True)
+    desde: Mapped[datetime] = mapped_column(DateTime)
+    hasta: Mapped[datetime] = mapped_column(DateTime)
+    motivo: Mapped[str] = mapped_column(String(200))
+    creado_por: Mapped[int] = mapped_column(ForeignKey("residentes.id"))
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class RegistroPorteria(Base):
+    """Registro de ingresos y salidas en portería para proveedores, trabajadores y delivery."""
+    __tablename__ = "registros_porteria"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    tipo: Mapped[str] = mapped_column(String(20), index=True)  # proveedor | trabajador | delivery
+    nombre: Mapped[str] = mapped_column(String(120))
+    empresa: Mapped[str] = mapped_column(String(120), default="")
+    rut: Mapped[str] = mapped_column(String(20), default="")
+    unidad_id: Mapped[int | None] = mapped_column(ForeignKey("unidades.id"), nullable=True)
+    motivo: Mapped[str] = mapped_column(String(200), default="")
+    entrada: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    salida: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    registrado_por: Mapped[int] = mapped_column(ForeignKey("residentes.id"))
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

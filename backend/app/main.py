@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 
+import time
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import jwt
 from fastapi.responses import JSONResponse
@@ -24,6 +26,8 @@ async def lifespan(_):
 
 
 app = FastAPI(title="Sistema de Automatización para Edificios", version="0.1.0", lifespan=lifespan)
+_INICIO = time.monotonic()
+_METRICS = {"http_requests_total": 0}
 
 
 @app.exception_handler(IntegrityError)
@@ -41,6 +45,7 @@ async def base_saturada(request, exc):
 
 @app.middleware("http")
 async def cabeceras_de_seguridad(request, call_next):
+    _METRICS["http_requests_total"] += 1
     resp = await call_next(request)
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("X-Frame-Options", "DENY")
@@ -57,15 +62,29 @@ app.add_middleware(CORSMiddleware,
                    allow_methods=["*"], allow_headers=["*"])
 for r in (auth.router, devices.router, edificio.router, panel.router, comunidad.router, administracion.router, webhooks.router):
     app.include_router(r)
+    app.include_router(r, prefix="/api/v1")
 app.include_router(administracion.edificios_router)
 for modulo in (operaciones, asambleas, gestion, documentos, mfa, reportes, iot, comercial):
     app.include_router(modulo.router)
+    app.include_router(modulo.router, prefix="/api/v1")
+app.include_router(administracion.edificios_router, prefix="/api/v1")
 
 
 @app.get("/health")
+@app.get("/api/v1/health")
 def health():
     """Vivo: el proceso responde. No toca la base (sirve para que el orquestador sepa si reiniciar)."""
     return {"ok": True}
+
+
+@app.get("/metrics")
+def metrics():
+    """Métricas operativas básicas del servicio (19.16)."""
+    return {
+        "uptime_s": round(time.monotonic() - _INICIO, 2),
+        "http_requests_total": _METRICS["http_requests_total"],
+        "ws_salas_activas": len(realtime_manager._salas),
+    }
 
 
 @app.get("/ready")

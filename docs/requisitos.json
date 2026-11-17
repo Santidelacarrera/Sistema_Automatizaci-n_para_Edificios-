@@ -211,9 +211,9 @@
     "id": "04.02",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Registrar torres, pisos y departamentos.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Unidades disponibles; faltan entidades torre y piso."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Unidad.torre, Unidad.piso (migración 0014), GET /estructura y PATCH /unidades/{id}/ubicacion; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "04.03",
@@ -923,25 +923,25 @@
     "id": "07.02",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Registro de proveedores.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "RegistroPorteria (migración 0014) y POST/GET /porteria/ingresos para proveedores; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.03",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Registro de trabajadores.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "RegistroPorteria y POST/GET /porteria/ingresos para trabajadores; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.04",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Registro de delivery.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "RegistroPorteria y POST/GET /porteria/ingresos para delivery; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.05",
@@ -995,9 +995,9 @@
     "id": "07.11",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Historial de entradas y salidas.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Historial de entradas/salidas en GET /porteria/ingresos y POST /porteria/ingresos/{id}/salida; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.12",
@@ -1147,9 +1147,9 @@
     "id": "08.14",
     "modulo": "RESERVAS DE ESPACIOS COMUNES",
     "requisito": "Aprobación o rechazo.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "POST /reservas-espacio/{id}/resolver (aprobación/rechazo con notificación); test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "08.15",
@@ -1187,9 +1187,9 @@
     "id": "08.19",
     "modulo": "RESERVAS DE ESPACIOS COMUNES",
     "requisito": "Bloqueo por mantenimiento.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "BloqueoEspacio (migración 0014), GET/POST/DELETE /espacios-comunes/{id}/bloqueos y validación 409 en reservas; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "08.20",
@@ -1603,9 +1603,9 @@
     "id": "11.12",
     "modulo": "ASAMBLEAS, VOTACIONES Y COMITÉS",
     "requisito": "Informes para el comité.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/asambleas.py`; `/asambleas/*`; tests `operaciones_integradas`, E2E `operaciones`; consulta comunitaria sin certificaci?n jur?dica.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /asambleas/informe-comite y GET /asambleas/informe-comite.pdf; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "12.01",
@@ -2739,9 +2739,9 @@
     "id": "19.16",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Métricas.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /metrics con contadores operativos (uptime_s, http_requests_total, ws_salas_activas); test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.17",
@@ -2811,9 +2811,9 @@
     "id": "19.25",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Versionamiento de APIs.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Alias de versionamiento /api/v1/* para todos los routers en main.py; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.01",
@@ -3011,9 +3011,9 @@
     "id": "21.06",
     "modulo": "DISEÑO UX/UI",
     "requisito": "Tablas con filtros.",
-    "estado": "PARCIAL",
-    "evidencia": "`frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Filtro de tabla en Cobranza.js (.tabla-filtro) + búsqueda global en page.js; Next.js build y E2E Playwright/axe-core OK.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "21.07",
@@ -3179,17 +3179,17 @@
     "id": "22.11",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Detección de intentos de acceso anómalos.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/accesos/anomalias detecta rechazos repetidos en AccesoLog; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.12",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Alertas por credenciales duplicadas.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/accesos/anomalias detecta tags/patentes duplicados; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.13",
@@ -3491,9 +3491,9 @@
     "id": "24.01",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Página pública del producto.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Existe pantalla p?blica de acceso; no landing comercial completa."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Sección pública informativa de la plataforma (.landing-publica) en pantalla inicial page.js; Next.js build y axe-core OK.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.02",

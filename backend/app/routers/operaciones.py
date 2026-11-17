@@ -20,6 +20,7 @@ from ..validacion import rut_normalizar, rut_valido
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["operaciones"])
 User = Annotated[Principal, Depends(current_user)]
 Admin = Annotated[Principal, Depends(require_roles(Rol.admin))]
+Staff = Annotated[Principal, Depends(require_roles(Rol.admin, Rol.conserje))]
 
 
 def edificio(db, user, eid, escribir=False):
@@ -723,3 +724,62 @@ def responder_encuesta(edificio_id: str, encuesta_id: int, body: dict, user: Use
     db.add(r)
     db.commit()
     return {"id": r.id, "encuesta_id": e.id, "puntaje": r.puntaje}
+
+
+@router.get("/porteria/ingresos")
+def listar_ingresos_porteria(edificio_id: str, user: User, tipo: str | None = None, db: Session = Depends(get_db)):
+    """Historial de entradas y salidas de proveedores, trabajadores y delivery en portería (07.02-07.04, 07.11)."""
+    from ..operations_models import RegistroPorteria
+    edificio(db, user, edificio_id)
+    if user.rol == Rol.residente:
+        raise HTTPException(403, "Solo conserjería o administración puede consultar el libro de portería")
+    q = select(RegistroPorteria).where(RegistroPorteria.edificio_id == edificio_id)
+    if tipo:
+        q = q.where(RegistroPorteria.tipo == tipo)
+    rows = db.scalars(q.order_by(RegistroPorteria.id.desc()).limit(200)).all()
+    return [ficha(r, "id tipo nombre empresa rut unidad_id motivo entrada salida registrado_por") for r in rows]
+
+
+@router.post("/porteria/ingresos", status_code=201)
+def registrar_ingreso_porteria(edificio_id: str, body: dict, user: Staff, db: Session = Depends(get_db)):
+    """Registra entrada en portería de proveedor, trabajador o delivery (07.02-07.04)."""
+    from ..operations_models import RegistroPorteria
+    edificio(db, user, edificio_id, True)
+    tipo = str(body.get("tipo") or "").strip().lower()
+    if tipo not in ("proveedor", "trabajador", "delivery"):
+        raise HTTPException(422, "tipo debe ser 'proveedor', 'trabajador' o 'delivery'")
+    nombre = str(body.get("nombre") or "").strip()
+    if len(nombre) < 2:
+        raise HTTPException(422, "Nombre requerido")
+    uid = body.get("unidad_id")
+    if uid is not None:
+        recurso(db, Unidad, edificio_id, int(uid))
+    reg = RegistroPorteria(
+        edificio_id=edificio_id,
+        tipo=tipo,
+        nombre=nombre[:120],
+        empresa=str(body.get("empresa") or "").strip()[:120],
+        rut=str(body.get("rut") or "").strip()[:20],
+        unidad_id=int(uid) if uid is not None else None,
+        motivo=str(body.get("motivo") or "").strip()[:200],
+        registrado_por=user.residente_id,
+    )
+    db.add(reg)
+    db.flush()
+    auditar(db, user, edificio_id, "porteria.ingreso", reg.id, clase=tipo, nombre=reg.nombre)
+    db.commit()
+    return ficha(reg, "id tipo nombre empresa rut unidad_id motivo entrada salida registrado_por")
+
+
+@router.post("/porteria/ingresos/{registro_id}/salida")
+def registrar_salida_porteria(edificio_id: str, registro_id: int, user: Staff, db: Session = Depends(get_db)):
+    """Registra salida de un ingreso en portería (07.11)."""
+    from ..operations_models import RegistroPorteria
+    edificio(db, user, edificio_id, True)
+    reg = recurso(db, RegistroPorteria, edificio_id, registro_id)
+    if reg.salida is not None:
+        raise HTTPException(409, "La salida ya fue registrada")
+    reg.salida = utcnow()
+    auditar(db, user, edificio_id, "porteria.salida", reg.id)
+    db.commit()
+    return ficha(reg, "id tipo nombre empresa rut unidad_id motivo entrada salida registrado_por")

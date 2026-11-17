@@ -132,6 +132,54 @@ def cerrar(edificio_id: str, asamblea_id: int, body: ActaIn, user: Admin, db: Se
     return ficha(a, CAMPOS)
 
 
+@router.get("/informe-comite")
+def informe_comite(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Informe ejecutivo consolidado para el comité de administración (11.12)."""
+    from ..models import Cargo, Pago
+    from ..operations_models import CompromisoAsamblea, Incidencia
+    ed = edificio(db, user, edificio_id)
+    asambleas = db.scalars(select(Asamblea).where(Asamblea.edificio_id == edificio_id).order_by(Asamblea.id.desc())).all()
+    compromisos = db.scalars(select(CompromisoAsamblea).where(CompromisoAsamblea.edificio_id == edificio_id)).all()
+    incidencias_abiertas = db.scalars(select(Incidencia).where(
+        Incidencia.edificio_id == edificio_id, Incidencia.estado.not_in(["resuelta", "cerrada"]),
+    )).all()
+    deuda = sum(float(c.saldo) for c in db.scalars(select(Cargo).where(Cargo.edificio_id == edificio_id)).all())
+    recaudado = sum(float(p.monto) for p in db.scalars(select(Pago).where(
+        Pago.edificio_id == edificio_id, Pago.conciliado.is_(True), Pago.revertido.is_(False), Pago.duplicado_de_id.is_(None),
+    )).all())
+    return {
+        "edificio": ed.nombre,
+        "asambleas_total": len(asambleas),
+        "ultima_asamblea": ficha(asambleas[0], CAMPOS) if asambleas else None,
+        "compromisos_pendientes": sum(1 for c in compromisos if c.estado != "cumplido"),
+        "compromisos_cumplidos": sum(1 for c in compromisos if c.estado == "cumplido"),
+        "incidencias_abiertas": len(incidencias_abiertas),
+        "deuda_pendiente": round(deuda, 2),
+        "recaudado_acumulado": round(recaudado, 2),
+    }
+
+
+@router.get("/informe-comite.pdf")
+def informe_comite_pdf(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Versión PDF del informe ejecutivo para el comité de administración (11.12)."""
+    from fastapi.responses import Response
+    from ..services.reports import pdf
+    datos = informe_comite(edificio_id, user, db)
+    filas = [
+        ["Asambleas registradas", str(datos["asambleas_total"])],
+        ["Compromisos pendientes", str(datos["compromisos_pendientes"])],
+        ["Compromisos cumplidos", str(datos["compromisos_cumplidos"])],
+        ["Incidencias abiertas", str(datos["incidencias_abiertas"])],
+        ["Deuda pendiente", f"CLP {datos['deuda_pendiente']:,.2f}"],
+        ["Recaudado acumulado", f"CLP {datos['recaudado_acumulado']:,.2f}"],
+    ]
+    data = pdf("Informe para el Comité", datos["edificio"], ["Indicador", "Valor"], filas,
+               ["Resumen ejecutivo de gobernanza, mantenimiento y cobranza."])
+    return Response(data, media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="informe-comite-{edificio_id}.pdf"',
+                             "Cache-Control": "no-store"})
+
+
 @router.get("/{asamblea_id}")
 def detalle(edificio_id: str, asamblea_id: int, user: User, db: Session = Depends(get_db)):
     edificio(db, user, edificio_id)

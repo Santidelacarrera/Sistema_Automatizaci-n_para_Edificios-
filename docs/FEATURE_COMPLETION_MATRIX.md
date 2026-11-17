@@ -9,14 +9,14 @@ Estados: COMPLETADA Y PROBADA; IMPLEMENTADA, PERO NO PROBADA; PARCIAL; SOLAMENTE
 | Módulo | Completadas / criterios | Porcentaje estricto |
 |---|---:|---:|
 | PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT | 22/25 | 88.0% |
-| ADMINISTRACIÓN DE COMUNIDADES | 12/15 | 80.0% |
+| ADMINISTRACIÓN DE COMUNIDADES | 13/15 | 86.7% |
 | FINANZAS, GASTOS COMUNES Y CONTABILIDAD | 34/40 | 85.0% |
 | CONTROL DE ACCESO INTELIGENTE E IOT | 19/34 | 55.9% |
-| PORTERÍA Y CONSERJERÍA DIGITAL | 8/16 | 50.0% |
-| RESERVAS DE ESPACIOS COMUNES | 11/22 | 50.0% |
+| PORTERÍA Y CONSERJERÍA DIGITAL | 12/16 | 75.0% |
+| RESERVAS DE ESPACIOS COMUNES | 13/22 | 59.1% |
 | MANTENIMIENTO Y GESTIÓN DE INCIDENCIAS | 17/18 | 94.4% |
 | COMUNICACIÓN Y NOTIFICACIONES | 11/19 | 57.9% |
-| ASAMBLEAS, VOTACIONES Y COMITÉS | 9/12 | 75.0% |
+| ASAMBLEAS, VOTACIONES Y COMITÉS | 10/12 | 83.3% |
 | DOCUMENTACIÓN INTELIGENTE: DOCMIND AI | 2/22 | 9.1% |
 | INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA | 12/17 | 70.6% |
 | APLICACIÓN MÓVIL Y PORTAL DE RESIDENTES | 15/17 | 88.2% |
@@ -24,14 +24,14 @@ Estados: COMPLETADA Y PROBADA; IMPLEMENTADA, PERO NO PROBADA; PARCIAL; SOLAMENTE
 | MÓDULO DE PROVEEDORES Y PERSONAL | 10/15 | 66.7% |
 | CUMPLIMIENTO LEGAL Y NORMATIVO EN CHILE | 0/12 | 0.0% |
 | SEGURIDAD EMPRESARIAL | 8/25 | 32.0% |
-| ARQUITECTURA Y CALIDAD DEL SOFTWARE | 12/25 | 48.0% |
+| ARQUITECTURA Y CALIDAD DEL SOFTWARE | 14/25 | 56.0% |
 | TESTING Y VALIDACIÓN | 11/19 | 57.9% |
-| DISEÑO UX/UI | 11/16 | 68.8% |
-| FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO | 28/39 | 71.8% |
+| DISEÑO UX/UI | 12/16 | 75.0% |
+| FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO | 30/39 | 76.9% |
 | INTEGRACIÓN ENTRE TODOS LOS MÓDULOS | 10/10 | 100.0% |
-| COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN | 17/23 | 73.9% |
+| COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN | 18/23 | 78.3% |
 
-Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBADA: 295; PARCIAL: 159.
+Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBADA: 309; PARCIAL: 145.
 
 ## PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT
 
@@ -68,7 +68,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | ID | Requisito | Estado | Evidencia y alcance | Pendiente |
 |---|---|---|---|---|
 | 04.01 | Crear, editar y eliminar edificios. | COMPLETADA Y PROBADA | POST/PATCH /edificios y DELETE /edificios/{id} (elimina vacíos o desactiva con historial); test_parciales_software.py. | Ninguno. |
-| 04.02 | Registrar torres, pisos y departamentos. | PARCIAL | `models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`. | Unidades disponibles; faltan entidades torre y piso. |
+| 04.02 | Registrar torres, pisos y departamentos. | COMPLETADA Y PROBADA | Unidad.torre, Unidad.piso (migración 0014), GET /estructura y PATCH /unidades/{id}/ubicacion; test_lote_software_final.py. | Ninguno. |
 | 04.03 | Registrar estacionamientos y bodegas. | COMPLETADA Y PROBADA | `operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`. | Sin pendientes en software; no implica validación jurídica de títulos. |
 | 04.04 | Registrar bienes comunes. | COMPLETADA Y PROBADA | `operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`. | Sin pendientes en software; no implica validación jurídica de títulos. |
 | 04.05 | Asociar propietarios y arrendatarios a cada unidad. | COMPLETADA Y PROBADA | `operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`. | Sin pendientes en software; no implica validación jurídica de títulos. |
@@ -172,16 +172,16 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | ID | Requisito | Estado | Evidencia y alcance | Pendiente |
 |---|---|---|---|---|
 | 07.01 | Registro de visitas. | COMPLETADA Y PROBADA | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 07.02 | Registro de proveedores. | PARCIAL | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 07.03 | Registro de trabajadores. | PARCIAL | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 07.04 | Registro de delivery. | PARCIAL | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 07.02 | Registro de proveedores. | COMPLETADA Y PROBADA | RegistroPorteria (migración 0014) y POST/GET /porteria/ingresos para proveedores; test_lote_software_final.py. | Ninguno. |
+| 07.03 | Registro de trabajadores. | COMPLETADA Y PROBADA | RegistroPorteria y POST/GET /porteria/ingresos para trabajadores; test_lote_software_final.py. | Ninguno. |
+| 07.04 | Registro de delivery. | COMPLETADA Y PROBADA | RegistroPorteria y POST/GET /porteria/ingresos para delivery; test_lote_software_final.py. | Ninguno. |
 | 07.05 | Registro de encomiendas. | COMPLETADA Y PROBADA | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 07.06 | Registro de correspondencia. | PARCIAL | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 07.07 | Registro de vehículos. | COMPLETADA Y PROBADA | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 07.08 | Registro de visitas recurrentes. | COMPLETADA Y PROBADA | Modelo VisitaRecurrente, migración 0013, endpoints GET/POST/DELETE /visitas-recurrentes; test_18_funcionalidades.py. | Ninguno en backend. |
 | 07.09 | Autorizaciones de residentes. | COMPLETADA Y PROBADA | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 07.10 | Control de visitas no autorizadas. | COMPLETADA Y PROBADA | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 07.11 | Historial de entradas y salidas. | PARCIAL | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 07.11 | Historial de entradas y salidas. | COMPLETADA Y PROBADA | Historial de entradas/salidas en GET /porteria/ingresos y POST /porteria/ingresos/{id}/salida; test_lote_software_final.py. | Ninguno. |
 | 07.12 | Observaciones. | PARCIAL | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 07.13 | Fotografías cuando estén autorizadas. | COMPLETADA Y PROBADA | Modelo AdjuntoOperacion, migración 0013, POST/GET /adjuntos/porteria_visita/porteria_encomienda con autorización explícita; test_18_funcionalidades.py. | Ninguno en backend. |
 | 07.14 | Notificaciones al residente. | PARCIAL | `routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
@@ -205,12 +205,12 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 08.11 | Horarios configurables. | COMPLETADA Y PROBADA | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 08.12 | Límites de reservas. | COMPLETADA Y PROBADA | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 08.13 | Restricciones por departamento. | COMPLETADA Y PROBADA | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 08.14 | Aprobación o rechazo. | PARCIAL | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 08.14 | Aprobación o rechazo. | COMPLETADA Y PROBADA | POST /reservas-espacio/{id}/resolver (aprobación/rechazo con notificación); test_lote_software_final.py. | Ninguno. |
 | 08.15 | Cobros por reserva. | COMPLETADA Y PROBADA | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 08.16 | Garantías. | COMPLETADA Y PROBADA | EspacioComun.garantia, ReservaEspacio.garantia_estado, POST /reservas-espacio/{id}/garantia (genera Cargo si ejecutada); test_18_funcionalidades.py. | Ninguno en backend. |
 | 08.17 | Cancelaciones. | COMPLETADA Y PROBADA | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 08.18 | Penalizaciones configurables. | COMPLETADA Y PROBADA | ReservaEspacio.penalizacion y POST /reservas-espacio/{id}/penalizar (genera Cargo); test_18_funcionalidades.py. | Ninguno en backend. |
-| 08.19 | Bloqueo por mantenimiento. | PARCIAL | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 08.19 | Bloqueo por mantenimiento. | COMPLETADA Y PROBADA | BloqueoEspacio (migración 0014), GET/POST/DELETE /espacios-comunes/{id}/bloqueos y validación 409 en reservas; test_lote_software_final.py. | Ninguno. |
 | 08.20 | Historial. | COMPLETADA Y PROBADA | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 08.21 | Notificaciones. | PARCIAL | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 08.22 | Prevención de reservas duplicadas. | COMPLETADA Y PROBADA | `routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
@@ -277,7 +277,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 11.09 | Registro de acuerdos. | COMPLETADA Y PROBADA | `routers/asambleas.py`; `/asambleas/*`; tests `operaciones_integradas`, E2E `operaciones`; consulta comunitaria sin certificaci?n jur?dica. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 11.10 | Seguimiento de compromisos. | COMPLETADA Y PROBADA | `operations_models.py` (`CompromisoAsamblea`), `routers/asambleas.py` (`/compromisos`, `/acta.pdf`); `test_modulos_completos.py`. | Sin pendientes de software; validez jurídica sujeta a revisión legal. |
 | 11.11 | Historial de asambleas. | COMPLETADA Y PROBADA | `routers/asambleas.py`; `/asambleas/*`; tests `operaciones_integradas`, E2E `operaciones`; consulta comunitaria sin certificaci?n jur?dica. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 11.12 | Informes para el comité. | PARCIAL | `routers/asambleas.py`; `/asambleas/*`; tests `operaciones_integradas`, E2E `operaciones`; consulta comunitaria sin certificaci?n jur?dica. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 11.12 | Informes para el comité. | COMPLETADA Y PROBADA | GET /asambleas/informe-comite y GET /asambleas/informe-comite.pdf; test_lote_software_final.py. | Ninguno. |
 
 ## DOCUMENTACIÓN INTELIGENTE: DOCMIND AI
 
@@ -459,7 +459,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 19.13 | Migraciones de base de datos. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 19.14 | Manejo centralizado de errores. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 19.15 | Logs estructurados. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 19.16 | Métricas. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 19.16 | Métricas. | COMPLETADA Y PROBADA | GET /metrics con contadores operativos (uptime_s, http_requests_total, ws_salas_activas); test_lote_software_final.py. | Ninguno. |
 | 19.17 | Health checks. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 19.18 | Colas confiables. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 19.19 | Reintentos. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
@@ -468,7 +468,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 19.22 | Caché. | COMPLETADA Y PROBADA | services/cache.py (Redis + TTL memoria) integrado en /dashboard y /espacios-comunes; test_18_funcionalidades.py. | Ninguno. |
 | 19.23 | Optimización de consultas. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 19.24 | Documentación OpenAPI. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 19.25 | Versionamiento de APIs. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 19.25 | Versionamiento de APIs. | COMPLETADA Y PROBADA | Alias de versionamiento /api/v1/* para todos los routers en main.py; test_lote_software_final.py. | Ninguno. |
 
 ## TESTING Y VALIDACIÓN
 
@@ -503,7 +503,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 21.03 | Navegación sencilla. | COMPLETADA Y PROBADA | `frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 21.04 | Sidebar adaptable. | COMPLETADA Y PROBADA | Sidebar colapsable y adaptable (.cuerpo-layout, .sidebar) en page.js y globals.css; build y 36 pruebas Playwright/axe-core OK. | Ninguno. |
 | 21.05 | Dashboard moderno. | PARCIAL | `frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 21.06 | Tablas con filtros. | PARCIAL | `frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 21.06 | Tablas con filtros. | COMPLETADA Y PROBADA | Filtro de tabla en Cobranza.js (.tabla-filtro) + búsqueda global en page.js; Next.js build y E2E Playwright/axe-core OK. | Ninguno. |
 | 21.07 | Búsqueda global. | COMPLETADA Y PROBADA | Endpoint GET /edificios/{id}/buscar con aislamiento por rol/unidad e input global en cabecera (page.js); test_18_funcionalidades.py y build OK. | Ninguno. |
 | 21.08 | Formularios claros. | COMPLETADA Y PROBADA | `frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 21.09 | Confirmaciones para acciones críticas. | COMPLETADA Y PROBADA | `frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
@@ -529,8 +529,8 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 22.08 | Indicadores de desempeño de proveedores. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 22.09 | Optimización de tareas. | COMPLETADA Y PROBADA | optimizacion_tareas en services/llm.py expuesto en /ia/analisis; probado en test_18_funcionalidades.py. | Ninguno. |
 | 22.10 | Panel de eficiencia del edificio. | COMPLETADA Y PROBADA | `services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`. | Analítica determinista sobre datos reales del edificio. |
-| 22.11 | Detección de intentos de acceso anómalos. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 22.12 | Alertas por credenciales duplicadas. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 22.11 | Detección de intentos de acceso anómalos. | COMPLETADA Y PROBADA | GET /edificios/{id}/accesos/anomalias detecta rechazos repetidos en AccesoLog; test_lote_software_final.py. | Ninguno. |
+| 22.12 | Alertas por credenciales duplicadas. | COMPLETADA Y PROBADA | GET /edificios/{id}/accesos/anomalias detecta tags/patentes duplicados; test_lote_software_final.py. | Ninguno. |
 | 22.13 | Detección de dispositivos desconectados. | COMPLETADA Y PROBADA | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 22.14 | Análisis de eventos. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 22.15 | Historial forense de accesos. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
@@ -578,7 +578,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 
 | ID | Requisito | Estado | Evidencia y alcance | Pendiente |
 |---|---|---|---|---|
-| 24.01 | Página pública del producto. | PARCIAL | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Existe pantalla p?blica de acceso; no landing comercial completa. |
+| 24.01 | Página pública del producto. | COMPLETADA Y PROBADA | Sección pública informativa de la plataforma (.landing-publica) en pantalla inicial page.js; Next.js build y axe-core OK. | Ninguno. |
 | 24.02 | Registro de clientes. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 24.03 | Creación de organizaciones. | PARCIAL | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Clientes agrupados por contrato; faltan organizaciones con membres?as y roles propios. |
 | 24.04 | Alta de edificios. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |

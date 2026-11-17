@@ -817,3 +817,62 @@ def calendario_comunitario(edificio_id: str, user: User, db: Session = Depends(g
         eventos.append({"tipo": "reserva", "id": r.id, "titulo": f"Reserva espacio #{r.espacio_id}", "fecha": r.desde.isoformat(), "estado": r.estado})
     eventos.sort(key=lambda x: x["fecha"])
     return {"total": len(eventos), "eventos": eventos}
+
+
+@router.get("/edificios/{edificio_id}/estructura")
+def estructura_edificio(edificio_id: str, user: User, db: Session = Depends(get_db)):
+    """Devuelve torres, pisos y unidades agrupadas del edificio (04.02)."""
+    edificio(db, user, edificio_id)
+    unidades = db.scalars(select(Unidad).where(Unidad.edificio_id == edificio_id).order_by(Unidad.numero)).all()
+    torres = sorted({u.torre for u in unidades if u.torre})
+    pisos = sorted({u.piso for u in unidades if u.piso is not None})
+    return {
+        "torres": torres,
+        "pisos": pisos,
+        "unidades": [{"id": u.id, "numero": u.numero, "torre": u.torre or "", "piso": u.piso} for u in unidades],
+    }
+
+
+@router.patch("/edificios/{edificio_id}/unidades/{unidad_id}/ubicacion")
+def actualizar_ubicacion_unidad(edificio_id: str, unidad_id: int, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Asigna torre y piso explícitos a una unidad (04.02)."""
+    edificio(db, user, edificio_id, True)
+    u = recurso(db, Unidad, edificio_id, unidad_id)
+    if "torre" in body:
+        u.torre = str(body["torre"] or "").strip()[:40]
+    if "piso" in body:
+        u.piso = int(body["piso"]) if body["piso"] is not None else None
+    auditar(db, user, edificio_id, "unidad.ubicacion", u.id, torre=u.torre, piso=u.piso)
+    db.commit()
+    return {"id": u.id, "numero": u.numero, "torre": u.torre, "piso": u.piso}
+
+
+@router.get("/edificios/{edificio_id}/accesos/anomalias")
+def detectar_anomalias_acceso(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Detecta intentos repetidos de acceso rechazado (22.11) y credenciales/tags duplicados (22.12)."""
+    from collections import Counter
+    from ..models import AccesoLog, Tag, Vehiculo
+    edificio(db, user, edificio_id)
+    rechazos = db.scalars(select(AccesoLog).where(
+        AccesoLog.edificio_id == edificio_id, AccesoLog.permitido.is_(False),
+    ).order_by(AccesoLog.id.desc()).limit(500)).all()
+    conteo_rechazos = Counter((a.token, a.punto) for a in rechazos)
+    intentos_anomalos = [
+        {"token": tok, "punto": pto, "rechazos": n}
+        for (tok, pto), n in conteo_rechazos.items()
+        if n >= 3
+    ]
+
+    tags = db.scalars(select(Tag).where(Tag.edificio_id == edificio_id, Tag.estado == "activo")).all()
+    conteo_tags = Counter((t.uid or "").upper() for t in tags if t.uid)
+    vehiculos = db.scalars(select(Vehiculo).where(Vehiculo.edificio_id == edificio_id, Vehiculo.activo.is_(True))).all()
+    conteo_patentes = Counter((v.patente or "").upper() for v in vehiculos if v.patente)
+    credenciales_duplicadas = [
+        {"tipo": "tag", "valor": k, "cantidad": v} for k, v in conteo_tags.items() if v > 1
+    ] + [
+        {"tipo": "patente", "valor": k, "cantidad": v} for k, v in conteo_patentes.items() if v > 1
+    ]
+    return {
+        "intentos_anomalos": intentos_anomalos,
+        "credenciales_duplicadas": credenciales_duplicadas,
+    }
