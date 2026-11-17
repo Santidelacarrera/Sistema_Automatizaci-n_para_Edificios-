@@ -479,3 +479,96 @@ def comunicado_por_torre(edificio_id: str, body: dict, user: Admin, db: Session 
         ))
     db.commit()
     return {"id": com.id, "torre": torre, "unidades": len(uids), "notificados": len(residentes)}
+
+
+@router.get("/espacios-comunes/estadisticas")
+def estadisticas_espacios(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Estadísticas de uso, cancelaciones y recaudación de espacios comunes (22.23)."""
+    ed = _ed(db, user, edificio_id)
+    espacios = db.scalars(select(EspacioComun).where(EspacioComun.edificio_id == ed.id).order_by(EspacioComun.nombre)).all()
+    reservas = db.scalars(select(ReservaEspacio).where(ReservaEspacio.edificio_id == ed.id)).all()
+    salida = []
+    for esp in espacios:
+        rel = [r for r in reservas if r.espacio_id == esp.id]
+        confirmadas = [r for r in rel if r.estado == "confirmada"]
+        canceladas = [r for r in rel if r.estado == "cancelada"]
+        penalizaciones = sum(float(r.penalizacion or 0) for r in rel)
+        recaudado = len(confirmadas) * float(esp.tarifa or 0) + penalizaciones
+        salida.append({
+            "espacio_id": esp.id,
+            "nombre": esp.nombre,
+            "total_reservas": len(rel),
+            "confirmadas": len(confirmadas),
+            "canceladas": len(canceladas),
+            "penalizaciones": round(penalizaciones, 2),
+            "recaudacion_estimada": round(recaudado, 2),
+        })
+    return salida
+
+
+@router.post("/reservas-espacio/{reserva_id}/resolver")
+def resolver_reserva(edificio_id: str, reserva_id: int, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Aprueba o rechaza una reserva de espacio común (08.14)."""
+    from ..operations_models import Notificacion
+    ed = _ed(db, user, edificio_id)
+    r = db.get(ReservaEspacio, reserva_id)
+    if not r or r.edificio_id != ed.id:
+        raise HTTPException(404, "Reserva no existe")
+    decision = str(body.get("decision") or "").strip().lower()
+    if decision not in ("aprobada", "rechazada", "confirmada"):
+        raise HTTPException(422, "decision debe ser 'aprobada', 'confirmada' o 'rechazada'")
+    r.estado = "confirmada" if decision in ("aprobada", "confirmada") else "rechazada"
+    motivo = str(body.get("motivo") or "").strip()[:160]
+    for res in db.scalars(select(Residente).where(Residente.edificio_id == ed.id, Residente.unidad_id == r.unidad_id, Residente.activo.is_(True))).all():
+        db.add(Notificacion(
+            edificio_id=ed.id, residente_id=res.id, clave=f"reserva:{r.id}:{r.estado}",
+            titulo=f"Reserva {r.estado}", texto=motivo or f"Su reserva #{r.id} pasó a estado {r.estado}.", canal="app",
+        ))
+    db.commit()
+    return {"id": r.id, "estado": r.estado}
+
+
+@router.get("/espacios-comunes/{espacio_id}/bloqueos")
+def listar_bloqueos_espacio(edificio_id: str, espacio_id: int, user: User, db: Session = Depends(get_db)):
+    """Lista bloqueos de mantenimiento de un espacio común (08.19)."""
+    from ..operations_models import BloqueoEspacio
+    ed = _ed(db, user, edificio_id)
+    rows = db.scalars(select(BloqueoEspacio).where(
+        BloqueoEspacio.edificio_id == ed.id, BloqueoEspacio.espacio_id == espacio_id,
+    ).order_by(BloqueoEspacio.desde.asc())).all()
+    return [{"id": b.id, "espacio_id": b.espacio_id, "desde": b.desde.isoformat(),
+             "hasta": b.hasta.isoformat(), "motivo": b.motivo} for b in rows]
+
+
+@router.post("/espacios-comunes/{espacio_id}/bloqueos", status_code=201)
+def crear_bloqueo_espacio(edificio_id: str, espacio_id: int, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Bloquea un espacio común por mantenimiento en un rango horario (08.19)."""
+    from ..operations_models import BloqueoEspacio
+    ed = _ed(db, user, edificio_id)
+    esp = db.get(EspacioComun, espacio_id)
+    if not esp or esp.edificio_id != ed.id:
+        raise HTTPException(404, "Espacio no existe")
+    try:
+        desde = datetime.fromisoformat(str(body.get("desde")))
+        hasta = datetime.fromisoformat(str(body.get("hasta")))
+    except Exception:
+        raise HTTPException(422, "Fechas desde/hasta inválidas (use ISO 8601)")
+    if hasta <= desde:
+        raise HTTPException(422, "Rango horario inválido")
+    motivo = str(body.get("motivo") or "Mantenimiento programado").strip()[:180]
+    b = BloqueoEspacio(edificio_id=ed.id, espacio_id=esp.id, desde=desde, hasta=hasta, motivo=motivo, creado_por=user.residente_id)
+    db.add(b)
+    db.commit()
+    return {"id": b.id, "espacio_id": b.espacio_id, "desde": b.desde.isoformat(), "hasta": b.hasta.isoformat(), "motivo": b.motivo}
+
+
+@router.delete("/espacios-comunes/bloqueos/{bloqueo_id}")
+def eliminar_bloqueo_espacio(edificio_id: str, bloqueo_id: int, user: Admin, db: Session = Depends(get_db)):
+    from ..operations_models import BloqueoEspacio
+    ed = _ed(db, user, edificio_id)
+    b = db.get(BloqueoEspacio, bloqueo_id)
+    if not b or b.edificio_id != ed.id:
+        raise HTTPException(404, "Bloqueo no existe")
+    db.delete(b)
+    db.commit()
+    return {"id": bloqueo_id, "eliminado": True}

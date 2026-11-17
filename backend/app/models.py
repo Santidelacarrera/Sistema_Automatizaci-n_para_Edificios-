@@ -70,6 +70,7 @@ class Unidad(Base):
     codigo_cobro: Mapped[str] = mapped_column(String(30), unique=True)
     estacionamientos: Mapped[int] = mapped_column(Integer, default=0)
     torre: Mapped[str] = mapped_column(String(40), default="", server_default="")
+    piso: Mapped[int | None] = mapped_column(Integer, nullable=True)
     saldo_favor: Mapped[float] = mapped_column(Numeric(14, 2), default=0, server_default="0")
     residentes: Mapped[list["Residente"]] = relationship(back_populates="unidad")
 

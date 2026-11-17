@@ -26,6 +26,8 @@ export default function Cobranza({ cob, api, onChange }) {
   const [extra, setExtra] = useState("");
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [filtroDepto, setFiltroDepto] = useState("");
+  const filtrados = cob.morosos.filter((m) => !filtroDepto.trim() || String(m.numero).toLowerCase().includes(filtroDepto.trim().toLowerCase()) || String(m.codigo_cobro || "").toLowerCase().includes(filtroDepto.trim().toLowerCase()));
   const toggle = (id) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const todos = sel.size === cob.morosos.length && sel.size > 0;
   const enviar = async () => {
@@ -45,12 +47,15 @@ export default function Cobranza({ cob, api, onChange }) {
       </header>
       {cob.morosos.length === 0 ? <p className="vacio">Nadie tiene saldo pendiente.</p> : (
         <>
+          <div className="tabla-filtro">
+            <label>Filtrar tabla<input type="search" value={filtroDepto} onChange={(e) => setFiltroDepto(e.target.value)} placeholder="Depto o código…" /></label>
+          </div>
           <table className="tabla">
             <thead><tr>
-              <th><input type="checkbox" aria-label="Seleccionar todos" checked={todos} onChange={() => setSel(todos ? new Set() : new Set(cob.morosos.map((m) => m.unidad_id)))} /></th>
+              <th><input type="checkbox" aria-label="Seleccionar todos" checked={todos} onChange={() => setSel(todos ? new Set() : new Set(filtrados.map((m) => m.unidad_id)))} /></th>
               <th>Depto</th><th className="der">Saldo</th><th className="der">Atraso</th><th>Código de pago</th>
             </tr></thead>
-            <tbody>{cob.morosos.map((m) => (
+            <tbody>{filtrados.map((m) => (
               <tr key={m.unidad_id} className={m.dias_atraso > 60 ? "grave" : ""}>
                 <td><input type="checkbox" aria-label={`Seleccionar ${m.numero}`} checked={sel.has(m.unidad_id)} onChange={() => toggle(m.unidad_id)} /></td>
                 <td className="n">{m.numero}</td><td className="der">{clp(m.deuda)}</td>

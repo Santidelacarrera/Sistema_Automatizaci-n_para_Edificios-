@@ -61,6 +61,14 @@ function Login({ onOk }) {
         {err && <p role="alert" className="aviso err">{err}</p>}
         <button type="button" className="btn sec" onClick={() => onOk(demoSession())}>Ver con datos de ejemplo</button>
       </form>
+      <section className="landing-publica" aria-label="Información de la plataforma">
+        <h2>Plataforma integral de administración y automatización de edificios</h2>
+        <ul>
+          <li><strong>Finanzas y gastos comunes:</strong> prorrateo automático, conciliación bancaria, multas, fondo de reserva y reportes PDF.</li>
+          <li><strong>Portería y control de acceso:</strong> pases QR, visitas recurrentes, encomiendas, proveedores/delivery y laboratorio IoT.</li>
+          <li><strong>Comunidad y gobernanza:</strong> reservas con garantías, asambleas con actas PDF, encuestas y analítica asistida.</li>
+        </ul>
+      </section>
     </main>
   );
 }

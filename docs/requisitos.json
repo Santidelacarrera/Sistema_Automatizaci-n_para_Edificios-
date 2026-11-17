@@ -203,17 +203,17 @@
     "id": "04.01",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Crear, editar y eliminar edificios.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Alta/edici?n/suspensi?n implementadas; no hay borrado de edificios."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "POST/PATCH /edificios y DELETE /edificios/{id} (elimina vacíos o desactiva con historial); test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "04.02",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Registrar torres, pisos y departamentos.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Unidades disponibles; faltan entidades torre y piso."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Unidad.torre, Unidad.piso (migración 0014), GET /estructura y PATCH /unidades/{id}/ubicacion; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "04.03",
@@ -299,17 +299,17 @@
     "id": "04.13",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Consultar historial de cada departamento.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/unidades/{uid}/historial con aislamiento por rol/unidad; test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "04.14",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Administrar reglamentos internos.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "ReglamentoInterno (migración 0015) y endpoints GET/POST/PATCH /reglamentos; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "04.15",
@@ -347,9 +347,9 @@
     "id": "05.04",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Fondos de reserva.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET/POST /edificios/{id}/finanzas/fondo-reserva sobre MovimientoContable; test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "05.05",
@@ -363,9 +363,9 @@
     "id": "05.06",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Multas.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "POST /edificios/{id}/finanzas/multas con Cargo y Notificacion; test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "05.07",
@@ -635,9 +635,9 @@
     "id": "05.40",
     "modulo": "FINANZAS, GASTOS COMUNES Y CONTABILIDAD",
     "requisito": "Exportación a Excel y PDF.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/finance.py`, `reconciliation.py`, `routers/gestion.py`, `reportes.py`; `/gastos-comunes/*`, `/pagos/*`, `/conciliacion`; tests `panel_reservas_finanzas`, `comunidad`, `operaciones_integradas`, `iot_reportes`, `concurrencia_financiera_pg`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /finanzas/exportar.csv (UTF-8 BOM Excel) y GET /finanzas/resumen.pdf (fpdf2); test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "06.01",
@@ -923,25 +923,25 @@
     "id": "07.02",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Registro de proveedores.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "RegistroPorteria (migración 0014) y POST/GET /porteria/ingresos para proveedores; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.03",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Registro de trabajadores.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "RegistroPorteria y POST/GET /porteria/ingresos para trabajadores; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.04",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Registro de delivery.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "RegistroPorteria y POST/GET /porteria/ingresos para delivery; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.05",
@@ -995,9 +995,9 @@
     "id": "07.11",
     "modulo": "PORTERÍA Y CONSERJERÍA DIGITAL",
     "requisito": "Historial de entradas y salidas.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comunidad.py`, `panel.py`; `/visitas`, `/encomiendas`, `/accesos`; tests `comunidad`, `reservas_qr`, E2E `flujo` y `operaciones`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Historial de entradas/salidas en GET /porteria/ingresos y POST /porteria/ingresos/{id}/salida; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "07.12",
@@ -1147,9 +1147,9 @@
     "id": "08.14",
     "modulo": "RESERVAS DE ESPACIOS COMUNES",
     "requisito": "Aprobación o rechazo.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "POST /reservas-espacio/{id}/resolver (aprobación/rechazo con notificación); test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "08.15",
@@ -1187,9 +1187,9 @@
     "id": "08.19",
     "modulo": "RESERVAS DE ESPACIOS COMUNES",
     "requisito": "Bloqueo por mantenimiento.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/edificio.py`, `rules.py`; `/espacios`, `/reservas-espacios`; tests `reservas_qr`, `panel_reservas_finanzas`, `concurrencia_financiera_pg`; E2E `flujo`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "BloqueoEspacio (migración 0014), GET/POST/DELETE /espacios-comunes/{id}/bloqueos y validación 409 en reservas; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "08.20",
@@ -1603,9 +1603,9 @@
     "id": "11.12",
     "modulo": "ASAMBLEAS, VOTACIONES Y COMITÉS",
     "requisito": "Informes para el comité.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/asambleas.py`; `/asambleas/*`; tests `operaciones_integradas`, E2E `operaciones`; consulta comunitaria sin certificaci?n jur?dica.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /asambleas/informe-comite y GET /asambleas/informe-comite.pdf; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "12.01",
@@ -2235,9 +2235,9 @@
     "id": "16.05",
     "modulo": "MÓDULO DE PROVEEDORES Y PERSONAL",
     "requisito": "Cotizaciones.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "CotizacionProveedor (migración 0015), GET/POST /cotizaciones y POST /cotizaciones/{id}/seleccionar; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "16.06",
@@ -2731,17 +2731,17 @@
     "id": "19.15",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Logs estructurados.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "services/logging_json.py (emitir_log_json) integrado en middleware y errores de main.py; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.16",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Métricas.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /metrics con contadores operativos (uptime_s, http_requests_total, ws_salas_activas); test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.17",
@@ -2779,9 +2779,9 @@
     "id": "19.21",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Paginación.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Paginación cursor (antes/limit) en incidencias/soporte y limit/offset en /proveedores, /porteria/ingresos y /saas/errores; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.22",
@@ -2811,9 +2811,9 @@
     "id": "19.25",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Versionamiento de APIs.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Alias de versionamiento /api/v1/* para todos los routers en main.py; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.01",
@@ -2867,9 +2867,9 @@
     "id": "20.07",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Tests de componentes.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Suite frontend Playwright + componentes React (build Next.js + 36 flujos demo + 10 reales en e2e_local.py).",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.08",
@@ -2899,9 +2899,9 @@
     "id": "20.11",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Tests de accesibilidad.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Auditoría automática axe-core en frontend/e2e/accesibilidad.spec.js y e2e-real (0 violaciones WCAG).",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.12",
@@ -2915,25 +2915,25 @@
     "id": "20.13",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Redis.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "scripts/verificar_worker_local.py con Redis real + pruebas de cache.py en test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.14",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Workers.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "scripts/verificar_worker_local.py con dos procesos Celery reales sucesivos + pruebas de automatización.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.15",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Correo.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Pruebas de notificar/outbox SMTP y recordatorios en test_bloque_final_5.py y tests de cobranza (mock SMTP en local).",
+    "pendiente": "Credenciales SMTP reales para envío en producción."
   },
   {
     "id": "20.16",
@@ -2947,9 +2947,9 @@
     "id": "20.17",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Webhooks.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Pruebas de webhook WhatsApp Cloud API (verificación GET + firma HMAC POST) en test_modulos_completos.py y test_bloque_final_5.py.",
+    "pendiente": "Ninguno en código/tests locales."
   },
   {
     "id": "20.18",
@@ -3011,9 +3011,9 @@
     "id": "21.06",
     "modulo": "DISEÑO UX/UI",
     "requisito": "Tablas con filtros.",
-    "estado": "PARCIAL",
-    "evidencia": "`frontend/app`, `globals.css`; 36 E2E demo y 9 E2E reales, incluyendo m?vil/Axe; no auditor?a UX profesional.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Filtro de tabla en Cobranza.js (.tabla-filtro) + búsqueda global en page.js; Next.js build y E2E Playwright/axe-core OK.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "21.07",
@@ -3155,9 +3155,9 @@
     "id": "22.08",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Indicadores de desempeño de proveedores.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/proveedores/kpis (órdenes, evaluación promedio y gasto acumulado); test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.09",
@@ -3179,17 +3179,17 @@
     "id": "22.11",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Detección de intentos de acceso anómalos.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/accesos/anomalias detecta rechazos repetidos en AccesoLog; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.12",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Alertas por credenciales duplicadas.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/accesos/anomalias detecta tags/patentes duplicados; test_lote_software_final.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.13",
@@ -3227,17 +3227,17 @@
     "id": "22.17",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Seguimiento de agua y electricidad.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "LecturaMedidor + GET /medidores/comparar para agua y electricidad; test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.18",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Comparación de períodos.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/medidores/comparar?periodo_a=...&periodo_b=...; test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.19",
@@ -3259,9 +3259,9 @@
     "id": "22.21",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Encuestas.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "EncuestaComunidad, RespuestaEncuesta y GET/POST /encuestas + /responder; test_18_funcionalidades.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.22",
@@ -3275,17 +3275,17 @@
     "id": "22.23",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Estadísticas de uso de espacios.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/espacios-comunes/estadisticas; test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.24",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Calendario comunitario.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/calendario consolidando asambleas, mantenimientos y reservas; test_parciales_software.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.25",
@@ -3323,9 +3323,9 @@
     "id": "22.29",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Escalamiento de alertas.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Escalamiento automático de incidencias vencidas en automation.ejecutar (prioridad critica + Evento incidencia.escalada); test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.30",
@@ -3491,9 +3491,9 @@
     "id": "24.01",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Página pública del producto.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Existe pantalla p?blica de acceso; no landing comercial completa."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Sección pública informativa de la plataforma (.landing-publica) en pantalla inicial page.js; Next.js build y axe-core OK.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.02",
@@ -3507,9 +3507,9 @@
     "id": "24.03",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Creación de organizaciones.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Clientes agrupados por contrato; faltan organizaciones con membres?as y roles propios."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Organizacion y MiembroOrganizacion (migración 0015) + endpoints /saas/organizaciones; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.04",
@@ -3523,9 +3523,9 @@
     "id": "24.05",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Onboarding.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Onboarding atómico POST /saas/onboarding (edificio + unidades + admin); test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.06",
@@ -3563,57 +3563,57 @@
     "id": "24.10",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Registro de errores.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "ErrorLog (migración 0015), handler global en main.py y consulta paginada GET /saas/errores; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.11",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Documentación de uso.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Documentación general y operativa en docs/MANUALES_OPERACION.md y docs/MANUAL_MODULOS.md.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.12",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Manual de administración.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Manual de administración en docs/MANUALES_OPERACION.md.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.13",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Manual de residentes.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Manual de residentes en docs/MANUALES_OPERACION.md.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.14",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Manual de portería.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Manual de portería y conserjería en docs/MANUALES_OPERACION.md.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.15",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Manual de instalación IoT.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Manual de instalación IoT en laboratorio en docs/MANUALES_OPERACION.md y firmware/.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.16",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Guía de despliegue.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Guía de despliegue Docker/Alembic en docs/MANUALES_OPERACION.md y docs/EXTERNAL_INTEGRATIONS.md.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.17",

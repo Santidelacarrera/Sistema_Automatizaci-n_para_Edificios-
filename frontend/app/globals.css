@@ -964,3 +964,12 @@ div.aviso p { margin: 0 0 .35rem; }
   .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--borde); }
   .busqueda-global { order: 3; max-width: 100%; flex-basis: 100%; }
 }
+
+.landing-publica {
+  max-width: 440px; padding: 1.1rem 1.25rem; border: 1px solid var(--borde);
+  border-radius: 12px; background: var(--tarjeta); color: var(--texto-1); font-size: .9rem;
+}
+.landing-publica h2 { font-size: 1rem; margin: 0 0 .6rem; }
+.landing-publica ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .4rem; color: var(--texto-2); }
+.tabla-filtro { margin-bottom: .75rem; max-width: 280px; }
+.tabla-filtro label { display: grid; gap: .25rem; font-size: .85rem; color: var(--texto-2); }

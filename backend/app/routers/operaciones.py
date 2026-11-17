@@ -20,6 +20,7 @@ from ..validacion import rut_normalizar, rut_valido
 router = APIRouter(prefix="/edificios/{edificio_id}", tags=["operaciones"])
 User = Annotated[Principal, Depends(current_user)]
 Admin = Annotated[Principal, Depends(require_roles(Rol.admin))]
+Staff = Annotated[Principal, Depends(require_roles(Rol.admin, Rol.conserje))]
 
 
 def edificio(db, user, eid, escribir=False):
@@ -102,10 +103,11 @@ def entregas(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
 
 
 @router.get("/proveedores")
-def proveedores(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+def proveedores(edificio_id: str, user: Admin, limit: int = Query(100, ge=1, le=500),
+                offset: int = Query(0, ge=0), db: Session = Depends(get_db)):
     edificio(db, user, edificio_id)
     return [ficha(p, PROV_CAMPOS) for p in db.scalars(select(Proveedor).where(
-        Proveedor.edificio_id == edificio_id).order_by(Proveedor.nombre).limit(500))]
+        Proveedor.edificio_id == edificio_id).order_by(Proveedor.nombre).offset(offset).limit(limit))]
 
 
 @router.post("/proveedores", status_code=201)
@@ -723,3 +725,204 @@ def responder_encuesta(edificio_id: str, encuesta_id: int, body: dict, user: Use
     db.add(r)
     db.commit()
     return {"id": r.id, "encuesta_id": e.id, "puntaje": r.puntaje}
+
+
+@router.get("/porteria/ingresos")
+def listar_ingresos_porteria(edificio_id: str, user: User, tipo: str | None = None,
+                             limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
+                             db: Session = Depends(get_db)):
+    """Historial paginado de entradas y salidas en portería (07.02-07.04, 07.11, 19.21)."""
+    from ..operations_models import RegistroPorteria
+    edificio(db, user, edificio_id)
+    if user.rol == Rol.residente:
+        raise HTTPException(403, "Solo conserjería o administración puede consultar el libro de portería")
+    q = select(RegistroPorteria).where(RegistroPorteria.edificio_id == edificio_id)
+    if tipo:
+        q = q.where(RegistroPorteria.tipo == tipo)
+    rows = db.scalars(q.order_by(RegistroPorteria.id.desc()).offset(offset).limit(limit)).all()
+    return [ficha(r, "id tipo nombre empresa rut unidad_id motivo entrada salida registrado_por") for r in rows]
+
+
+@router.post("/porteria/ingresos", status_code=201)
+def registrar_ingreso_porteria(edificio_id: str, body: dict, user: Staff, db: Session = Depends(get_db)):
+    """Registra entrada en portería de proveedor, trabajador o delivery (07.02-07.04)."""
+    from ..operations_models import RegistroPorteria
+    edificio(db, user, edificio_id, True)
+    tipo = str(body.get("tipo") or "").strip().lower()
+    if tipo not in ("proveedor", "trabajador", "delivery"):
+        raise HTTPException(422, "tipo debe ser 'proveedor', 'trabajador' o 'delivery'")
+    nombre = str(body.get("nombre") or "").strip()
+    if len(nombre) < 2:
+        raise HTTPException(422, "Nombre requerido")
+    uid = body.get("unidad_id")
+    if uid is not None:
+        recurso(db, Unidad, edificio_id, int(uid))
+    reg = RegistroPorteria(
+        edificio_id=edificio_id,
+        tipo=tipo,
+        nombre=nombre[:120],
+        empresa=str(body.get("empresa") or "").strip()[:120],
+        rut=str(body.get("rut") or "").strip()[:20],
+        unidad_id=int(uid) if uid is not None else None,
+        motivo=str(body.get("motivo") or "").strip()[:200],
+        registrado_por=user.residente_id,
+    )
+    db.add(reg)
+    db.flush()
+    auditar(db, user, edificio_id, "porteria.ingreso", reg.id, clase=tipo, nombre=reg.nombre)
+    db.commit()
+    return ficha(reg, "id tipo nombre empresa rut unidad_id motivo entrada salida registrado_por")
+
+
+@router.post("/porteria/ingresos/{registro_id}/salida")
+def registrar_salida_porteria(edificio_id: str, registro_id: int, user: Staff, db: Session = Depends(get_db)):
+    """Registra salida de un ingreso en portería (07.11)."""
+    from ..operations_models import RegistroPorteria
+    edificio(db, user, edificio_id, True)
+    reg = recurso(db, RegistroPorteria, edificio_id, registro_id)
+    if reg.salida is not None:
+        raise HTTPException(409, "La salida ya fue registrada")
+    reg.salida = utcnow()
+    auditar(db, user, edificio_id, "porteria.salida", reg.id)
+    db.commit()
+    return ficha(reg, "id tipo nombre empresa rut unidad_id motivo entrada salida registrado_por")
+
+
+@router.get("/proveedores/kpis")
+def kpis_proveedores(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Indicadores de desempeño, evaluación y gasto por proveedor (22.08)."""
+    edificio(db, user, edificio_id)
+    provs = db.scalars(select(Proveedor).where(Proveedor.edificio_id == edificio_id).order_by(Proveedor.nombre)).all()
+    ordenes = db.scalars(select(OrdenTrabajo).where(OrdenTrabajo.edificio_id == edificio_id)).all()
+    salida = []
+    for p in provs:
+        rel = [o for o in ordenes if o.proveedor_id == p.id]
+        terminadas = [o for o in rel if o.estado == "terminada"]
+        evals = [o.evaluacion for o in terminadas if o.evaluacion is not None]
+        gasto = sum(float(o.presupuesto or 0) for o in terminadas)
+        salida.append({
+            "proveedor_id": p.id,
+            "nombre": p.nombre,
+            "servicio": p.servicio,
+            "activo": p.activo,
+            "ordenes_totales": len(rel),
+            "ordenes_terminadas": len(terminadas),
+            "evaluacion_promedio": round(sum(evals) / len(evals), 2) if evals else None,
+            "gasto_acumulado": round(gasto, 2),
+        })
+    return salida
+
+
+@router.get("/cotizaciones")
+def listar_cotizaciones(edificio_id: str, user: Admin, incidencia_id: int | None = None,
+                        limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
+                        db: Session = Depends(get_db)):
+    """Lista cotizaciones de proveedores paginadas (16.05, 19.21)."""
+    from ..operations_models import CotizacionProveedor
+    edificio(db, user, edificio_id)
+    q = select(CotizacionProveedor).where(CotizacionProveedor.edificio_id == edificio_id)
+    if incidencia_id is not None:
+        q = q.where(CotizacionProveedor.incidencia_id == incidencia_id)
+    return [ficha(c, "id incidencia_id proveedor_id monto plazo_dias detalle estado creado")
+            for c in db.scalars(q.order_by(CotizacionProveedor.monto.asc()).offset(offset).limit(limit))]
+
+
+@router.post("/cotizaciones", status_code=201)
+def crear_cotizacion(edificio_id: str, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Registra una cotización de proveedor para comparar antes de emitir orden de trabajo (16.05)."""
+    from decimal import Decimal
+    from ..operations_models import CotizacionProveedor
+    edificio(db, user, edificio_id, True)
+    inc_id = body.get("incidencia_id")
+    prov_id = body.get("proveedor_id")
+    if not inc_id or not prov_id:
+        raise HTTPException(422, "incidencia_id y proveedor_id requeridos")
+    recurso(db, Incidencia, edificio_id, int(inc_id))
+    recurso(db, Proveedor, edificio_id, int(prov_id))
+    try:
+        monto = Decimal(str(body.get("monto", 0)))
+    except Exception:
+        raise HTTPException(422, "Monto inválido")
+    if monto <= 0:
+        raise HTTPException(422, "El monto de cotización debe ser mayor a 0")
+    c = CotizacionProveedor(
+        edificio_id=edificio_id,
+        incidencia_id=int(inc_id),
+        proveedor_id=int(prov_id),
+        monto=monto,
+        plazo_dias=max(1, int(body.get("plazo_dias") or 7)),
+        detalle=str(body.get("detalle") or "")[:400],
+    )
+    db.add(c)
+    db.flush()
+    auditar(db, user, edificio_id, "cotizacion.creada", c.id, proveedor_id=c.proveedor_id, monto=float(c.monto))
+    db.commit()
+    return ficha(c, "id incidencia_id proveedor_id monto plazo_dias detalle estado creado")
+
+
+@router.post("/cotizaciones/{cotizacion_id}/seleccionar")
+def seleccionar_cotizacion(edificio_id: str, cotizacion_id: int, user: Admin, db: Session = Depends(get_db)):
+    """Selecciona la cotización ganadora y descarta las competidoras de la misma incidencia (16.05)."""
+    from ..operations_models import CotizacionProveedor
+    edificio(db, user, edificio_id, True)
+    c = recurso(db, CotizacionProveedor, edificio_id, cotizacion_id)
+    for otra in db.scalars(select(CotizacionProveedor).where(
+        CotizacionProveedor.edificio_id == edificio_id,
+        CotizacionProveedor.incidencia_id == c.incidencia_id,
+        CotizacionProveedor.id != c.id,
+    )).all():
+        otra.estado = "descartada"
+    c.estado = "seleccionada"
+    auditar(db, user, edificio_id, "cotizacion.seleccionada", c.id, incidencia_id=c.incidencia_id)
+    db.commit()
+    return ficha(c, "id incidencia_id proveedor_id monto plazo_dias detalle estado creado")
+
+
+@router.get("/reglamentos")
+def listar_reglamentos(edificio_id: str, user: User, db: Session = Depends(get_db)):
+    """Lista los reglamentos internos de la comunidad (04.14)."""
+    from ..operations_models import ReglamentoInterno
+    edificio(db, user, edificio_id)
+    rows = db.scalars(select(ReglamentoInterno).where(ReglamentoInterno.edificio_id == edificio_id)
+                      .order_by(ReglamentoInterno.id.desc())).all()
+    return [ficha(r, "id titulo version contenido vigente creado_por creado") for r in rows]
+
+
+@router.post("/reglamentos", status_code=201)
+def crear_reglamento(edificio_id: str, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Publica un reglamento interno versionado (04.14)."""
+    from ..operations_models import ReglamentoInterno
+    edificio(db, user, edificio_id, True)
+    titulo = str(body.get("titulo") or "").strip()
+    contenido = str(body.get("contenido") or "").strip()
+    if len(titulo) < 3 or len(contenido) < 10:
+        raise HTTPException(422, "Título y contenido del reglamento son obligatorios")
+    r = ReglamentoInterno(
+        edificio_id=edificio_id,
+        titulo=titulo[:160],
+        version=str(body.get("version") or "1.0")[:20],
+        contenido=contenido,
+        vigente=bool(body.get("vigente", True)),
+        creado_por=user.residente_id,
+    )
+    db.add(r)
+    db.flush()
+    auditar(db, user, edificio_id, "reglamento.creado", r.id, version=r.version)
+    db.commit()
+    return ficha(r, "id titulo version contenido vigente creado_por creado")
+
+
+@router.patch("/reglamentos/{reglamento_id}")
+def actualizar_reglamento(edificio_id: str, reglamento_id: int, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Actualiza vigencia o contenido de un reglamento interno (04.14)."""
+    from ..operations_models import ReglamentoInterno
+    edificio(db, user, edificio_id, True)
+    r = recurso(db, ReglamentoInterno, edificio_id, reglamento_id)
+    for k in ("titulo", "version", "contenido"):
+        if k in body and body[k]:
+            setattr(r, k, str(body[k]).strip())
+    if "vigente" in body:
+        r.vigente = bool(body["vigente"])
+    auditar(db, user, edificio_id, "reglamento.actualizado", r.id, vigente=r.vigente)
+    db.commit()
+    return ficha(r, "id titulo version contenido vigente creado_por creado")

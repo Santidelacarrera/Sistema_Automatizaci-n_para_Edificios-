@@ -163,6 +163,12 @@ def reservar_espacio(edificio_id: str, body: ReservaEspacioIn, user: User, db: S
         ReservaEspacio.desde < body.hasta, ReservaEspacio.hasta > body.desde))
     if choque:
         raise HTTPException(409, "Espacio ya reservado en ese horario")
+    from ..operations_models import BloqueoEspacio
+    bloqueado = db.scalar(select(func.count(BloqueoEspacio.id)).where(
+        BloqueoEspacio.espacio_id == esp.id,
+        BloqueoEspacio.desde < body.hasta, BloqueoEspacio.hasta > body.desde))
+    if bloqueado:
+        raise HTTPException(409, "Espacio bloqueado por mantenimiento en ese horario")
     mes_ini = body.desde.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     usos_mes = db.scalar(select(func.count(ReservaEspacio.id)).where(
         ReservaEspacio.unidad_id == u.id, ReservaEspacio.espacio_id == esp.id,

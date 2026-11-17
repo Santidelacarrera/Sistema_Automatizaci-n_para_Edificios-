@@ -642,3 +642,237 @@ def buscar_global(edificio_id: str, q: str = "", user: User = ..., db: Session =
         "documentos": documentos,
         "proveedores": proveedores,
     }
+
+
+@router.delete("/edificios/{edificio_id}")
+def eliminar_o_desactivar_edificio(edificio_id: str, user: Global, db: Session = Depends(get_db)):
+    """Elimina un edificio vacío o lo desactiva de forma segura si posee historial (04.01)."""
+    e = edificio(db, user, edificio_id, True)
+    tiene_unidades = db.scalar(select(func.count(Unidad.id)).where(Unidad.edificio_id == edificio_id)) or 0
+    tiene_cargos = db.scalar(select(func.count(Cargo.id)).where(Cargo.edificio_id == edificio_id)) or 0
+    if tiene_unidades == 0 and tiene_cargos == 0:
+        db.delete(e)
+        db.commit()
+        return {"id": edificio_id, "eliminado": True, "activo": False}
+    e.activo = False
+    auditar(db, user, edificio_id, "edificio.desactivado", edificio_id)
+    db.commit()
+    return {"id": edificio_id, "eliminado": False, "activo": False}
+
+
+@router.get("/edificios/{edificio_id}/unidades/{unidad_id}/historial")
+def historial_unidad(edificio_id: str, unidad_id: int, user: User, db: Session = Depends(get_db)):
+    """Historial consolidado de un departamento (04.13): cargos, pagos, incidencias, reservas, visitas y encomiendas."""
+    from ..models import ReservaEspacio, Visita
+    edificio(db, user, edificio_id)
+    u = recurso(db, Unidad, edificio_id, unidad_id)
+    if user.rol == Rol.residente:
+        yo = db.get(Residente, user.residente_id)
+        if not yo or yo.unidad_id != u.id:
+            raise HTTPException(403, "Solo puede consultar el historial de su propio departamento")
+    cargos = db.scalars(select(Cargo).where(Cargo.edificio_id == edificio_id, Cargo.unidad_id == u.id).order_by(Cargo.id.desc()).limit(50)).all()
+    pagos = db.scalars(select(Pago).where(Pago.edificio_id == edificio_id, Pago.unidad_id == u.id).order_by(Pago.id.desc()).limit(50)).all()
+    incidencias = db.scalars(select(Incidencia).where(Incidencia.edificio_id == edificio_id, Incidencia.unidad_id == u.id).order_by(Incidencia.id.desc()).limit(50)).all()
+    reservas = db.scalars(select(ReservaEspacio).where(ReservaEspacio.edificio_id == edificio_id, ReservaEspacio.unidad_id == u.id).order_by(ReservaEspacio.id.desc()).limit(50)).all()
+    visitas = db.scalars(select(Visita).where(Visita.edificio_id == edificio_id, Visita.unidad_id == u.id).order_by(Visita.id.desc()).limit(50)).all()
+    encomiendas = db.scalars(select(Encomienda).where(Encomienda.edificio_id == edificio_id, Encomienda.unidad_id == u.id).order_by(Encomienda.id.desc()).limit(50)).all()
+    return {
+        "unidad": {"id": u.id, "numero": u.numero, "torre": u.torre, "coeficiente": float(u.coeficiente), "saldo_favor": float(u.saldo_favor)},
+        "cargos": [{"id": c.id, "periodo": c.periodo, "concepto": c.concepto, "monto": float(c.monto), "saldo": float(c.saldo)} for c in cargos],
+        "pagos": [{"id": p.id, "fecha": p.fecha.isoformat(), "monto": float(p.monto), "conciliado": p.conciliado, "revertido": p.revertido} for p in pagos],
+        "incidencias": [{"id": i.id, "titulo": i.titulo, "estado": i.estado, "prioridad": i.prioridad} for i in incidencias],
+        "reservas": [{"id": r.id, "espacio_id": r.espacio_id, "desde": r.desde.isoformat(), "estado": r.estado} for r in reservas],
+        "visitas": [{"id": v.id, "nombre_visita": v.nombre_visita, "estado": v.estado.value} for v in visitas],
+        "encomiendas": [{"id": e.id, "destinatario": e.destinatario, "estado": e.estado} for e in encomiendas],
+    }
+
+
+@router.post("/edificios/{edificio_id}/finanzas/multas", status_code=201)
+def aplicar_multa(edificio_id: str, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Aplica una multa auditable a una unidad (05.06)."""
+    from datetime import timedelta
+    from ..operations_models import Notificacion
+    edificio(db, user, edificio_id, True)
+    uid = body.get("unidad_id")
+    if not uid:
+        raise HTTPException(422, "unidad_id requerido")
+    u = recurso(db, Unidad, edificio_id, int(uid))
+    try:
+        monto = Decimal(str(body.get("monto", 0)))
+    except Exception:
+        raise HTTPException(422, "Monto inválido")
+    if monto <= 0:
+        raise HTTPException(422, "El monto de la multa debe ser mayor a 0")
+    motivo = str(body.get("motivo") or "Infracción al reglamento interno").strip()[:180]
+    periodo = str(body.get("periodo") or hoy_local().strftime("%Y-%m")).strip()[:7]
+    cargo = Cargo(
+        edificio_id=edificio_id,
+        unidad_id=u.id,
+        periodo=periodo,
+        categoria="multa",
+        concepto=f"Multa: {motivo}",
+        monto=monto,
+        saldo=monto,
+        vencimiento=hoy_local() + timedelta(days=15),
+    )
+    db.add(cargo)
+    db.flush()
+    for res in db.scalars(select(Residente).where(Residente.edificio_id == edificio_id, Residente.unidad_id == u.id, Residente.activo.is_(True))).all():
+        db.add(Notificacion(edificio_id=edificio_id, residente_id=res.id, clave=f"multa:{cargo.id}", titulo="Multa aplicada", texto=cargo.concepto, canal="app"))
+    auditar(db, user, edificio_id, "finanzas.multa", cargo.id, unidad_id=u.id, monto=float(monto))
+    db.commit()
+    return {"id": cargo.id, "unidad_id": u.id, "categoria": cargo.categoria, "monto": float(cargo.monto), "concepto": cargo.concepto}
+
+
+@router.get("/edificios/{edificio_id}/finanzas/fondo-reserva")
+def ver_fondo_reserva(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Saldo y movimientos del fondo de reserva del edificio (05.04)."""
+    from ..operations_models import MovimientoContable
+    edificio(db, user, edificio_id)
+    movs = db.scalars(select(MovimientoContable).where(
+        MovimientoContable.edificio_id == edificio_id,
+        MovimientoContable.categoria == "fondo_reserva",
+        MovimientoContable.estado != "anulado",
+    ).order_by(MovimientoContable.id.desc())).all()
+    aportes = sum(float(m.monto) for m in movs if m.tipo == "ingreso")
+    egresos = sum(float(m.monto) for m in movs if m.tipo == "egreso")
+    return {
+        "saldo": round(aportes - egresos, 2),
+        "aportes": round(aportes, 2),
+        "egresos": round(egresos, 2),
+        "movimientos": [{"id": m.id, "fecha": m.fecha.isoformat(), "tipo": m.tipo, "monto": float(m.monto), "concepto": m.concepto} for m in movs],
+    }
+
+
+@router.post("/edificios/{edificio_id}/finanzas/fondo-reserva", status_code=201)
+def registrar_fondo_reserva(edificio_id: str, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Registra aporte o uso del fondo de reserva (05.04)."""
+    from ..operations_models import MovimientoContable
+    edificio(db, user, edificio_id, True)
+    tipo = str(body.get("tipo") or "ingreso").strip().lower()
+    if tipo not in ("ingreso", "egreso"):
+        raise HTTPException(422, "tipo debe ser 'ingreso' o 'egreso'")
+    try:
+        monto = Decimal(str(body.get("monto", 0)))
+    except Exception:
+        raise HTTPException(422, "Monto inválido")
+    if monto <= 0:
+        raise HTTPException(422, "Monto debe ser mayor a 0")
+    concepto = str(body.get("concepto") or "Movimiento fondo de reserva").strip()[:180]
+    hoy = hoy_local()
+    m = MovimientoContable(
+        edificio_id=edificio_id,
+        fecha=hoy,
+        periodo=hoy.strftime("%Y-%m"),
+        tipo=tipo,
+        categoria="fondo_reserva",
+        cuenta_debe="fondo_reserva" if tipo == "ingreso" else "gastos_reserva",
+        cuenta_haber="caja_banco" if tipo == "egreso" else "ingresos_reserva",
+        concepto=concepto,
+        monto=monto,
+        estado="pagado",
+        creado_por=user.residente_id,
+    )
+    db.add(m)
+    db.flush()
+    auditar(db, user, edificio_id, "fondo_reserva.movimiento", m.id, clase_mov=tipo, monto=float(monto))
+    db.commit()
+    return {"id": m.id, "tipo": m.tipo, "monto": float(m.monto), "concepto": m.concepto}
+
+
+@router.get("/edificios/{edificio_id}/medidores/comparar")
+def comparar_medidores(edificio_id: str, periodo_a: str, periodo_b: str, user: Admin, db: Session = Depends(get_db)):
+    """Seguimiento y comparación de consumos de agua y electricidad entre dos períodos (22.17, 22.18)."""
+    from ..models import LecturaMedidor
+    edificio(db, user, edificio_id)
+    lecturas = db.scalars(select(LecturaMedidor).where(
+        LecturaMedidor.edificio_id == edificio_id,
+        LecturaMedidor.periodo.in_([periodo_a, periodo_b]),
+    )).all()
+    resumen = {periodo_a: {}, periodo_b: {}}
+    for lec in lecturas:
+        bucket = resumen.setdefault(lec.periodo, {})
+        bucket[lec.servicio] = round(bucket.get(lec.servicio, 0.0) + float(lec.consumo or 0), 3)
+    tipos = sorted(set(resumen[periodo_a].keys()) | set(resumen[periodo_b].keys()))
+    comparativa = []
+    for t in tipos:
+        va = resumen[periodo_a].get(t, 0.0)
+        vb = resumen[periodo_b].get(t, 0.0)
+        comparativa.append({"tipo": t, "periodo_a": va, "periodo_b": vb, "variacion": round(vb - va, 3)})
+    return {"periodo_a": periodo_a, "periodo_b": periodo_b, "comparativa": comparativa}
+
+
+@router.get("/edificios/{edificio_id}/calendario")
+def calendario_comunitario(edificio_id: str, user: User, db: Session = Depends(get_db)):
+    """Calendario comunitario consolidado: asambleas, mantenimientos y reservas confirmadas (22.24)."""
+    from ..models import ReservaEspacio
+    from ..operations_models import Asamblea, PlanMantenimiento
+    edificio(db, user, edificio_id)
+    eventos = []
+    for a in db.scalars(select(Asamblea).where(Asamblea.edificio_id == edificio_id)).all():
+        eventos.append({"tipo": "asamblea", "id": a.id, "titulo": a.titulo, "fecha": a.fecha.isoformat(), "estado": a.estado})
+    for pm in db.scalars(select(PlanMantenimiento).where(PlanMantenimiento.edificio_id == edificio_id, PlanMantenimiento.activo.is_(True))).all():
+        eventos.append({"tipo": "mantenimiento", "id": pm.id, "titulo": pm.titulo, "fecha": pm.proxima_fecha.isoformat(), "estado": "programado"})
+    for r in db.scalars(select(ReservaEspacio).where(ReservaEspacio.edificio_id == edificio_id, ReservaEspacio.estado == "confirmada")).all():
+        eventos.append({"tipo": "reserva", "id": r.id, "titulo": f"Reserva espacio #{r.espacio_id}", "fecha": r.desde.isoformat(), "estado": r.estado})
+    eventos.sort(key=lambda x: x["fecha"])
+    return {"total": len(eventos), "eventos": eventos}
+
+
+@router.get("/edificios/{edificio_id}/estructura")
+def estructura_edificio(edificio_id: str, user: User, db: Session = Depends(get_db)):
+    """Devuelve torres, pisos y unidades agrupadas del edificio (04.02)."""
+    edificio(db, user, edificio_id)
+    unidades = db.scalars(select(Unidad).where(Unidad.edificio_id == edificio_id).order_by(Unidad.numero)).all()
+    torres = sorted({u.torre for u in unidades if u.torre})
+    pisos = sorted({u.piso for u in unidades if u.piso is not None})
+    return {
+        "torres": torres,
+        "pisos": pisos,
+        "unidades": [{"id": u.id, "numero": u.numero, "torre": u.torre or "", "piso": u.piso} for u in unidades],
+    }
+
+
+@router.patch("/edificios/{edificio_id}/unidades/{unidad_id}/ubicacion")
+def actualizar_ubicacion_unidad(edificio_id: str, unidad_id: int, body: dict, user: Admin, db: Session = Depends(get_db)):
+    """Asigna torre y piso explícitos a una unidad (04.02)."""
+    edificio(db, user, edificio_id, True)
+    u = recurso(db, Unidad, edificio_id, unidad_id)
+    if "torre" in body:
+        u.torre = str(body["torre"] or "").strip()[:40]
+    if "piso" in body:
+        u.piso = int(body["piso"]) if body["piso"] is not None else None
+    auditar(db, user, edificio_id, "unidad.ubicacion", u.id, torre=u.torre, piso=u.piso)
+    db.commit()
+    return {"id": u.id, "numero": u.numero, "torre": u.torre, "piso": u.piso}
+
+
+@router.get("/edificios/{edificio_id}/accesos/anomalias")
+def detectar_anomalias_acceso(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Detecta intentos repetidos de acceso rechazado (22.11) y credenciales/tags duplicados (22.12)."""
+    from collections import Counter
+    from ..models import AccesoLog, Tag, Vehiculo
+    edificio(db, user, edificio_id)
+    rechazos = db.scalars(select(AccesoLog).where(
+        AccesoLog.edificio_id == edificio_id, AccesoLog.permitido.is_(False),
+    ).order_by(AccesoLog.id.desc()).limit(500)).all()
+    conteo_rechazos = Counter((a.token, a.punto) for a in rechazos)
+    intentos_anomalos = [
+        {"token": tok, "punto": pto, "rechazos": n}
+        for (tok, pto), n in conteo_rechazos.items()
+        if n >= 3
+    ]
+
+    tags = db.scalars(select(Tag).where(Tag.edificio_id == edificio_id, Tag.estado == "activo")).all()
+    conteo_tags = Counter((t.uid or "").upper() for t in tags if t.uid)
+    vehiculos = db.scalars(select(Vehiculo).where(Vehiculo.edificio_id == edificio_id, Vehiculo.activo.is_(True))).all()
+    conteo_patentes = Counter((v.patente or "").upper() for v in vehiculos if v.patente)
+    credenciales_duplicadas = [
+        {"tipo": "tag", "valor": k, "cantidad": v} for k, v in conteo_tags.items() if v > 1
+    ] + [
+        {"tipo": "patente", "valor": k, "cantidad": v} for k, v in conteo_patentes.items() if v > 1
+    ]
+    return {
+        "intentos_anomalos": intentos_anomalos,
+        "credenciales_duplicadas": credenciales_duplicadas,
+    }

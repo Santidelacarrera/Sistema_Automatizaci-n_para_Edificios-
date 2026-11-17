@@ -229,6 +229,104 @@ def soporte(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
         TicketSoporte.edificio_id == edificio_id).order_by(TicketSoporte.id.desc()).limit(200))]
 
 
+@router.get("/saas/organizaciones")
+def listar_organizaciones(user: Global, db: Session = Depends(get_db)):
+    """Lista organizaciones SaaS y cantidad de miembros (24.03)."""
+    from ..operations_models import MiembroOrganizacion, Organizacion
+    orgs = db.scalars(select(Organizacion).order_by(Organizacion.id.desc())).all()
+    miembros = db.scalars(select(MiembroOrganizacion)).all()
+    conteo = {}
+    for m in miembros:
+        conteo[m.organizacion_id] = conteo.get(m.organizacion_id, 0) + 1
+    return [{"id": o.id, "nombre": o.nombre, "slug": o.slug, "activo": o.activo, "miembros": conteo.get(o.id, 0)} for o in orgs]
+
+
+@router.post("/saas/organizaciones", status_code=201)
+def crear_organizacion(body: dict, user: Global, db: Session = Depends(get_db)):
+    """Crea una organización SaaS con slug único (24.03)."""
+    from ..operations_models import Organizacion
+    nombre = str(body.get("nombre") or "").strip()
+    slug = str(body.get("slug") or "").strip().lower()
+    if len(nombre) < 2 or len(slug) < 2:
+        raise HTTPException(422, "nombre y slug son obligatorios")
+    if db.scalar(select(Organizacion).where(Organizacion.slug == slug)):
+        raise HTTPException(409, "Slug de organización ya existe")
+    org = Organizacion(nombre=nombre[:160], slug=slug[:60])
+    db.add(org)
+    db.commit()
+    return {"id": org.id, "nombre": org.nombre, "slug": org.slug, "activo": org.activo}
+
+
+@router.post("/saas/organizaciones/{org_id}/miembros", status_code=201)
+def agregar_miembro_organizacion(org_id: int, body: dict, user: Global, db: Session = Depends(get_db)):
+    """Agrega un miembro con rol interno a una organización SaaS (24.03)."""
+    from ..operations_models import MiembroOrganizacion, Organizacion
+    org = db.get(Organizacion, org_id)
+    if not org:
+        raise HTTPException(404, "Organización no existe")
+    email = str(body.get("email") or "").strip().lower()
+    rol = str(body.get("rol") or "gestor").strip().lower()
+    if "@" not in email or rol not in ("propietario", "gestor", "lectura"):
+        raise HTTPException(422, "Email o rol de organización inválido")
+    if db.scalar(select(MiembroOrganizacion).where(MiembroOrganizacion.organizacion_id == org.id, MiembroOrganizacion.email == email)):
+        raise HTTPException(409, "Miembro ya registrado en la organización")
+    m = MiembroOrganizacion(organizacion_id=org.id, email=email[:160], rol=rol)
+    db.add(m)
+    db.commit()
+    return {"id": m.id, "organizacion_id": m.organizacion_id, "email": m.email, "rol": m.rol}
+
+
+@router.post("/saas/onboarding", status_code=201)
+def onboarding_edificio(body: dict, user: Global, db: Session = Depends(get_db)):
+    """Onboarding atómico de nuevo edificio, unidades iniciales y administrador (24.05)."""
+    import secrets
+    from ..models import Residente, Rol, Unidad
+    from ..security import hash_clave_dispositivo, hash_password
+    ed_id = str(body.get("edificio_id") or "").strip().lower()
+    nombre_ed = str(body.get("nombre") or "").strip()
+    admin_email = str(body.get("admin_email") or "").strip().lower()
+    admin_nombre = str(body.get("admin_nombre") or "Administrador").strip()
+    admin_pw = str(body.get("admin_password") or "TempPass123!")
+    unidades_in = body.get("unidades") or ["101", "102"]
+    if len(ed_id) < 2 or len(nombre_ed) < 2 or "@" not in admin_email or not unidades_in:
+        raise HTTPException(422, "Datos de onboarding incompletos")
+    if db.get(Edificio, ed_id):
+        raise HTTPException(409, "Edificio ya existe")
+    ed = Edificio(id=ed_id[:40], nombre=nombre_ed[:120], device_api_key=hash_clave_dispositivo(secrets.token_urlsafe(24)))
+    db.add(ed)
+    db.flush()
+    coef = round(1.0 / len(unidades_in), 6)
+    primera_u = None
+    for num in unidades_in:
+        u = Unidad(edificio_id=ed.id, numero=str(num)[:20], coeficiente=coef, codigo_cobro=f"ONB-{ed.id[:8]}-{num}"[:30])
+        db.add(u)
+        db.flush()
+        if primera_u is None:
+            primera_u = u
+    adm = Residente(
+        edificio_id=ed.id, unidad_id=primera_u.id, nombre=admin_nombre[:120],
+        rut=str(body.get("admin_rut") or "11.111.111-1")[:20],
+        email=admin_email[:160], rol=Rol.admin, password_hash=hash_password(admin_pw),
+    )
+    db.add(adm)
+    db.commit()
+    return {"edificio_id": ed.id, "unidades_creadas": len(unidades_in), "admin_email": adm.email}
+
+
+@router.get("/saas/errores")
+def listar_errores_ops(user: Global, limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
+    """Consulta paginada del registro centralizado de errores (24.10, 19.21)."""
+    from ..operations_models import ErrorLog
+    rows = db.scalars(
+        select(ErrorLog).order_by(ErrorLog.id.desc()).offset(max(0, offset)).limit(min(200, max(1, limit)))
+    ).all()
+    return [
+        {"id": e.id, "metodo": e.metodo, "ruta": e.ruta, "mensaje": e.mensaje,
+         "creado": e.creado.isoformat() if e.creado else None}
+        for e in rows
+    ]
+
+
 @router.post("/edificios/{edificio_id}/soporte", status_code=201)
 def nuevo_ticket(edificio_id: str, body: TicketIn, user: Admin, db: Session = Depends(get_db)):
     edificio(db, user, edificio_id, True)
