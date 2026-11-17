@@ -54,3 +54,31 @@ def comprobante(edificio_id: str, pago_id: int, user: User, db: Session = Depend
                 ["Estado", "Revertido" if p.revertido else "Conciliado" if p.conciliado else "Pendiente"]],
                ["Acredita el registro en la plataforma; no sustituye el comprobante bancario ni una factura tributaria."])
     return archivo(data, "comprobante")
+
+
+@router.get("/finanzas/resumen.pdf")
+def resumen_finanzas_pdf(edificio_id: str, user: User, db: Session = Depends(get_db)):
+    """Exportación PDF del resumen financiero del edificio (05.40)."""
+    if user.rol not in (Rol.admin, Rol.superadmin):
+        raise HTTPException(403, "Solo administración puede exportar el resumen financiero")
+    ed = edificio(db, user, edificio_id)
+    cargos = db.scalars(select(Cargo).where(Cargo.edificio_id == edificio_id).order_by(Cargo.periodo.desc(), Cargo.id.desc()).limit(500)).all()
+    pagos = db.scalars(select(Pago).where(
+        Pago.edificio_id == edificio_id, Pago.conciliado.is_(True), Pago.revertido.is_(False), Pago.duplicado_de_id.is_(None),
+    )).all()
+    total_emitido = sum(float(c.monto) for c in cargos)
+    total_pendiente = sum(float(c.saldo) for c in cargos)
+    total_recaudado = sum(float(p.monto) for p in pagos)
+    filas = [
+        ["Cargos emitidos (recientes)", f"CLP {total_emitido:,.2f}"],
+        ["Saldo pendiente por cobrar", f"CLP {total_pendiente:,.2f}"],
+        ["Pagos conciliados acumulados", f"CLP {total_recaudado:,.2f}"],
+    ]
+    data = pdf(
+        "Resumen Financiero",
+        f"{ed.nombre} · Emitido {hoy_local()}",
+        ["Indicador", "Monto"],
+        filas,
+        ["Reporte financiero interno generado por la plataforma."],
+    )
+    return archivo(data, f"resumen-finanzas-{edificio_id}")

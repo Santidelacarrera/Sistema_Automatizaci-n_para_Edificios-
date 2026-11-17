@@ -479,3 +479,28 @@ def comunicado_por_torre(edificio_id: str, body: dict, user: Admin, db: Session 
         ))
     db.commit()
     return {"id": com.id, "torre": torre, "unidades": len(uids), "notificados": len(residentes)}
+
+
+@router.get("/espacios-comunes/estadisticas")
+def estadisticas_espacios(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Estadísticas de uso, cancelaciones y recaudación de espacios comunes (22.23)."""
+    ed = _ed(db, user, edificio_id)
+    espacios = db.scalars(select(EspacioComun).where(EspacioComun.edificio_id == ed.id).order_by(EspacioComun.nombre)).all()
+    reservas = db.scalars(select(ReservaEspacio).where(ReservaEspacio.edificio_id == ed.id)).all()
+    salida = []
+    for esp in espacios:
+        rel = [r for r in reservas if r.espacio_id == esp.id]
+        confirmadas = [r for r in rel if r.estado == "confirmada"]
+        canceladas = [r for r in rel if r.estado == "cancelada"]
+        penalizaciones = sum(float(r.penalizacion or 0) for r in rel)
+        recaudado = len(confirmadas) * float(esp.tarifa or 0) + penalizaciones
+        salida.append({
+            "espacio_id": esp.id,
+            "nombre": esp.nombre,
+            "total_reservas": len(rel),
+            "confirmadas": len(confirmadas),
+            "canceladas": len(canceladas),
+            "penalizaciones": round(penalizaciones, 2),
+            "recaudacion_estimada": round(recaudado, 2),
+        })
+    return salida
