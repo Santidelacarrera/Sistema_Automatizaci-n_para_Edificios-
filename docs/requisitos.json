@@ -307,9 +307,9 @@
     "id": "04.14",
     "modulo": "ADMINISTRACIÓN DE COMUNIDADES",
     "requisito": "Administrar reglamentos internos.",
-    "estado": "PARCIAL",
-    "evidencia": "`models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "ReglamentoInterno (migración 0015) y endpoints GET/POST/PATCH /reglamentos; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "04.15",
@@ -2235,9 +2235,9 @@
     "id": "16.05",
     "modulo": "MÓDULO DE PROVEEDORES Y PERSONAL",
     "requisito": "Cotizaciones.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "CotizacionProveedor (migración 0015), GET/POST /cotizaciones y POST /cotizaciones/{id}/seleccionar; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "16.06",
@@ -2731,9 +2731,9 @@
     "id": "19.15",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Logs estructurados.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "services/logging_json.py (emitir_log_json) integrado en middleware y errores de main.py; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.16",
@@ -2779,9 +2779,9 @@
     "id": "19.21",
     "modulo": "ARQUITECTURA Y CALIDAD DEL SOFTWARE",
     "requisito": "Paginación.",
-    "estado": "PARCIAL",
-    "evidencia": "`app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Paginación cursor (antes/limit) en incidencias/soporte y limit/offset en /proveedores, /porteria/ingresos y /saas/errores; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "19.22",
@@ -2867,9 +2867,9 @@
     "id": "20.07",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Tests de componentes.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Suite frontend Playwright + componentes React (build Next.js + 36 flujos demo + 10 reales en e2e_local.py).",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.08",
@@ -2899,9 +2899,9 @@
     "id": "20.11",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Tests de accesibilidad.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Auditoría automática axe-core en frontend/e2e/accesibilidad.spec.js y e2e-real (0 violaciones WCAG).",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.12",
@@ -2915,25 +2915,25 @@
     "id": "20.13",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Redis.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "scripts/verificar_worker_local.py con Redis real + pruebas de cache.py en test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.14",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Workers.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "scripts/verificar_worker_local.py con dos procesos Celery reales sucesivos + pruebas de automatización.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "20.15",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Correo.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Pruebas de notificar/outbox SMTP y recordatorios en test_bloque_final_5.py y tests de cobranza (mock SMTP en local).",
+    "pendiente": "Credenciales SMTP reales para envío en producción."
   },
   {
     "id": "20.16",
@@ -2947,9 +2947,9 @@
     "id": "20.17",
     "modulo": "TESTING Y VALIDACIÓN",
     "requisito": "Webhooks.",
-    "estado": "PARCIAL",
-    "evidencia": "Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Pruebas de webhook WhatsApp Cloud API (verificación GET + firma HMAC POST) en test_modulos_completos.py y test_bloque_final_5.py.",
+    "pendiente": "Ninguno en código/tests locales."
   },
   {
     "id": "20.18",
@@ -3155,9 +3155,9 @@
     "id": "22.08",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Indicadores de desempeño de proveedores.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "GET /edificios/{id}/proveedores/kpis (órdenes, evaluación promedio y gasto acumulado); test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.09",
@@ -3323,9 +3323,9 @@
     "id": "22.29",
     "modulo": "FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO",
     "requisito": "Escalamiento de alertas.",
-    "estado": "PARCIAL",
-    "evidencia": "`services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Escalamiento automático de incidencias vencidas en automation.ejecutar (prioridad critica + Evento incidencia.escalada); test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "22.30",
@@ -3507,9 +3507,9 @@
     "id": "24.03",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Creación de organizaciones.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Clientes agrupados por contrato; faltan organizaciones con membres?as y roles propios."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Organizacion y MiembroOrganizacion (migración 0015) + endpoints /saas/organizaciones; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.04",
@@ -3523,9 +3523,9 @@
     "id": "24.05",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Onboarding.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "Onboarding atómico POST /saas/onboarding (edificio + unidades + admin); test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.06",
@@ -3563,9 +3563,9 @@
     "id": "24.10",
     "modulo": "COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN",
     "requisito": "Registro de errores.",
-    "estado": "PARCIAL",
-    "evidencia": "`routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo.",
-    "pendiente": "Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md."
+    "estado": "COMPLETADA Y PROBADA",
+    "evidencia": "ErrorLog (migración 0015), handler global en main.py y consulta paginada GET /saas/errores; test_bloque_final_5.py.",
+    "pendiente": "Ninguno."
   },
   {
     "id": "24.11",

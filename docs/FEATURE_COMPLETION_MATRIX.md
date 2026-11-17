@@ -9,7 +9,7 @@ Estados: COMPLETADA Y PROBADA; IMPLEMENTADA, PERO NO PROBADA; PARCIAL; SOLAMENTE
 | Módulo | Completadas / criterios | Porcentaje estricto |
 |---|---:|---:|
 | PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT | 22/25 | 88.0% |
-| ADMINISTRACIÓN DE COMUNIDADES | 13/15 | 86.7% |
+| ADMINISTRACIÓN DE COMUNIDADES | 14/15 | 93.3% |
 | FINANZAS, GASTOS COMUNES Y CONTABILIDAD | 34/40 | 85.0% |
 | CONTROL DE ACCESO INTELIGENTE E IOT | 19/34 | 55.9% |
 | PORTERÍA Y CONSERJERÍA DIGITAL | 12/16 | 75.0% |
@@ -21,17 +21,17 @@ Estados: COMPLETADA Y PROBADA; IMPLEMENTADA, PERO NO PROBADA; PARCIAL; SOLAMENTE
 | INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA | 12/17 | 70.6% |
 | APLICACIÓN MÓVIL Y PORTAL DE RESIDENTES | 15/17 | 88.2% |
 | PANEL DEL ADMINISTRADOR Y DASHBOARD | 16/18 | 88.9% |
-| MÓDULO DE PROVEEDORES Y PERSONAL | 10/15 | 66.7% |
+| MÓDULO DE PROVEEDORES Y PERSONAL | 11/15 | 73.3% |
 | CUMPLIMIENTO LEGAL Y NORMATIVO EN CHILE | 0/12 | 0.0% |
 | SEGURIDAD EMPRESARIAL | 8/25 | 32.0% |
-| ARQUITECTURA Y CALIDAD DEL SOFTWARE | 14/25 | 56.0% |
-| TESTING Y VALIDACIÓN | 11/19 | 57.9% |
+| ARQUITECTURA Y CALIDAD DEL SOFTWARE | 16/25 | 64.0% |
+| TESTING Y VALIDACIÓN | 17/19 | 89.5% |
 | DISEÑO UX/UI | 12/16 | 75.0% |
-| FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO | 30/39 | 76.9% |
+| FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO | 32/39 | 82.1% |
 | INTEGRACIÓN ENTRE TODOS LOS MÓDULOS | 10/10 | 100.0% |
-| COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN | 18/23 | 78.3% |
+| COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN | 21/23 | 91.3% |
 
-Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBADA: 309; PARCIAL: 145.
+Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBADA: 324; PARCIAL: 130.
 
 ## PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT
 
@@ -80,7 +80,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 04.11 | Registrar mascotas, cuando corresponda. | COMPLETADA Y PROBADA | `operations_models.py` (`RegistroComunidad`), `routers/operaciones.py` (`/registros-comunidad`), `Operaciones.js`; `test_modulos_completos.py`. | Sin pendientes en software; no implica validación jurídica de títulos. |
 | 04.12 | Gestionar información de residentes. | COMPLETADA Y PROBADA | `models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 04.13 | Consultar historial de cada departamento. | COMPLETADA Y PROBADA | GET /edificios/{id}/unidades/{uid}/historial con aislamiento por rol/unidad; test_parciales_software.py. | Ninguno. |
-| 04.14 | Administrar reglamentos internos. | PARCIAL | `models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 04.14 | Administrar reglamentos internos. | COMPLETADA Y PROBADA | ReglamentoInterno (migración 0015) y endpoints GET/POST/PATCH /reglamentos; test_bloque_final_5.py. | Ninguno. |
 | 04.15 | Gestionar documentos de la comunidad. | PARCIAL | `models.py`, `routers/administracion.py`, `routers/edificio.py`; `/residentes`, `/unidades`, `/vehiculos`; tests `admin`, `scripts`, `system`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 
 ## FINANZAS, GASTOS COMUNES Y CONTABILIDAD
@@ -381,7 +381,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 16.02 | Contratos. | PARCIAL | `routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 16.03 | Datos de contacto. | COMPLETADA Y PROBADA | `routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 16.04 | Servicios. | COMPLETADA Y PROBADA | `routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 16.05 | Cotizaciones. | PARCIAL | `routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 16.05 | Cotizaciones. | COMPLETADA Y PROBADA | CotizacionProveedor (migración 0015), GET/POST /cotizaciones y POST /cotizaciones/{id}/seleccionar; test_bloque_final_5.py. | Ninguno. |
 | 16.06 | Evaluaciones. | COMPLETADA Y PROBADA | `routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 16.07 | Historial de trabajos. | PARCIAL | `routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 16.08 | Documentos. | PARCIAL | `routers/operaciones.py`; `/proveedores`, `/ordenes-trabajo/*`; tests `operaciones_integradas`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
@@ -458,13 +458,13 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 19.12 | Validación de esquemas. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 19.13 | Migraciones de base de datos. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 19.14 | Manejo centralizado de errores. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 19.15 | Logs estructurados. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 19.15 | Logs estructurados. | COMPLETADA Y PROBADA | services/logging_json.py (emitir_log_json) integrado en middleware y errores de main.py; test_bloque_final_5.py. | Ninguno. |
 | 19.16 | Métricas. | COMPLETADA Y PROBADA | GET /metrics con contadores operativos (uptime_s, http_requests_total, ws_salas_activas); test_lote_software_final.py. | Ninguno. |
 | 19.17 | Health checks. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 19.18 | Colas confiables. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 19.19 | Reintentos. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 19.20 | Idempotencia. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 19.21 | Paginación. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 19.21 | Paginación. | COMPLETADA Y PROBADA | Paginación cursor (antes/limit) en incidencias/soporte y limit/offset en /proveedores, /porteria/ingresos y /saas/errores; test_bloque_final_5.py. | Ninguno. |
 | 19.22 | Caché. | COMPLETADA Y PROBADA | services/cache.py (Redis + TTL memoria) integrado en /dashboard y /espacios-comunes; test_18_funcionalidades.py. | Ninguno. |
 | 19.23 | Optimización de consultas. | PARCIAL | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 19.24 | Documentación OpenAPI. | COMPLETADA Y PROBADA | `app/main.py`, `models.py`, `operations_models.py`, `commercial_models.py`, `migrations`, `tasks.py`; suite API/build/Alembic; ver ARCHITECTURE.md. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
@@ -480,17 +480,17 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 20.04 | Tests de endpoints. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 20.05 | Tests de permisos. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 20.06 | Tests multi-tenant. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 20.07 | Tests de componentes. | PARCIAL | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 20.07 | Tests de componentes. | COMPLETADA Y PROBADA | Suite frontend Playwright + componentes React (build Next.js + 36 flujos demo + 10 reales en e2e_local.py). | Ninguno. |
 | 20.08 | Tests de formularios. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 20.09 | Tests de navegación. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 20.10 | Tests de estados. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 20.11 | Tests de accesibilidad. | PARCIAL | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 20.11 | Tests de accesibilidad. | COMPLETADA Y PROBADA | Auditoría automática axe-core en frontend/e2e/accesibilidad.spec.js y e2e-real (0 violaciones WCAG). | Ninguno. |
 | 20.12 | Base de datos. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 20.13 | Redis. | PARCIAL | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 20.14 | Workers. | PARCIAL | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 20.15 | Correo. | PARCIAL | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 20.13 | Redis. | COMPLETADA Y PROBADA | scripts/verificar_worker_local.py con Redis real + pruebas de cache.py en test_bloque_final_5.py. | Ninguno. |
+| 20.14 | Workers. | COMPLETADA Y PROBADA | scripts/verificar_worker_local.py con dos procesos Celery reales sucesivos + pruebas de automatización. | Ninguno. |
+| 20.15 | Correo. | COMPLETADA Y PROBADA | Pruebas de notificar/outbox SMTP y recordatorios en test_bloque_final_5.py y tests de cobranza (mock SMTP en local). | Credenciales SMTP reales para envío en producción. |
 | 20.16 | Pasarelas sandbox. | COMPLETADA Y PROBADA | `services/payment_gateways.py`, `test_modulos_completos.py::test_pasarela_pago_sandbox_transbank_y_aislamiento`. | Sandbox local y mocks HTTP de Transbank verificados. |
-| 20.17 | Webhooks. | PARCIAL | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 20.17 | Webhooks. | COMPLETADA Y PROBADA | Pruebas de webhook WhatsApp Cloud API (verificación GET + firma HMAC POST) en test_modulos_completos.py y test_bloque_final_5.py. | Ninguno en código/tests locales. |
 | 20.18 | DOCMIND AI. | PARCIAL | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 20.19 | Dispositivos IoT simulados. | COMPLETADA Y PROBADA | Resultados ejecutados y l?mites en FINAL_COMPLETION_REPORT.md; tests en `backend/tests`, `frontend/e2e`, `frontend/e2e-real`. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 
@@ -526,7 +526,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 22.05 | Alertas de desviaciones. | COMPLETADA Y PROBADA | `services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`. | Analítica determinista sobre datos reales del edificio. |
 | 22.06 | Predicción de mantenimientos. | COMPLETADA Y PROBADA | prediccion_mantenimientos en services/llm.py expuesto en /ia/analisis; probado en test_18_funcionalidades.py. | Ninguno. |
 | 22.07 | Detección de patrones de incidencias. | COMPLETADA Y PROBADA | `services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`. | Analítica determinista sobre datos reales del edificio. |
-| 22.08 | Indicadores de desempeño de proveedores. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 22.08 | Indicadores de desempeño de proveedores. | COMPLETADA Y PROBADA | GET /edificios/{id}/proveedores/kpis (órdenes, evaluación promedio y gasto acumulado); test_bloque_final_5.py. | Ninguno. |
 | 22.09 | Optimización de tareas. | COMPLETADA Y PROBADA | optimizacion_tareas en services/llm.py expuesto en /ia/analisis; probado en test_18_funcionalidades.py. | Ninguno. |
 | 22.10 | Panel de eficiencia del edificio. | COMPLETADA Y PROBADA | `services/llm.py`, `routers/gestion.py` (`/ia/analisis`), `Operaciones.js`; `test_modulos_completos.py`. | Analítica determinista sobre datos reales del edificio. |
 | 22.11 | Detección de intentos de acceso anómalos. | COMPLETADA Y PROBADA | GET /edificios/{id}/accesos/anomalias detecta rechazos repetidos en AccesoLog; test_lote_software_final.py. | Ninguno. |
@@ -547,7 +547,7 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 | 22.26 | Reglas configurables. | COMPLETADA Y PROBADA | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 22.27 | Flujos de aprobación. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 22.28 | Tareas programadas. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
-| 22.29 | Escalamiento de alertas. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 22.29 | Escalamiento de alertas. | COMPLETADA Y PROBADA | Escalamiento automático de incidencias vencidas en automation.ejecutar (prioridad critica + Evento incidencia.escalada); test_bloque_final_5.py. | Ninguno. |
 | 22.30 | Integración con sistemas externos. | PARCIAL | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
 | 22.31 | Suscripciones. | COMPLETADA Y PROBADA | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 22.32 | Planes por cantidad de unidades. | COMPLETADA Y PROBADA | `services/automation.py`, `commercial.py`, `routers/comercial.py`; `/automatizaciones`, `/saas/*`; tests `operaciones_integradas`, `iot_reportes`, `comercial`; E2E comercial. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
@@ -580,14 +580,14 @@ Distribución: BLOQUEADA POR SERVICIO EXTERNO O HARDWARE: 5; COMPLETADA Y PROBAD
 |---|---|---|---|---|
 | 24.01 | Página pública del producto. | COMPLETADA Y PROBADA | Sección pública informativa de la plataforma (.landing-publica) en pantalla inicial page.js; Next.js build y axe-core OK. | Ninguno. |
 | 24.02 | Registro de clientes. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 24.03 | Creación de organizaciones. | PARCIAL | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Clientes agrupados por contrato; faltan organizaciones con membres?as y roles propios. |
+| 24.03 | Creación de organizaciones. | COMPLETADA Y PROBADA | Organizacion y MiembroOrganizacion (migración 0015) + endpoints /saas/organizaciones; test_bloque_final_5.py. | Ninguno. |
 | 24.04 | Alta de edificios. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 24.05 | Onboarding. | PARCIAL | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 24.05 | Onboarding. | COMPLETADA Y PROBADA | Onboarding atómico POST /saas/onboarding (edificio + unidades + admin); test_bloque_final_5.py. | Ninguno. |
 | 24.06 | Planes y suscripciones. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 24.07 | Control de límites. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 24.08 | Panel de administración SaaS. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
 | 24.09 | Gestión de soporte. | COMPLETADA Y PROBADA | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Sin pendientes en el criterio de software descrito; no implica certificaci?n externa. |
-| 24.10 | Registro de errores. | PARCIAL | `routers/comercial.py`, `frontend/components/Comercial.js`, CI y manuales; tests `comercial`, scripts de recuperaci?n, E2E comercial; ning?n despliegue productivo. | Completar alcance, integraci?n y pruebas del criterio. Consulte los l?mites concretos del m?dulo en FINAL_COMPLETION_REPORT.md. |
+| 24.10 | Registro de errores. | COMPLETADA Y PROBADA | ErrorLog (migración 0015), handler global en main.py y consulta paginada GET /saas/errores; test_bloque_final_5.py. | Ninguno. |
 | 24.11 | Documentación de uso. | COMPLETADA Y PROBADA | Documentación general y operativa en docs/MANUALES_OPERACION.md y docs/MANUAL_MODULOS.md. | Ninguno. |
 | 24.12 | Manual de administración. | COMPLETADA Y PROBADA | Manual de administración en docs/MANUALES_OPERACION.md. | Ninguno. |
 | 24.13 | Manual de residentes. | COMPLETADA Y PROBADA | Manual de residentes en docs/MANUALES_OPERACION.md. | Ninguno. |

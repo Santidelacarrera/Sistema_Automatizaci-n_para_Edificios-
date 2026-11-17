@@ -70,7 +70,11 @@ def ejecutar(db, edificio_id, hoy=None):
                           Incidencia.estado.not_in(["resuelta", "cerrada"]))
                           .order_by(Incidencia.id).limit(500)):
         if inc.prioridad == "critica" or (inc.vencimiento and inc.vencimiento < hoy):
+            if inc.vencimiento and inc.vencimiento < hoy and inc.prioridad == "alta":
+                inc.prioridad = "critica"
             avisar(admins, "Incidencia requiere atención", inc.titulo, f"inc:{inc.id}:escalar:{hoy}")
+            db.add(Evento(edificio_id=edificio_id, tipo="incidencia.escalada",
+                          payload={"recurso_id": inc.id, "prioridad": inc.prioridad}))
     dias = cfg.contratos_dias if cfg else 30
     for model, campo, prefijo in ((Proveedor, Proveedor.contrato_hasta, "contrato"), (Documento, Documento.vence, "documento")):
         for obj in db.scalars(select(model).where(model.edificio_id == edificio_id, campo >= hoy,

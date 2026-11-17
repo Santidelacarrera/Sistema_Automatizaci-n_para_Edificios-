@@ -442,3 +442,64 @@ class RegistroPorteria(Base):
     salida: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     registrado_por: Mapped[int] = mapped_column(ForeignKey("residentes.id"))
     creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class ErrorLog(Base):
+    """Registro centralizado de errores no controlados para diagnóstico operativo."""
+    __tablename__ = "errores_log"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ruta: Mapped[str] = mapped_column(String(200))
+    metodo: Mapped[str] = mapped_column(String(12))
+    edificio_id: Mapped[str] = mapped_column(String(40), default="")
+    mensaje: Mapped[str] = mapped_column(String(300))
+    detalle: Mapped[str] = mapped_column(Text, default="")
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class Organizacion(Base):
+    """Organización o grupo inmobiliario SaaS con membresías y roles propios."""
+    __tablename__ = "organizaciones"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nombre: Mapped[str] = mapped_column(String(160))
+    slug: Mapped[str] = mapped_column(String(60), unique=True, index=True)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class MiembroOrganizacion(Base):
+    """Miembro perteneciente a una organización SaaS con rol interno."""
+    __tablename__ = "miembros_organizacion"
+    __table_args__ = (UniqueConstraint("organizacion_id", "email"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organizacion_id: Mapped[int] = mapped_column(ForeignKey("organizaciones.id"), index=True)
+    email: Mapped[str] = mapped_column(String(160))
+    rol: Mapped[str] = mapped_column(String(30), default="gestor")  # propietario | gestor | lectura
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class CotizacionProveedor(Base):
+    """Cotización de proveedor asociada a una incidencia antes de emitir orden de trabajo."""
+    __tablename__ = "cotizaciones_proveedor"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    incidencia_id: Mapped[int] = mapped_column(ForeignKey("incidencias.id"), index=True)
+    proveedor_id: Mapped[int] = mapped_column(ForeignKey("proveedores.id"))
+    monto: Mapped[float] = mapped_column(Numeric(14, 2))
+    plazo_dias: Mapped[int] = mapped_column(Integer, default=7)
+    detalle: Mapped[str] = mapped_column(String(400), default="")
+    estado: Mapped[str] = mapped_column(String(20), default="pendiente")  # pendiente | seleccionada | descartada
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class ReglamentoInterno(Base):
+    """Reglamento interno versionado de la comunidad."""
+    __tablename__ = "reglamentos_internos"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    edificio_id: Mapped[str] = mapped_column(ForeignKey("edificios.id"), index=True)
+    titulo: Mapped[str] = mapped_column(String(160))
+    version: Mapped[str] = mapped_column(String(20), default="1.0")
+    contenido: Mapped[str] = mapped_column(Text)
+    vigente: Mapped[bool] = mapped_column(Boolean, default=True)
+    creado_por: Mapped[int] = mapped_column(ForeignKey("residentes.id"))
+    creado: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

@@ -10,7 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import handlers  # noqa: F401  (registra suscriptores del bus)
 from .config import settings, validar_para_arranque
-from .db import Base, engine
+from .db import Base, SessionLocal, engine
+from .services.logging_json import emitir_log_json
 from .routers import administracion, auth, comunidad, devices, edificio, panel, webhooks
 from .routers import asambleas, comercial, documentos, gestion, iot, mfa, operaciones, reportes
 from .services.realtime import realtime_manager
@@ -43,9 +44,29 @@ async def base_saturada(request, exc):
                         headers={"Retry-After": "2"})
 
 
+@app.exception_handler(Exception)
+async def error_no_controlado(request, exc):
+    """Captura centralizada de errores no controlados en JSON + tabla errores_log (24.10)."""
+    from .operations_models import ErrorLog
+    emitir_log_json("error", "http.error_no_controlado", metodo=request.method, ruta=request.url.path, clase=exc.__class__.__name__)
+    try:
+        with SessionLocal() as db:
+            db.add(ErrorLog(
+                ruta=str(request.url.path)[:200],
+                metodo=str(request.method)[:12],
+                mensaje=f"{exc.__class__.__name__}: {str(exc)[:240]}",
+                detalle="",
+            ))
+            db.commit()
+    except Exception:
+        pass
+    return JSONResponse({"detail": "Error interno del servidor."}, status_code=500)
+
+
 @app.middleware("http")
 async def cabeceras_de_seguridad(request, call_next):
     _METRICS["http_requests_total"] += 1
+    emitir_log_json("info", "http.request", metodo=request.method, ruta=request.url.path)
     resp = await call_next(request)
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("X-Frame-Options", "DENY")
