@@ -41,7 +41,7 @@ def listar_edificios(user: Annotated[Principal, Depends(require_roles(Rol.supera
         unidades = db.scalar(select(func.count(Unidad.id)).where(Unidad.edificio_id == ed.id))
         residentes = db.scalar(select(func.count(Residente.id)).where(
             Residente.edificio_id == ed.id, Residente.activo.is_(True)))
-        filas.append({"id": ed.id, "nombre": ed.nombre, "unidades": unidades, "residentes": residentes,
+        filas.append({"id": ed.id, "nombre": ed.nombre, "activo": ed.activo, "unidades": unidades, "residentes": residentes,
                       "deuda_total": float(deuda.get(ed.id, 0) or 0)})
     return filas
 

@@ -7,6 +7,15 @@ import tempfile
 os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{tempfile.mkdtemp()}/test.db"
 os.environ["WHATSAPP_WEBHOOK_TOKEN"] = "tok"
 os.environ["CELERY_EAGER"] = "true"
+# Las carreras usan seis clientes y una sesión de comprobación. No heredar un pool operativo menor.
+os.environ["DB_POOL_SIZE"] = "10"
+os.environ["DB_MAX_OVERFLOW"] = "5"
+os.environ["DB_POOL_TIMEOUT"] = "30"
+# La suite nunca hereda credenciales operativas desde .env. Los adaptadores se configuran con dobles en cada test.
+for variable in ("EVOLUTION_URL", "EVOLUTION_APIKEY", "EVOLUTION_INSTANCE", "SMTP_HOST", "SMTP_PASSWORD", "ANTHROPIC_API_KEY", "DOCMIND_URL", "MFA_ENCRYPTION_KEY"):
+    os.environ[variable] = ""
+os.environ["MFA_REQUIRED_PRIVILEGED"] = "false"
+os.environ["DOCMIND_TENANTS"] = "{}"
 # Clave de prueba de 32+ bytes (la de desarrollo por defecto es corta y PyJWT avisa en cada test).
 os.environ.setdefault("JWT_SECRET", "clave-de-pruebas-solo-para-la-suite-0123456789")
 

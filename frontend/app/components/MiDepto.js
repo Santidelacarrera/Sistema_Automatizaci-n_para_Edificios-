@@ -1,4 +1,5 @@
 "use client";
+import Operaciones from "./Operaciones";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clp } from "../../lib/api";
 import { Confirmar, Estado, fh, hoyISO } from "./ui";
@@ -135,10 +136,20 @@ export default function MiDepto({ api, nombre, onSalir, unidadId, embebido = fal
 
         <section aria-labelledby="h-cuenta">
           <h3 id="h-cuenta">Gastos comunes</h3>
+          {api.descargar && <button className="btn sec" onClick={async () => { try { await api.descargar(`/unidades/${d.unidad.id}/estado-cuenta.pdf`, "estado-cuenta.pdf"); } catch (e) { setErr(e.message); } }}>Descargar estado de cuenta PDF</button>}
+          {c.saldo_favor > 0 && <p className="estado-ok">Saldo a favor: {clp(c.saldo_favor)}. Se aplicará a sus próximos gastos comunes.</p>}
           {c.deuda === 0 ? <p className="vacio">No tiene cargos pendientes.</p> : (
             <table className="tabla"><tbody>
               {DESGLOSE.filter(([k]) => c.desglose[k] > 0).map(([k, t]) => <tr key={k}><td>{t}</td><td className="der">{clp(c.desglose[k])}</td></tr>)}
             </tbody><tfoot><tr><th>Total a pagar</th><th className="der">{clp(c.deuda)}</th></tr></tfoot></table>)}
+            {api.operar && c.deuda > 0 && <button className="btn" style={{ marginLeft: "0.5rem" }} onClick={async () => {
+              try {
+                const tx = await api.operar("POST", "/pagos/pasarela/iniciar", { proveedor: "sandbox", monto: c.deuda });
+                await api.operar("POST", `/pagos/pasarela/${tx.id}/confirmar`, { resultado_sandbox: "autorizada" });
+                setMsg({ ok: true, t: `Pago en línea sandbox autorizado (${tx.orden_compra}).` });
+                await cargar();
+              } catch (e) { setErr(e.message); }
+            }}>Pagar en línea (Sandbox)</button>}
           <p className="nota">Al transferir, escriba el código <code>{d.unidad.codigo_cobro}</code> en el comentario para que se asigne solo.</p>
         </section>
 
@@ -188,7 +199,7 @@ export default function MiDepto({ api, nombre, onSalir, unidadId, embebido = fal
         <div className="marca"><b>Depto {d.unidad.numero}</b><span>{nombre || "Residente"}</span></div>
         <button className="salir" onClick={onSalir}>Salir</button>
       </header>
-      <main className="vista seccion-vista mi-depto">{contenido}</main>
+      <main className="vista seccion-vista mi-depto">{contenido}{api.operar && <Operaciones api={api} esAdmin={false} />}</main>
     </div>
   );
 }

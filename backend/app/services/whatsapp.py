@@ -81,12 +81,16 @@ def clasificar(texto: str) -> str:
 def identificar_residente(db: Session, telefono: str) -> Residente | None:
     """Match por teléfono; tolera con/sin código de país comparando los últimos 9 dígitos."""
     cola = telefono[-9:]
-    for r in db.scalars(select(Residente).where(Residente.telefono.like(f"%{cola}"), Residente.activo.is_(True))):
-        return r
-    return None
+    if len(cola) != 9 or not cola.isdigit():
+        return None
+    candidatos = db.scalars(select(Residente).where(Residente.telefono.like(f"%{cola}"),
+                                                   Residente.activo.is_(True)).limit(2)).all()
+    return candidatos[0] if len(candidatos) == 1 else None
 
 
 def faltantes() -> list[str]:
+    if settings.whatsapp_cloud_token and settings.whatsapp_phone_number_id:
+        return []
     """Nombres de las variables de entorno que faltan para enviar. Nunca incluye sus valores."""
     requeridas = {"EVOLUTION_URL": settings.evolution_url, "EVOLUTION_INSTANCE": settings.evolution_instance,
                   "EVOLUTION_APIKEY": settings.evolution_apikey}
@@ -102,7 +106,52 @@ def motivo_no_configurado() -> str:
     return f"Falta {', '.join(faltan)} en .env (Evolution API no configurada)" if faltan else ""
 
 
+def parse_cloud_webhook(payload: dict) -> tuple[str, str, str] | None:
+    """Devuelve (telefono, texto, msg_id) de un webhook de WhatsApp Business Cloud API (Meta)."""
+    try:
+        for entry in payload.get("entry") or []:
+            for change in entry.get("changes") or []:
+                for m in (change.get("value") or {}).get("messages") or []:
+                    if m.get("type") == "text":
+                        tel = normalizar_telefono(str(m.get("from", "")))
+                        txt = str((m.get("text") or {}).get("body") or "").strip()
+                        mid = str(m.get("id") or "")[:120]
+                        if tel and txt:
+                            return tel, txt, mid
+    except (AttributeError, TypeError):
+        return None
+    return None
+
+
+def verificar_firma_meta(cuerpo: bytes, header_sig: str | None) -> bool:
+    """Verifica firma `X-Hub-Signature-256: sha256=...` de Meta con `WHATSAPP_APP_SECRET`."""
+    import hashlib
+    import hmac
+    if not settings.whatsapp_app_secret or not header_sig or not header_sig.startswith("sha256="):
+        return False
+    esperada = hmac.new(settings.whatsapp_app_secret.encode(), cuerpo, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(esperada, header_sig.removeprefix("sha256="))
+
+
 def enviar(telefono: str, texto: str) -> ResultadoEnvio:
+    if telefono and settings.whatsapp_cloud_token and settings.whatsapp_phone_number_id:
+        try:
+            r = httpx.post(
+                f"https://graph.facebook.com/v20.0/{settings.whatsapp_phone_number_id}/messages",
+                headers={"Authorization": f"Bearer {settings.whatsapp_cloud_token}"},
+                timeout=10,
+                json={"messaging_product": "whatsapp", "to": normalizar_telefono(telefono),
+                      "type": "text", "text": {"body": texto}},
+            )
+        except httpx.TimeoutException:
+            return ResultadoEnvio(CANAL, ERROR, "WhatsApp Cloud API no respondió a tiempo", transitorio=True)
+        except httpx.HTTPError as e:
+            return ResultadoEnvio(CANAL, ERROR, f"No se pudo conectar con WhatsApp Cloud API ({e.__class__.__name__})",
+                                  transitorio=True)
+        if r.is_success:
+            return ResultadoEnvio(CANAL, ENVIADO)
+        return ResultadoEnvio(CANAL, ERROR, f"WhatsApp Cloud API respondió HTTP {r.status_code}",
+                              transitorio=r.status_code >= 500)
     """Envía un mensaje y devuelve el resultado explícito. No lanza excepciones por fallos de red."""
     if not telefono:
         return ResultadoEnvio(CANAL, NO_CONFIGURADO, "El residente no tiene teléfono registrado")

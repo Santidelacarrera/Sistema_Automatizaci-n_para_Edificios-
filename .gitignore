@@ -3,6 +3,11 @@ __pycache__/
 .env
 *.db
 .pytest_cache/
+.artifacts/
+frontend/node_modules/
+frontend/.next/
+frontend/test-results/
+frontend/playwright-report/
 .graph-indexer/
 firmware/esp32/config_local.py
 .env

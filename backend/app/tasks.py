@@ -14,9 +14,34 @@ log = logging.getLogger(__name__)
 celery = Celery("edificios", broker=settings.redis_url, backend=settings.redis_url)
 celery.conf.task_always_eager = settings.celery_eager
 celery.conf.beat_schedule = {
+    "entregar-outbox": {"task": "app.tasks.entregar_outbox", "schedule": 30.0},
+    "automatizaciones": {"task": "app.tasks.automatizaciones", "schedule": 3600.0},
     "liberar-no-show": {"task": "app.tasks.liberar_no_show", "schedule": 60.0},
     "purgar-datos-vencidos": {"task": "app.tasks.purgar_datos", "schedule": 86400.0},  # una vez al día
 }
+
+
+@celery.task(name="app.tasks.entregar_outbox")
+def entregar_outbox():
+    from .services.notifications import procesar
+    with SessionLocal() as db:
+        res = procesar(db)
+        db.commit()
+        return res
+
+
+@celery.task(name="app.tasks.automatizaciones")
+def automatizaciones():
+    from sqlalchemy import select
+    from .services.automation import ejecutar
+    with SessionLocal() as db:
+        ids = db.scalars(select(Edificio.id).where(Edificio.activo.is_(True))).all()
+    resultado = {}
+    for eid in ids:
+        with SessionLocal() as db:
+            resultado[eid] = ejecutar(db, eid)
+            db.commit()
+    return resultado
 
 
 @celery.task(name="app.tasks.liberar_no_show")

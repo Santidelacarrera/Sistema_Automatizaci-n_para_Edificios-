@@ -25,16 +25,19 @@ def hash_password(pw: str) -> str:
 def verify_password(pw: str, stored: str) -> bool:
     try:
         salt_hex, h_hex = stored.split("$")
-    except ValueError:
+        salt = bytes.fromhex(salt_hex)
+        if len(salt) != 16 or len(h_hex) != 128 or len(pw) > 1024:
+            return False
+        h = hashlib.scrypt(pw.encode(), salt=salt, n=2**14, r=8, p=1)
+    except (ValueError, TypeError, AttributeError):
         return False
-    h = hashlib.scrypt(pw.encode(), salt=bytes.fromhex(salt_hex), n=2**14, r=8, p=1)
     return hmac.compare_digest(h.hex(), h_hex)
 
 
-def create_token(residente_id: int, edificio_id: str, rol: Rol) -> str:
+def create_token(residente_id: int, edificio_id: str, rol: Rol, session_version: int = 0, mfa: bool = False) -> str:
     exp = utcnow() + timedelta(minutes=settings.jwt_expire_minutes)
     return jwt.encode({"sub": str(residente_id), "edificio_id": edificio_id,
-                       "rol": rol.value, "exp": exp}, settings.jwt_secret, algorithm="HS256")
+                       "rol": rol.value, "sv": session_version, "mfa": mfa, "iat": utcnow(), "exp": exp}, settings.jwt_secret, algorithm="HS256")
 
 
 class Principal:
@@ -49,13 +52,26 @@ def current_user(cred: Annotated[HTTPAuthorizationCredentials | None, Depends(_b
     if cred is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Falta token")
     try:
-        p = jwt.decode(cred.credentials, settings.jwt_secret, algorithms=["HS256"])
+        p = jwt.decode(cred.credentials, settings.jwt_secret, algorithms=["HS256"],
+                       options={"require": ["exp", "sub"]})
         residente_id = int(p["sub"])
-    except (jwt.PyJWTError, KeyError, ValueError):
+    except (jwt.PyJWTError, KeyError, ValueError, TypeError):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token inválido")
     r = db.get(Residente, residente_id)
     if not r or not r.activo:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Usuario inactivo o inexistente")
+    if p.get("sv", 0) != r.session_version:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesión revocada")
+    if p.get("purpose"):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token restringido al alta de MFA")
+    from .operations_models import SegundoFactor
+    from .services.mfa import requerido
+    factor = db.get(SegundoFactor, r.id)
+    if (requerido(r.rol) or (factor and factor.activo)) and not p.get("mfa"):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Se requiere segundo factor")
+    ed = db.get(Edificio, r.edificio_id)
+    if r.rol != Rol.superadmin and (not ed or not ed.activo):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Edificio suspendido")
     return Principal(r.id, r.edificio_id, r.rol)
 
 
@@ -86,6 +102,6 @@ def device_building(
 ) -> Edificio:
     """Autenticación de lectores ESP32: API key por edificio."""
     ed = db.get(Edificio, edificio_id)
-    if not ed or not x_device_key or not hmac.compare_digest(ed.device_api_key, hash_clave_dispositivo(x_device_key)):
+    if not ed or not ed.activo or not x_device_key or not hmac.compare_digest(ed.device_api_key, hash_clave_dispositivo(x_device_key)):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Dispositivo no autorizado")
     return ed

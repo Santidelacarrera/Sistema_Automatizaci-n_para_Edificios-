@@ -56,6 +56,8 @@ jobs:
           TEST_DATABASE_URL: postgresql+psycopg://ci:${{ env.PG_CLAVE }}@localhost:5432/edificios
         run: |
           pytest -q
+      - name: Redis y worker real sin servicios externos
+        run: python ../scripts/verificar_worker_local.py
 
   respaldos:
     runs-on: ubuntu-latest
@@ -157,7 +159,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - name: Panel + API reales con datos sembrados
-        run: scripts/e2e_real.sh
+        run: python scripts/e2e_local.py
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

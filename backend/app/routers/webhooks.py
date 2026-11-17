@@ -15,6 +15,49 @@ AYUDA = ("Hola {nombre} 👋 Puedo ayudarte con:\n• Reservar visita (ej: «vis
          "• Reservar quincho\n• Consultar tu deuda")
 
 
+@router.get("/whatsapp")
+def whatsapp_verify(request: Request):
+    """Verificación de suscripción del webhook oficial de WhatsApp Business Cloud API (Meta)."""
+    mode = request.query_params.get("hub.mode")
+    token = request.query_params.get("hub.verify_token")
+    challenge = request.query_params.get("hub.challenge")
+    if mode == "subscribe" and settings.whatsapp_verify_token and token and \
+            hmac.compare_digest(settings.whatsapp_verify_token, token):
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(challenge or "")
+    raise HTTPException(403, "Verificación de webhook rechazada")
+
+
+@router.post("/whatsapp/cloud")
+async def whatsapp_cloud_webhook(request: Request, x_hub_signature_256: str | None = Header(None),
+                                 db: Session = Depends(get_db)):
+    """Webhook oficial de WhatsApp Business Cloud API (Meta) con verificación HMAC-SHA256."""
+    cuerpo = await request.body()
+    if not whatsapp.verificar_firma_meta(cuerpo, x_hub_signature_256):
+        raise HTTPException(401, "Firma de webhook de Meta inválida")
+    payload = await request.json()
+    parsed = whatsapp.parse_cloud_webhook(payload)
+    if not parsed:
+        return {"ignorado": True}
+    telefono, texto, msg_id = parsed
+    if msg_id:
+        db.add(MensajeWA(msg_id=msg_id))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            return {"duplicado": True}
+    r = whatsapp.identificar_residente(db, telefono)
+    if not r:
+        envio = whatsapp.enviar(telefono, "No encontramos tu número en ningún edificio. Contacta a la administración.")
+        return {"residente": None, "envio": envio.estado}
+    intent = whatsapp.clasificar(texto)
+    resp = (f"Tu deuda actual es ${finance.deuda_unidad(db, r.unidad_id):,.0f}."
+            if intent == "consultar_deuda" else AYUDA.format(nombre=r.nombre.split()[0]))
+    envio = whatsapp.enviar(telefono, resp)
+    return {"residente": r.id, "intent": intent, "respuesta": resp, "envio": envio.estado}
+
+
 @router.post("/whatsapp")
 async def whatsapp_webhook(request: Request, x_webhook_token: str | None = Header(None),
                            db: Session = Depends(get_db)):

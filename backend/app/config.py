@@ -51,6 +51,26 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from: str = "administracion@example.com"
+    # Un proyecto DOCMIND exclusivo por edificio. Las claves sólo se leen del entorno.
+    docmind_url: str = ""
+    docmind_tenants: dict[str, dict[str, str]] = {}
+    whatsapp_cloud_token: str = ""
+    whatsapp_phone_number_id: str = ""
+    whatsapp_app_secret: str = ""
+    whatsapp_verify_token: str = ""
+    payment_gateway_default: str = "sandbox"
+    payment_webhook_secret: str = ""
+    transbank_commerce_code: str = ""
+    transbank_api_key: str = ""
+    transbank_env: str = "integracion"
+    mercadopago_access_token: str = ""
+    khipu_api_key: str = ""
+    fcm_server_key: str = ""
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_from_number: str = ""
+    mfa_encryption_key: str = ""  # clave Fernet; independiente de JWT_SECRET
+    mfa_required_privileged: bool = False  # producción siempre exige MFA a admin/superadmin
 
 
 settings = Settings()

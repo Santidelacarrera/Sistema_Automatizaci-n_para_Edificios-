@@ -22,20 +22,31 @@ async function http(sess, method, path, body) {
   return data;
 }
 
-export async function login(edificio_id, email, password) {
+export async function login(edificio_id, email, password, codigo_mfa) {
   const r = await fetch(BASE + "/auth/login", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ edificio_id, email, password }),
+    body: JSON.stringify({ edificio_id, email, password, ...(codigo_mfa ? { codigo_mfa } : {}) }),
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new ApiError(r.status, data.detail ?? "No se pudo iniciar sesión");
+  if (data.mfa_setup_required) return data;
   return { token: data.access_token, edificio_id, demo: false, rol: data.rol, nombre: data.nombre };
+}
+
+export const prepararMfa = (token, password) => http({ token }, "POST", "/auth/mfa/preparar", { password });
+export async function confirmarMfa(token, codigo) {
+  const d = await http({ token }, "POST", "/auth/mfa/confirmar", { codigo });
+  return { token: d.access_token, edificio_id: d.edificio_id, rol: d.rol, nombre: d.nombre, demo: false };
 }
 
 export const apiHasBackend = () => Boolean(BASE);
 
 // Sólo superadmin: resumen de todos los edificios.
 export const listarEdificios = (sess) => http(sess, "GET", "/edificios");
+export const cerrarSesion = (sess) => sess && !sess.demo ? http(sess, "POST", "/auth/logout") : Promise.resolve();
+export const crearEdificio = (sess, body) => http(sess, "POST", "/edificios", body);
+export const editarEdificio = (sess, id, body) => http(sess, "PATCH", `/edificios/${encodeURIComponent(id)}`, body);
+export const operarGlobal = (sess, method, path, body) => http(sess, method, path, body);
 
 // ---------- cliente unificado (real o demo) ----------
 let demoUnico = null; // el estado de la demo vive mientras dure la sesión, no cada render
@@ -43,6 +54,22 @@ export function client(sess) {
   if (sess.demo) return (demoUnico ??= demoClient());
   const e = `/edificios/${sess.edificio_id}`;
   return {
+    operar: (metodo, ruta, body) => http(sess, metodo, `${e}${ruta}`, body),
+    subirDocumento: async (form, id) => {
+      const r = await fetch(`${BASE}${e}/documentos${id ? `/${id}/versiones` : ""}`, {
+        method: "POST", headers: { Authorization: `Bearer ${sess.token}` }, body: form,
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new ApiError(r.status, data.detail ?? "No se pudo subir el documento");
+      return data;
+    },
+    descargar: async (ruta, nombre) => {
+      const r = await fetch(`${BASE}${e}${ruta}`, { headers: { Authorization: `Bearer ${sess.token}` } });
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new ApiError(r.status, d.detail ?? "No se pudo descargar"); }
+      const url = URL.createObjectURL(await r.blob());
+      const a = document.createElement("a"); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
     panel: () => http(sess, "GET", `${e}/panel`),
     accesos: () => http(sess, "GET", `${e}/accesos?limit=60`),
     visitas: () => http(sess, "GET", `${e}/visitas`),
