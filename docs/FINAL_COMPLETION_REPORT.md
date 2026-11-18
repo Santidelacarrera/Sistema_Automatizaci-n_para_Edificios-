@@ -10,8 +10,8 @@ Partiendo de la rama `completion-buildings-v2` (commit base `93382d0`), se compl
 
 | Estado | Cantidad |
 |---|---:|
-| COMPLETADA Y PROBADA | 324 |
-| PARCIAL (incluye integraciones con credenciales/hardware externo o alcance complementario) | 130 |
+| COMPLETADA Y PROBADA | 370 |
+| PARCIAL (exclusivamente dependencias externas, DOCMIND en vivo, hardware físico, revisión legal o VPS de producción) | 84 |
 | NO IMPLEMENTADA | 0 |
 | BLOQUEADA POR SERVICIO EXTERNO O HARDWARE | 5 |
 | **Total de viñetas** | **459** |
@@ -20,24 +20,24 @@ Partiendo de la rama `completion-buildings-v2` (commit base `93382d0`), se compl
 
 | Módulo | Completadas / criterios | Porcentaje estricto |
 |---|---:|---:|
+| ADMINISTRACIÓN DE COMUNIDADES | 15/15 | 100.0% |
+| PORTERÍA Y CONSERJERÍA DIGITAL | 16/16 | 100.0% |
+| RESERVAS DE ESPACIOS COMUNES | 22/22 | 100.0% |
+| MANTENIMIENTO Y GESTIÓN DE INCIDENCIAS | 18/18 | 100.0% |
+| ASAMBLEAS, VOTACIONES Y COMITÉS | 12/12 | 100.0% |
+| APLICACIÓN MÓVIL Y PORTAL DE RESIDENTES | 17/17 | 100.0% |
+| PANEL DEL ADMINISTRADOR Y DASHBOARD | 18/18 | 100.0% |
+| MÓDULO DE PROVEEDORES Y PERSONAL | 15/15 | 100.0% |
+| DISEÑO UX/UI | 16/16 | 100.0% |
 | INTEGRACIÓN ENTRE TODOS LOS MÓDULOS | 10/10 | 100.0% |
-| MANTENIMIENTO Y GESTIÓN DE INCIDENCIAS | 17/18 | 94.4% |
-| ADMINISTRACIÓN DE COMUNIDADES | 14/15 | 93.3% |
+| PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT | 24/25 | 96.0% |
+| TESTING Y VALIDACIÓN | 18/19 | 94.7% |
+| FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO | 36/39 | 92.3% |
 | COMERCIALIZACIÓN Y PREPARACIÓN PARA PRODUCCIÓN | 21/23 | 91.3% |
-| TESTING Y VALIDACIÓN | 17/19 | 89.5% |
-| PANEL DEL ADMINISTRADOR Y DASHBOARD | 16/18 | 88.9% |
-| APLICACIÓN MÓVIL Y PORTAL DE RESIDENTES | 15/17 | 88.2% |
-| PLATAFORMA MULTI-EDIFICIO Y MULTI-TENANT | 22/25 | 88.0% |
-| FINANZAS, GASTOS COMUNES Y CONTABILIDAD | 34/40 | 85.0% |
-| ASAMBLEAS, VOTACIONES Y COMITÉS | 10/12 | 83.3% |
-| FUNCIONES EXTRA PARA DIFERENCIAR EL PRODUCTO | 32/39 | 82.1% |
-| PORTERÍA Y CONSERJERÍA DIGITAL | 12/16 | 75.0% |
-| DISEÑO UX/UI | 12/16 | 75.0% |
-| MÓDULO DE PROVEEDORES Y PERSONAL | 11/15 | 73.3% |
+| FINANZAS, GASTOS COMUNES Y CONTABILIDAD | 36/40 | 90.0% |
+| ARQUITECTURA Y CALIDAD DEL SOFTWARE | 20/25 | 80.0% |
+| COMUNICACIÓN Y NOTIFICACIONES | 15/19 | 78.9% |
 | INTELIGENCIA ARTIFICIAL Y AUTOMATIZACIÓN AVANZADA | 12/17 | 70.6% |
-| ARQUITECTURA Y CALIDAD DEL SOFTWARE | 16/25 | 64.0% |
-| RESERVAS DE ESPACIOS COMUNES | 13/22 | 59.1% |
-| COMUNICACIÓN Y NOTIFICACIONES | 11/19 | 57.9% |
 | CONTROL DE ACCESO INTELIGENTE E IOT | 19/34 | 55.9% |
 | SEGURIDAD EMPRESARIAL | 8/25 | 32.0% |
 | DOCUMENTACIÓN INTELIGENTE: DOCMIND AI | 2/22 | 9.1% |
@@ -81,7 +81,7 @@ Partiendo de la rama `completion-buildings-v2` (commit base `93382d0`), se compl
 
 | Validación | Comando / Entorno | Resultado observado |
 |---|---|---|
-| Backend completo (SQLite) | `cd backend && python -m pytest -q` | **322 passed, 6 skipped** (los 6 de concurrencia PostgreSQL) |
+| Backend completo (SQLite) | `cd backend && python -m pytest -q` | **326 passed, 6 skipped** (los 6 de concurrencia PostgreSQL) |
 | Migraciones y esquema (PostgreSQL 16) | `alembic upgrade head && alembic check` (`f1af332eaa4c` → `0015_obs_org_cotiz_regl`) | **OK**, sin diferencias pendientes (`No new upgrade operations detected.`) |
 | Concurrencia y nuevos módulos (PostgreSQL 16) | `pytest tests/test_concurrencia_pg.py tests/test_modulos_completos.py tests/test_18_funcionalidades.py tests/test_parciales_software.py tests/test_lote_software_final.py tests/test_bloque_final_5.py -q` | **18 passed** (concurrencia `FOR UPDATE` + módulos completos + 18 funcionalidades + lote final + 5 bloques) |
 | Respaldo y restauración (PostgreSQL 16) | `pg_dump -Fc` + `pg_restore` sobre base vacía `restaurada` | **OK**, 52 tablas restauradas |

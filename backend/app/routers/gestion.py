@@ -876,3 +876,31 @@ def detectar_anomalias_acceso(edificio_id: str, user: Admin, db: Session = Depen
         "intentos_anomalos": intentos_anomalos,
         "credenciales_duplicadas": credenciales_duplicadas,
     }
+
+
+
+@router.get("/edificios/{edificio_id}/accesos/forense")
+def historial_forense_accesos(edificio_id: str, user: Admin, token: str | None = None,
+                              permitido: bool | None = None, limit: int = 100, offset: int = 0,
+                              db: Session = Depends(get_db)):
+    """Historial forense filtrable y paginado de accesos (22.15)."""
+    from ..models import AccesoLog
+    edificio(db, user, edificio_id)
+    q = select(AccesoLog).where(AccesoLog.edificio_id == edificio_id)
+    if token:
+        q = q.where(AccesoLog.token == token.strip())
+    if permitido is not None:
+        q = q.where(AccesoLog.permitido.is_(permitido))
+    rows = db.scalars(q.order_by(AccesoLog.id.desc()).offset(max(0, offset)).limit(min(500, max(1, limit)))).all()
+    return [{"id": a.id, "token": a.token, "punto": a.punto, "fuente": a.fuente,
+             "permitido": a.permitido, "motivo": a.motivo, "creado": a.creado.isoformat()} for a in rows]
+
+
+@router.get("/edificios/{edificio_id}/eventos/resumen")
+def resumen_eventos(edificio_id: str, user: Admin, db: Session = Depends(get_db)):
+    """Análisis agrupado de eventos del edificio por tipo (22.14)."""
+    from collections import Counter
+    edificio(db, user, edificio_id)
+    evs = db.scalars(select(Evento).where(Evento.edificio_id == edificio_id).order_by(Evento.id.desc()).limit(1000)).all()
+    conteo = Counter(e.tipo for e in evs)
+    return {"total": len(evs), "por_tipo": [{"tipo": k, "cantidad": v} for k, v in conteo.most_common()]}
