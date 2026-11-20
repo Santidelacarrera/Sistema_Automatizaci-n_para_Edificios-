@@ -302,7 +302,22 @@ export default function Operaciones({ api, esAdmin }) {
           <button className="btn" disabled={busy}>Consultar asistente</button>
         </form>
         {respuesta?.respuesta && <article className="gestion-card"><p>{respuesta.respuesta}</p>
+          {respuesta.clasificacion && <p><small>Modo: {respuesta.clasificacion}</small></p>}
           {respuesta.borrador_circular && <pre className="gestion-texto">{respuesta.borrador_circular.asunto}\n\n{respuesta.borrador_circular.cuerpo}</pre>}</article>}
+        <div className="fila-form">
+          <button type="button" className="btn sec" disabled={busy} onClick={async () => {
+            await accion(async () => {
+              const r = await request("POST", "/ia/indexar", {});
+              setRespuesta({ respuesta: `Base indexada: ${r.fuentes} fuente(s), ${r.fragmentos_totales} fragmento(s).`, clasificacion: "indexacion" });
+            }, "Conocimiento indexado.");
+          }}>Indexar conocimiento</button>
+          <button type="button" className="btn sec" disabled={busy} onClick={async (e) => {
+            const ta = e.currentTarget.closest("section")?.querySelector("textarea[name='pregunta']");
+            const preg = ta?.value?.trim() || "";
+            if (preg.length < 3) return;
+            await accion(async () => setRespuesta(await request("POST", "/ia/preguntar", { pregunta: preg })), "Consulta con memoria respondida.");
+          }}>Preguntar con memoria</button>
+        </div>
       </section>
     </>}
   </section>;

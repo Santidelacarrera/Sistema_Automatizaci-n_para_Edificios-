@@ -13,7 +13,7 @@ from .config import settings, validar_para_arranque
 from .db import Base, SessionLocal, engine
 from .services.logging_json import emitir_log_json
 from .routers import administracion, auth, comunidad, devices, edificio, panel, webhooks
-from .routers import asambleas, comercial, documentos, gestion, iot, mfa, operaciones, reportes
+from .routers import asambleas, comercial, documentos, gestion, iot, memoria_qa, mfa, operaciones, reportes
 from .services.realtime import realtime_manager
 
 validar_para_arranque()  # falla al importar si la configuración no es segura para el entorno
@@ -89,7 +89,7 @@ for r in (auth.router, devices.router, edificio.router, panel.router, comunidad.
     app.include_router(r)
     app.include_router(r, prefix="/api/v1")
 app.include_router(administracion.edificios_router)
-for modulo in (operaciones, asambleas, gestion, documentos, mfa, reportes, iot, comercial):
+for modulo in (operaciones, asambleas, gestion, documentos, mfa, reportes, iot, comercial, memoria_qa):
     app.include_router(modulo.router)
     app.include_router(modulo.router, prefix="/api/v1")
 app.include_router(administracion.edificios_router, prefix="/api/v1")
