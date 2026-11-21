@@ -112,4 +112,10 @@ test("contabilidad, personal y asistente IA con backend real", async ({ page }) 
   await page.getByLabel("Consulta administrativa o solicitud de borrador").fill("Genera un borrador de circular");
   await page.getByRole("button", { name: "Consultar asistente" }).click();
   await expect(page.getByText("Informativo operativo y financiero")).toBeVisible();
+
+  await page.getByRole("button", { name: "Indexar conocimiento" }).click();
+  await expect(page.getByText(/Base indexada:/)).toBeVisible();
+  await page.getByLabel("Consulta administrativa o solicitud de borrador").fill("¿Cuántas unidades tiene el edificio?");
+  await page.getByRole("button", { name: "Preguntar con memoria" }).click();
+  await expect(page.getByText(/Modo:/)).toBeVisible();
 });

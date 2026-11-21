@@ -358,5 +358,9 @@ Próximos pasos, en orden de prioridad:
 | [`docs/PORTON_UHF.md`](docs/PORTON_UHF.md) | Compra de stickers y lector, prueba de muestra, modos de acceso, clonación y pruebas de producción |
 | [`firmware/esp32/README.md`](firmware/esp32/README.md) | Cableado, advertencia de niveles lógicos 5 V / 3,3 V, configuración del equipo y pruebas de banco |
 | [`backend/integraciones/lpr/README.md`](backend/integraciones/lpr/README.md) | Configuración del traductor de cámaras de patentes |
+| [`docs/QA_MEMORY_ENGINE.md`](docs/QA_MEMORY_ENGINE.md) | Motor Q&A híbrido (BM25 + vectorial + reranking) y banco de memoria persistente |
+| [`docs/MANUALES_OPERACION.md`](docs/MANUALES_OPERACION.md) | Manuales de administración, residentes, portería, laboratorio IoT y despliegue |
+| [`docs/FINAL_COMPLETION_REPORT.md`](docs/FINAL_COMPLETION_REPORT.md) | Informe final de implementación, pruebas y pendientes externos |
+| [`docs/FEATURE_COMPLETION_MATRIX.md`](docs/FEATURE_COMPLETION_MATRIX.md) | Matriz de los 459 requisitos con estado y evidencia |
 
 Licencia: pendiente de definir por el titular del proyecto.
